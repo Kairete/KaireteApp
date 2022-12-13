@@ -1,0 +1,58 @@
+import 'package:flutter/material.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
+import 'package:kairete/components/kairete_popup.dart';
+import 'package:kairete/constants/app_routes.dart';
+import 'package:kairete/features/login/models/user_model.dart';
+import 'package:kairete/features/login/navigator/login_navigator.dart';
+import 'package:kairete/features/login/usecase/login_usecase.dart';
+import 'package:get/get.dart';
+import 'package:kairete/helper/user.dart';
+
+class LoginController extends GetxController {
+  LoginUsecase usecase = ILoginUsecase();
+  LoginNavigator navigator = ILoginNavigator();
+
+  TextEditingController nameController = TextEditingController();
+  TextEditingController passController = TextEditingController();
+
+  var errorName = ''.obs;
+  var errorPass = ''.obs;
+
+  @override
+  void onInit() {
+    if (Get.arguments != null) {
+      nameController.text = Get.arguments['email'];
+    }
+    super.onInit();
+  }
+
+  void onLogin() async {
+    if (validateData()) {
+      final body = {
+        'login': nameController.text,
+        'password': passController.text,
+      };
+      final json = await usecase.login(body: body);
+      if (json != null) {
+        final user = UserModel.fromJson(json);
+        UserManager.instance.user = user;
+        Get.offAllNamed(Routes.home);
+      }
+    }
+  }
+
+  bool validateData() {
+    if (nameController.text.isEmpty) {
+      errorName.value = 'required';
+      return false;
+    } else if (passController.text.isEmpty) {
+      errorPass.value = 'required';
+      return false;
+    }
+    return true;
+  }
+
+  void toRegister() {
+    navigator.toRegister();
+  }
+}

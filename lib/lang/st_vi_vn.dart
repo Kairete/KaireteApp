@@ -1,0 +1,17 @@
+const Map<String, String> vi = {
+  'login': 'Đăng nhập',
+  'login_hint_phone': 'Số điện thoại/username',
+  'login_hint_pass': 'Mật khẩu',
+  'login_forgot': 'Quên mật khẩu?',
+  'login_face_id': 'Sử dụng FaceID',
+  'login_socical': 'Hoặc đăng nhập bằng',
+  'login_link_text_1': 'Chưa có tài khoản?',
+  'register': 'Đăng ký',
+  'close': 'Đóng',
+  'notice': 'Thông báo',
+  'login_error_phone_empty': 'Vui lòng nhập số điện thoại/username!',
+  'login_error_pass_empty': 'Vui lòng nhập mật khẩu!',
+  'login_error_username': 'Username không hợp lệ, vui lòng thử lại!',
+  'login_error_phone': 'Số điện thoại không hợp lệ, vui lòng thử lại!',
+  'ok': 'Đồng ý',
+};
