@@ -219,7 +219,7 @@ class KaireteTextField extends StatelessWidget {
           onChanged: (value) {
             timer?.cancel();
             timer = Timer(
-              Duration(milliseconds: debounceTime ?? 500),
+              Duration(milliseconds: debounceTime ?? 0),
               () {
                 onChanged(value);
               },

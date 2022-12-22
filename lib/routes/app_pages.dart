@@ -13,7 +13,7 @@ class AppPages {
     // var state = isFirstOpen
     //     ? Routes.onBoading
     //     : (token == null ? Routes.login : Routes.dashBoard);
-    return Routes.home;
+    return Routes.login;
   }
 
   static final routes = [

@@ -8,6 +8,7 @@ import 'package:kairete/features/newsfeed/controllers/newsfeed_detail_controller
 import '../../../components/cache_image.dart';
 import '../../../helper/time.dart';
 
+// ignore: must_be_immutable
 class NewsfeedDetailScreen extends StatelessWidget {
   NewsfeedDetailScreen({Key? key}) : super(key: key);
 
@@ -29,11 +30,19 @@ class NewsfeedDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              controller.item?.title ?? '',
+              controller.item?.blogEntryItem?.category?.title ?? '',
               style: kTextMediumtStyle.copyWith(
-                  color: kTextCriticalColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+                color: kTextCriticalColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Text(
+              controller.item?.title ?? '',
+              style: kTextTitle.copyWith(color: kTextCriticalColor),
             ),
             const SizedBox(
               height: 8,
@@ -42,8 +51,8 @@ class NewsfeedDetailScreen extends StatelessWidget {
                 text: TextSpan(
               text: controller.item?.user?.username ?? 'Empty name',
               style: kTextMediumtStyle.copyWith(
-                  color: Colors.grey,
-                  fontSize: 13,
+                  color: kTextCriticalColor,
+                  fontSize: 17,
                   fontWeight: FontWeight.w600),
               children: <TextSpan>[
                 const TextSpan(
@@ -52,7 +61,7 @@ class NewsfeedDetailScreen extends StatelessWidget {
                     text: TimeManager.instance.convertFromTimeStamp(
                         timestamp: controller.item?.itemDate ?? 0),
                     style: kTextMediumtStyle.copyWith(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
+                        fontSize: 15, fontWeight: FontWeight.w600)),
               ],
             )),
             const SizedBox(
@@ -70,7 +79,7 @@ class NewsfeedDetailScreen extends StatelessWidget {
               controller.item?.messagePlainText ?? '',
               style: kTextMediumtStyle.copyWith(
                   color: Colors.black,
-                  fontSize: 15,
+                  fontSize: 18,
                   fontWeight: FontWeight.w400),
             ),
           ],

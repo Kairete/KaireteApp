@@ -1,5 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
@@ -9,6 +7,9 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/helper/time.dart';
+
+import '../../../components/kairete_button.dart';
+import '../../../components/reactions_view.dart';
 
 // ignore: must_be_immutable
 class NewsFeedScreen extends StatelessWidget {
@@ -20,170 +21,230 @@ class NewsFeedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(top: 16, bottom: 16),
-      child: Obx(() => ListView.builder(
-            itemCount: controller.items.length,
-            itemBuilder: (context, index) {
-              final item = controller.items[index];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.grey.withAlpha(60),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        KaireteCacheNetworkImage(
-                          url: item.user?.avatarUrls?.l ?? '',
-                          width: 36,
-                          height: 36,
-                          isCircle: true,
+      child: Obx(() => controller.items.isEmpty
+          ? const SizedBox()
+          : ListView.builder(
+              itemCount: controller.items.length + 1,
+              itemBuilder: (context, index) {
+                final originIndex = index == 0 ? 0 : index - 1;
+                final item = controller.items[originIndex];
+                return index == 0
+                    ? GestureDetector(
+                        onTap: () {
+                          controller.toCreate();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                          margin: const EdgeInsets.only(
+                              left: 16, right: 16, bottom: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              width: 1,
+                              color: Colors.grey,
+                            ),
+                            color: kF7FBFE,
+                          ),
+                          child: Text(
+                            'Write something…',
+                            style: kTextRegularStyle.copyWith(
+                              color: Colors.black.withAlpha(60),
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                      )
+                    : Container(
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  width: 1,
+                                  color: kBorderDefaultColor,
+                                ),
+                                color: Colors.grey.shade200,
+                              ),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    item.user?.username ?? 'Empty name',
-                                    style: kTextRegularStyle.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                  KaireteCacheNetworkImage(
+                                    url: item.user?.avatarUrls?.l ?? '',
+                                    width: 36,
+                                    height: 36,
+                                    isCircle: true,
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(
+                                            text: item.user?.customFields
+                                                    ?.fullName ??
+                                                '',
+                                            style: kTextRegularStyle.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                            children: [
+                                              if (item.blogEntryItem?.blog
+                                                      ?.title !=
+                                                  null)
+                                                const WidgetSpan(
+                                                    child: Icon(
+                                                  Icons.play_arrow,
+                                                  color: kPrimaryColor,
+                                                  size: 16,
+                                                )),
+                                              TextSpan(
+                                                  text: item.blogEntryItem?.blog
+                                                          ?.title ??
+                                                      '',
+                                                  style: kTextRegularStyle
+                                                      .copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: kPrimaryColor,
+                                                    fontSize: 16,
+                                                  )),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          height: 4,
+                                        ),
+                                        RichText(
+                                          text: TextSpan(
+                                            text: '',
+                                            style: kTextMediumtStyle.copyWith(
+                                                color: Colors.grey,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600),
+                                            children: <TextSpan>[
+                                              // const TextSpan(
+                                              //   text: ' • ',
+                                              //   style: TextStyle(
+                                              //       fontWeight: FontWeight.bold),
+                                              // ),
+                                              TextSpan(
+                                                  text: TimeManager.instance
+                                                      .convertFromTimeStamp(
+                                                          timestamp:
+                                                              item.itemDate ??
+                                                                  0),
+                                                  style: kTextMediumtStyle
+                                                      .copyWith(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                  )),
+                                            ],
+                                          ),
+                                        )
+                                      ],
                                     ),
                                   ),
-                                  if (item.itemCategory != null)
-                                    const Icon(
-                                      Icons.play_arrow,
-                                      color: kPrimaryColor,
-                                      size: 16,
-                                    ),
-                                  if (item.itemCategory != null)
-                                    Text(
-                                      item.itemCategory!,
-                                      style: kTextRegularStyle.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: kPrimaryColor),
-                                    ),
                                 ],
                               ),
-                              const SizedBox(
-                                height: 4,
+                            ),
+                            const SizedBox(
+                              height: 16,
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 16, right: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (item.title != '')
+                                    Text(
+                                      item.title ?? '',
+                                      style: kTextMediumtStyle.copyWith(
+                                          color: Colors.black,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  if (item.title != '')
+                                    const SizedBox(
+                                      height: 16,
+                                    ),
+                                  if (item.blogEntryItem?.attachments != null)
+                                    KaireteCacheNetworkImage(
+                                        url: item.blogEntryItem?.attachments?[0]
+                                                .thumbnailUrl ??
+                                            ''),
+                                  if (item.blogEntryItem?.attachments != null)
+                                    const SizedBox(
+                                      height: 16,
+                                    ),
+                                  Text(
+                                    item.messagePlainText ?? '',
+                                    maxLines: 5,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: kTextMediumtStyle.copyWith(
+                                        color: Colors.black,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400),
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  KaireteTextButton(
+                                    onTap: () {
+                                      controller.toDetail(item: item);
+                                    },
+                                    title: 'See detail',
+                                  ),
+                                  if (item.reactions != null)
+                                    ReactionsItemView(
+                                        reactions: item.reactions ?? [])
+                                ],
                               ),
-                              RichText(
-                                text: TextSpan(
-                                  text: item.user?.username ?? 'Empty name',
-                                  style: kTextMediumtStyle.copyWith(
-                                      color: Colors.grey,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600),
-                                  children: <TextSpan>[
-                                    const TextSpan(
-                                        text: ' • ',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextSpan(
-                                        text: TimeManager.instance
-                                            .convertFromTimeStamp(
-                                                timestamp: item.itemDate ?? 0),
-                                        style: kTextMediumtStyle.copyWith(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600)),
-                                  ],
+                            ),
+                            const SizedBox(
+                              height: 8,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  width: 0.5,
+                                  color: Colors.grey.shade400,
                                 ),
-                              )
-                            ],
-                          ),
+                                color: kF5F5F5,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  KaireteIconButton(
+                                    title: '${item.commentCount} Replies',
+                                  ),
+                                  const KaireteIconButton(
+                                    title: 'Like',
+                                    icon: 'ic_like',
+                                  ),
+                                  KaireteIconButton(
+                                    title: '${item.shareCount} Share',
+                                    icon: 'ic_share',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 16,
+                            )
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      controller.toDetail(item: item);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title ?? '',
-                            style: kTextMediumtStyle.copyWith(
-                                color: Colors.black,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(
-                            height: 16,
-                          ),
-                          if (item.blogEntryItem != null)
-                            KaireteCacheNetworkImage(
-                                url: item.blogEntryItem?.attachments![0]
-                                        .thumbnailUrl ??
-                                    ''),
-                          const SizedBox(
-                            height: 16,
-                          ),
-                          Text(
-                            item.messagePlainText ?? '',
-                            maxLines: 5,
-                            overflow: TextOverflow.ellipsis,
-                            style: kTextMediumtStyle.copyWith(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400),
-                          ),
-                          const SizedBox(
-                            height: 4,
-                          ),
-                          Text(
-                            'See detail',
-                            style: kTextMediumtStyle.copyWith(
-                                color: kTextPrimaryColor,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  Container(
-                    color: Colors.grey.withAlpha(60),
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        KaireteIconButton(
-                          title: '${item.commentCount} Replies',
-                        ),
-                        const KaireteIconButton(
-                          title: 'Like',
-                          icon: 'ic_like',
-                        ),
-                        KaireteIconButton(
-                          title: '${item.shareCount} Share',
-                          icon: 'ic_share',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 8,
-                  )
-                ],
-              );
-            },
-          )),
+                      );
+              },
+            )),
     );
   }
 }
@@ -201,10 +262,10 @@ class KaireteIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          color: kPrimaryColor,
           border: Border.all(color: kBorderDefaultColor, width: 1)),
       child: Row(
         children: [
@@ -212,6 +273,7 @@ class KaireteIconButton extends StatelessWidget {
             name: icon ?? 'ic_reply',
             width: 21,
             height: 16,
+            color: Colors.white,
           ),
           const SizedBox(
             width: 4,
@@ -219,9 +281,9 @@ class KaireteIconButton extends StatelessWidget {
           Text(
             title ?? '0 replies',
             style: kTextRegularStyle.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: kPrimaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
             ),
           ),
         ],

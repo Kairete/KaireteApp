@@ -62,7 +62,7 @@ class KairetePrimaryButton extends StatelessWidget {
       case StateButton.pressed:
         return kSurfaceMediumColor;
       default:
-        return kSurfaceDisabledColor;
+        return Colors.transparent;
     }
   }
 

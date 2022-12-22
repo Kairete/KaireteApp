@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kairete/constants/color.dart';
 
 import 'color_constant.dart';
 
@@ -22,23 +23,33 @@ const kTextMediumtStyle = TextStyle(
     fontWeight: FontWeight.w500,
     color: kTextMediumColor);
 
-const kTextDisableStyle = TextStyle(
-    fontFamily: kMyFont,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: kTextDisabledColor);
+const kTextTitle = TextStyle(
+  fontFamily: kMyFont,
+  fontSize: 24,
+  fontWeight: FontWeight.w700,
+  color: kPrimaryColor,
+);
 
-const kTextCriticalStyle = TextStyle(
-    fontFamily: kMyFont,
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    color: kTextCriticalColor);
+const kTextCategory = TextStyle(
+  fontFamily: kMyFont,
+  fontSize: 17,
+  fontWeight: FontWeight.w700,
+  color: kPrimaryColor,
+);
+
+const kTextSubTitle = TextStyle(
+  fontFamily: kMyFont,
+  fontSize: 17,
+  fontWeight: FontWeight.w700,
+  color: kPrimaryColor,
+);
 
 const kTextButtonStyle = TextStyle(
-    fontFamily: kMyFont,
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: Colors.white);
+  fontFamily: kMyFont,
+  fontSize: 17,
+  fontWeight: FontWeight.w700,
+  color: Colors.white,
+);
 
 final kGradient = BoxDecoration(
     gradient: LinearGradient(

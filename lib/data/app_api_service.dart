@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:kairete/components/kairete_popup.dart';
+import 'package:kairete/helper/user.dart';
 import '../constants/color_constant.dart';
 import '../constants/key_constant.dart';
 import '../local/data_local.dart';
@@ -67,7 +68,8 @@ class AppApiService {
     dio.options.headers['content-type'] = 'application/json';
     dio.options.headers['accept'] = 'application/json';
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
-    dio.options.headers['XF-Api-User'] = '1';
+    dio.options.headers['XF-Api-User'] =
+        UserManager.instance.user?.user?.userId ?? '1';
     dio.options.connectTimeout = 50000;
     dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;

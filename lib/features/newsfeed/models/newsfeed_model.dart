@@ -61,39 +61,41 @@ class Pagination {
 }
 
 class NewsfeedModel {
+  BlogEntryItem? blogEntryItem;
   int? commentCount;
   int? contentId;
   String? contentType;
   String? contentTitle;
   String? contentUrl;
-  GroupPost? groupPost;
+  String? itemCategory;
   int? itemDate;
   int? itemId;
   int? itemLastCommentDate;
   String? messageParsed;
   String? messagePlainText;
   int? reactionScore;
+  List<Reactions>? reactions;
   int? shareCount;
   String? title;
   User? user;
   int? userId;
   String? viewUrl;
-  BlogEntryItem? blogEntryItem;
-  String? itemCategory;
 
   NewsfeedModel(
-      {this.commentCount,
+      {this.blogEntryItem,
+      this.commentCount,
       this.contentId,
       this.contentType,
       this.contentTitle,
       this.contentUrl,
-      this.groupPost,
+      this.itemCategory,
       this.itemDate,
       this.itemId,
       this.itemLastCommentDate,
       this.messageParsed,
       this.messagePlainText,
       this.reactionScore,
+      this.reactions,
       this.shareCount,
       this.title,
       this.user,
@@ -101,47 +103,54 @@ class NewsfeedModel {
       this.viewUrl});
 
   NewsfeedModel.fromJson(Map<String, dynamic> json) {
+    blogEntryItem = json['BlogEntryItem'] != null
+        ? BlogEntryItem.fromJson(json['BlogEntryItem'])
+        : null;
     commentCount = json['comment_count'];
     contentId = json['content_id'];
     contentType = json['content_type'];
     contentTitle = json['ContentTitle'];
     contentUrl = json['ContentUrl'];
-    groupPost = json['GroupPost'] != null
-        ? GroupPost.fromJson(json['GroupPost'])
-        : null;
+    itemCategory = json['item_category'];
     itemDate = json['item_date'];
     itemId = json['item_id'];
     itemLastCommentDate = json['item_last_comment_date'];
     messageParsed = json['message_parsed'];
     messagePlainText = json['message_plain_text'];
     reactionScore = json['reaction_score'];
+    if (json['reactions'] != null) {
+      reactions = <Reactions>[];
+      json['reactions'].forEach((v) {
+        reactions!.add(Reactions.fromJson(v));
+      });
+    }
     shareCount = json['share_count'];
     title = json['title'];
     user = json['User'] != null ? User.fromJson(json['User']) : null;
     userId = json['user_id'];
     viewUrl = json['view_url'];
-    blogEntryItem = json['BlogEntryItem'] != null
-        ? BlogEntryItem.fromJson(json['BlogEntryItem'])
-        : null;
-    itemCategory = json['item_category'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    if (blogEntryItem != null) {
+      data['BlogEntryItem'] = blogEntryItem!.toJson();
+    }
     data['comment_count'] = commentCount;
     data['content_id'] = contentId;
     data['content_type'] = contentType;
     data['ContentTitle'] = contentTitle;
     data['ContentUrl'] = contentUrl;
-    if (groupPost != null) {
-      data['GroupPost'] = groupPost!.toJson();
-    }
+    data['item_category'] = itemCategory;
     data['item_date'] = itemDate;
     data['item_id'] = itemId;
     data['item_last_comment_date'] = itemLastCommentDate;
     data['message_parsed'] = messageParsed;
     data['message_plain_text'] = messagePlainText;
     data['reaction_score'] = reactionScore;
+    if (reactions != null) {
+      data['reactions'] = reactions!.map((v) => v.toJson()).toList();
+    }
     data['share_count'] = shareCount;
     data['title'] = title;
     if (user != null) {
@@ -153,239 +162,107 @@ class NewsfeedModel {
   }
 }
 
-class GroupPost {
+class BlogEntryItem {
+  List<Attachments>? attachments;
+  Blog? blog;
+  int? blogEntryId;
   bool? canComment;
   bool? canDelete;
   bool? canEdit;
   bool? canReact;
-  int? commentCount;
-  int? firstCommentId;
-  FirstComment? firstComment;
-  Group? group;
-  int? groupId;
+  Category? category;
+  Attachments? coverImage;
   bool? isIgnored;
-  int? lastCommentDate;
-  int? postDate;
-  int? postId;
-  bool? sticky;
-  User? user;
-  int? userId;
-  String? username;
-  String? viewUrl;
-
-  GroupPost(
-      {this.canComment,
-      this.canDelete,
-      this.canEdit,
-      this.canReact,
-      this.commentCount,
-      this.firstCommentId,
-      this.firstComment,
-      this.group,
-      this.groupId,
-      this.isIgnored,
-      this.lastCommentDate,
-      this.postDate,
-      this.postId,
-      this.sticky,
-      this.user,
-      this.userId,
-      this.username,
-      this.viewUrl});
-
-  GroupPost.fromJson(Map<String, dynamic> json) {
-    canComment = json['can_comment'];
-    canDelete = json['can_delete'];
-    canEdit = json['can_edit'];
-    canReact = json['can_react'];
-    commentCount = json['comment_count'];
-    firstCommentId = json['first_comment_id'];
-    firstComment = json['FirstComment'] != null
-        ? FirstComment.fromJson(json['FirstComment'])
-        : null;
-    group = json['Group'] != null ? Group.fromJson(json['Group']) : null;
-    groupId = json['group_id'];
-    isIgnored = json['is_ignored'];
-    lastCommentDate = json['last_comment_date'];
-    postDate = json['post_date'];
-    postId = json['post_id'];
-    sticky = json['sticky'];
-    user = json['User'] != null ? User.fromJson(json['User']) : null;
-    userId = json['user_id'];
-    username = json['username'];
-    viewUrl = json['view_url'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['can_comment'] = canComment;
-    data['can_delete'] = canDelete;
-    data['can_edit'] = canEdit;
-    data['can_react'] = canReact;
-    data['comment_count'] = commentCount;
-    data['first_comment_id'] = firstCommentId;
-    if (firstComment != null) {
-      data['FirstComment'] = firstComment!.toJson();
-    }
-    if (group != null) {
-      data['Group'] = group!.toJson();
-    }
-    data['group_id'] = groupId;
-    data['is_ignored'] = isIgnored;
-    data['last_comment_date'] = lastCommentDate;
-    data['post_date'] = postDate;
-    data['post_id'] = postId;
-    data['sticky'] = sticky;
-    if (user != null) {
-      data['User'] = user!.toJson();
-    }
-    data['user_id'] = userId;
-    data['username'] = username;
-    data['view_url'] = viewUrl;
-    return data;
-  }
-}
-
-class FirstComment {
-  int? attachCount;
-  List<Attachments>? attachments;
-  bool? canDelete;
-  bool? canEdit;
-  bool? canReact;
-  bool? canReply;
-  bool? canReport;
-  int? commentDate;
-  int? commentId;
-  int? commentLevel;
-  int? contentId;
-  String? contentType;
-  int? editCount;
-  // List<Null>? embedMetadata;
-  bool? hasMoreReplies;
-  bool? isIgnored;
-  bool? isReactedTo;
-  int? lastEditDate;
-  int? lastEditUserId;
-  String? message;
   String? messageParsed;
   String? messagePlainText;
-  int? parentId;
   int? reactionScore;
-  int? replyCount;
+  List<Reactions>? reactions;
+  String? title;
   User? user;
-  int? userId;
-  String? username;
   String? viewUrl;
 
-  FirstComment(
-      {this.attachCount,
-      this.attachments,
+  BlogEntryItem(
+      {this.attachments,
+      this.blog,
+      this.blogEntryId,
+      this.canComment,
       this.canDelete,
       this.canEdit,
       this.canReact,
-      this.canReply,
-      this.canReport,
-      this.commentDate,
-      this.commentId,
-      this.commentLevel,
-      this.contentId,
-      this.contentType,
-      this.editCount,
-      // this.embedMetadata,
-      this.hasMoreReplies,
+      this.category,
+      this.coverImage,
       this.isIgnored,
-      this.isReactedTo,
-      this.lastEditDate,
-      this.lastEditUserId,
-      this.message,
       this.messageParsed,
       this.messagePlainText,
-      this.parentId,
       this.reactionScore,
-      this.replyCount,
+      this.reactions,
+      this.title,
       this.user,
-      this.userId,
-      this.username,
       this.viewUrl});
 
-  FirstComment.fromJson(Map<String, dynamic> json) {
-    attachCount = json['attach_count'];
+  BlogEntryItem.fromJson(Map<String, dynamic> json) {
     if (json['Attachments'] != null) {
       attachments = <Attachments>[];
       json['Attachments'].forEach((v) {
         attachments!.add(Attachments.fromJson(v));
       });
     }
+    blog = json['Blog'] != null ? Blog.fromJson(json['Blog']) : null;
+    blogEntryId = json['blog_entry_id'];
+    canComment = json['can_comment'];
     canDelete = json['can_delete'];
     canEdit = json['can_edit'];
     canReact = json['can_react'];
-    canReply = json['can_reply'];
-    canReport = json['can_report'];
-    commentDate = json['comment_date'];
-    commentId = json['comment_id'];
-    commentLevel = json['comment_level'];
-    contentId = json['content_id'];
-    contentType = json['content_type'];
-    editCount = json['edit_count'];
-    // if (json['embed_metadata'] != null) {
-    //   embedMetadata = <Null>[];
-    //   json['embed_metadata'].forEach((v) {
-    //     embedMetadata!.add(Null.fromJson(v));
-    //   });
-    // }
-    hasMoreReplies = json['has_more_replies'];
+    category =
+        json['Category'] != null ? Category.fromJson(json['Category']) : null;
+    coverImage = json['CoverImage'] != null
+        ? Attachments.fromJson(json['CoverImage'])
+        : null;
     isIgnored = json['is_ignored'];
-    isReactedTo = json['is_reacted_to'];
-    lastEditDate = json['last_edit_date'];
-    lastEditUserId = json['last_edit_user_id'];
-    message = json['message'];
     messageParsed = json['message_parsed'];
     messagePlainText = json['message_plain_text'];
-    parentId = json['parent_id'];
     reactionScore = json['reaction_score'];
-    replyCount = json['reply_count'];
+    if (json['reactions'] != null) {
+      reactions = <Reactions>[];
+      json['reactions'].forEach((v) {
+        reactions!.add(Reactions.fromJson(v));
+      });
+    }
+    title = json['title'];
     user = json['User'] != null ? User.fromJson(json['User']) : null;
-    userId = json['user_id'];
-    username = json['username'];
     viewUrl = json['view_url'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['attach_count'] = attachCount;
     if (attachments != null) {
       data['Attachments'] = attachments!.map((v) => v.toJson()).toList();
     }
+    if (blog != null) {
+      data['Blog'] = blog!.toJson();
+    }
+    data['blog_entry_id'] = blogEntryId;
+    data['can_comment'] = canComment;
     data['can_delete'] = canDelete;
     data['can_edit'] = canEdit;
     data['can_react'] = canReact;
-    data['can_reply'] = canReply;
-    data['can_report'] = canReport;
-    data['comment_date'] = commentDate;
-    data['comment_id'] = commentId;
-    data['comment_level'] = commentLevel;
-    data['content_id'] = contentId;
-    data['content_type'] = contentType;
-    data['edit_count'] = editCount;
-    // if (embedMetadata != null) {
-    //   data['embed_metadata'] = embedMetadata!.map((v) => v.toJson()).toList();
-    // }
-    data['has_more_replies'] = hasMoreReplies;
+    if (category != null) {
+      data['Category'] = category!.toJson();
+    }
+    if (coverImage != null) {
+      data['CoverImage'] = coverImage!.toJson();
+    }
     data['is_ignored'] = isIgnored;
-    data['is_reacted_to'] = isReactedTo;
-    data['last_edit_date'] = lastEditDate;
-    data['last_edit_user_id'] = lastEditUserId;
-    data['message'] = message;
     data['message_parsed'] = messageParsed;
     data['message_plain_text'] = messagePlainText;
-    data['parent_id'] = parentId;
     data['reaction_score'] = reactionScore;
-    data['reply_count'] = replyCount;
+    if (reactions != null) {
+      data['reactions'] = reactions!.map((v) => v.toJson()).toList();
+    }
+    data['title'] = title;
     if (user != null) {
       data['User'] = user!.toJson();
     }
-    data['user_id'] = userId;
-    data['username'] = username;
     data['view_url'] = viewUrl;
     return data;
   }
@@ -456,6 +333,88 @@ class Attachments {
   }
 }
 
+class Blog {
+  int? blogId;
+  bool? canAddBlogEntry;
+  bool? canDelete;
+  bool? canEdit;
+  bool? canEditTags;
+  bool? canHardDelete;
+  String? description;
+  bool? isIgnored;
+  String? messageParsed;
+  String? messagePlainText;
+  int? reactionScore;
+  List<String>? tags;
+  String? title;
+  User? user;
+  String? viewUrl;
+
+  Blog(
+      {this.blogId,
+      this.canAddBlogEntry,
+      this.canDelete,
+      this.canEdit,
+      this.canEditTags,
+      this.canHardDelete,
+      this.description,
+      this.isIgnored,
+      this.messageParsed,
+      this.messagePlainText,
+      this.reactionScore,
+      this.tags,
+      this.title,
+      this.user,
+      this.viewUrl});
+
+  Blog.fromJson(Map<String, dynamic> json) {
+    blogId = json['blog_id'];
+    canAddBlogEntry = json['can_add_blog_entry'];
+    canDelete = json['can_delete'];
+    canEdit = json['can_edit'];
+    canEditTags = json['can_edit_tags'];
+    canHardDelete = json['can_hard_delete'];
+    description = json['description'];
+    isIgnored = json['is_ignored'];
+    messageParsed = json['message_parsed'];
+    messagePlainText = json['message_plain_text'];
+    reactionScore = json['reaction_score'];
+    // if (json['tags'] != null) {
+    //   tags = <String>[];
+    //   json['tags'].forEach((v) {
+    //     tags!.add(Null.fromJson(v));
+    //   });
+    // }
+    title = json['title'];
+    user = json['User'] != null ? User.fromJson(json['User']) : null;
+    viewUrl = json['view_url'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['blog_id'] = blogId;
+    data['can_add_blog_entry'] = canAddBlogEntry;
+    data['can_delete'] = canDelete;
+    data['can_edit'] = canEdit;
+    data['can_edit_tags'] = canEditTags;
+    data['can_hard_delete'] = canHardDelete;
+    data['description'] = description;
+    data['is_ignored'] = isIgnored;
+    data['message_parsed'] = messageParsed;
+    data['message_plain_text'] = messagePlainText;
+    data['reaction_score'] = reactionScore;
+    // if (tags != null) {
+    //   data['tags'] = tags!.map((v) => v.toJson()).toList();
+    // }
+    data['title'] = title;
+    if (user != null) {
+      data['User'] = user!.toJson();
+    }
+    data['view_url'] = viewUrl;
+    return data;
+  }
+}
+
 class User {
   bool? activityVisible;
   AvatarUrls? avatarUrls;
@@ -487,7 +446,7 @@ class User {
   int? questionSolutionCount;
   int? reactionScore;
   int? registerDate;
-  // List<Null>? secondaryGroupIds;
+  List<String>? secondaryGroupIds;
   bool? sgCanAddGroup;
   String? signature;
   int? trophyPoints;
@@ -533,7 +492,7 @@ class User {
       this.questionSolutionCount,
       this.reactionScore,
       this.registerDate,
-      // this.secondaryGroupIds,
+      this.secondaryGroupIds,
       this.sgCanAddGroup,
       this.signature,
       this.trophyPoints,
@@ -585,12 +544,12 @@ class User {
     questionSolutionCount = json['question_solution_count'];
     reactionScore = json['reaction_score'];
     registerDate = json['register_date'];
-    // if (json['secondary_group_ids'] != null) {
-    //   secondaryGroupIds = <Null>[];
-    //   json['secondary_group_ids'].forEach((v) {
-    //     secondaryGroupIds!.add(Null.fromJson(v));
-    //   });
-    // }
+    if (json['secondary_group_ids'] != null) {
+      secondaryGroupIds = <String>[];
+      json['secondary_group_ids'].forEach((v) {
+        secondaryGroupIds!.add(v);
+      });
+    }
     sgCanAddGroup = json['sg_can_add_group'];
     signature = json['signature'];
     trophyPoints = json['trophy_points'];
@@ -644,10 +603,9 @@ class User {
     data['question_solution_count'] = questionSolutionCount;
     data['reaction_score'] = reactionScore;
     data['register_date'] = registerDate;
-    // if (secondaryGroupIds != null) {
-    //   data['secondary_group_ids'] =
-    //       secondaryGroupIds!.map((v) => v.toJson()).toList();
-    // }
+    if (secondaryGroupIds != null) {
+      data['secondary_group_ids'] = secondaryGroupIds!.map((v) => v).toList();
+    }
     data['sg_can_add_group'] = sgCanAddGroup;
     data['signature'] = signature;
     data['trophy_points'] = trophyPoints;
@@ -694,44 +652,44 @@ class AvatarUrls {
 }
 
 class CustomFields {
-  String? firstName;
   String? lastName;
-  String? residence;
-  String? hometown;
+  String? firstName;
   String? skype;
   String? facebook;
   String? twitter;
+  String? residence;
+  String? hometown;
   String? fullName;
 
   CustomFields(
-      {this.firstName,
-      this.lastName,
-      this.residence,
-      this.hometown,
+      {this.lastName,
+      this.firstName,
       this.skype,
       this.facebook,
-      this.twitter});
+      this.twitter,
+      this.residence,
+      this.hometown});
 
   CustomFields.fromJson(Map<String, dynamic> json) {
-    firstName = json['firstName'];
     lastName = json['lastName'];
-    residence = json['residence'];
-    hometown = json['hometown'];
+    firstName = json['firstName'];
     skype = json['skype'];
     facebook = json['facebook'];
     twitter = json['twitter'];
+    residence = json['residence'];
+    hometown = json['hometown'];
     fullName = '$firstName $lastName';
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['firstName'] = firstName;
     data['lastName'] = lastName;
-    data['residence'] = residence;
-    data['hometown'] = hometown;
+    data['firstName'] = firstName;
     data['skype'] = skype;
     data['facebook'] = facebook;
     data['twitter'] = twitter;
+    data['residence'] = residence;
+    data['hometown'] = hometown;
     return data;
   }
 }
@@ -755,312 +713,65 @@ class ProfileBannerUrls {
   }
 }
 
-class Group {
-  int? albumCount;
-  bool? allowGuestPosting;
-  bool? alwaysModerateJoin;
-  String? avatarUrl;
-  bool? canDelete;
-  bool? canEdit;
-  bool? canEditTags;
-  bool? canHardDelete;
-  bool? canJoin;
-  bool? canLeave;
-  bool? canManageAvatar;
-  bool? canManageCover;
-  bool? canPost;
-  Category? category;
-  int? categoryId;
-  String? coverUrl;
-  int? createdDate;
-  CustomFields? customFields;
-  String? description;
-  int? discussionCount;
-  int? eventCount;
-  int? groupId;
-  String? groupState;
-  bool? isIgnored;
-  bool? isJoined;
-  bool? isOwner;
-  String? languageCode;
-  int? lastActivity;
-  int? memberCount;
-  int? memberModeratedCount;
-  String? name;
-  int? ownerUserId;
-  String? ownerUsername;
-  String? privacy;
-  String? shortDescription;
-  List<String>? tags;
-  int? viewCount;
-  String? viewUrl;
-
-  Group(
-      {this.albumCount,
-      this.allowGuestPosting,
-      this.alwaysModerateJoin,
-      this.avatarUrl,
-      this.canDelete,
-      this.canEdit,
-      this.canEditTags,
-      this.canHardDelete,
-      this.canJoin,
-      this.canLeave,
-      this.canManageAvatar,
-      this.canManageCover,
-      this.canPost,
-      this.category,
-      this.categoryId,
-      this.coverUrl,
-      this.createdDate,
-      this.customFields,
-      this.description,
-      this.discussionCount,
-      this.eventCount,
-      this.groupId,
-      this.groupState,
-      this.isIgnored,
-      this.isJoined,
-      this.isOwner,
-      this.languageCode,
-      this.lastActivity,
-      this.memberCount,
-      this.memberModeratedCount,
-      this.name,
-      this.ownerUserId,
-      this.ownerUsername,
-      this.privacy,
-      this.shortDescription,
-      this.tags,
-      this.viewCount,
-      this.viewUrl});
-
-  Group.fromJson(Map<String, dynamic> json) {
-    albumCount = json['album_count'];
-    allowGuestPosting = json['allow_guest_posting'];
-    alwaysModerateJoin = json['always_moderate_join'];
-    avatarUrl = json['avatar_url'];
-    canDelete = json['can_delete'];
-    canEdit = json['can_edit'];
-    canEditTags = json['can_edit_tags'];
-    canHardDelete = json['can_hard_delete'];
-    canJoin = json['can_join'];
-    canLeave = json['can_leave'];
-    canManageAvatar = json['can_manage_avatar'];
-    canManageCover = json['can_manage_cover'];
-    canPost = json['can_post'];
-    category =
-        json['Category'] != null ? Category.fromJson(json['Category']) : null;
-    categoryId = json['category_id'];
-    coverUrl = json['cover_url'];
-    createdDate = json['created_date'];
-    customFields = json['custom_fields'] != null
-        ? CustomFields.fromJson(json['custom_fields'])
-        : null;
-    description = json['description'];
-    discussionCount = json['discussion_count'];
-    eventCount = json['event_count'];
-    groupId = json['group_id'];
-    groupState = json['group_state'];
-    isIgnored = json['is_ignored'];
-    isJoined = json['is_joined'];
-    isOwner = json['is_owner'];
-    languageCode = json['language_code'];
-    lastActivity = json['last_activity'];
-    memberCount = json['member_count'];
-    memberModeratedCount = json['member_moderated_count'];
-    name = json['name'];
-    ownerUserId = json['owner_user_id'];
-    ownerUsername = json['owner_username'];
-    privacy = json['privacy'];
-    shortDescription = json['short_description'];
-    tags = json['tags'].cast<String>();
-    viewCount = json['view_count'];
-    viewUrl = json['view_url'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['album_count'] = albumCount;
-    data['allow_guest_posting'] = allowGuestPosting;
-    data['always_moderate_join'] = alwaysModerateJoin;
-    data['avatar_url'] = avatarUrl;
-    data['can_delete'] = canDelete;
-    data['can_edit'] = canEdit;
-    data['can_edit_tags'] = canEditTags;
-    data['can_hard_delete'] = canHardDelete;
-    data['can_join'] = canJoin;
-    data['can_leave'] = canLeave;
-    data['can_manage_avatar'] = canManageAvatar;
-    data['can_manage_cover'] = canManageCover;
-    data['can_post'] = canPost;
-    if (category != null) {
-      data['Category'] = category!.toJson();
-    }
-    data['category_id'] = categoryId;
-    data['cover_url'] = coverUrl;
-    data['created_date'] = createdDate;
-    if (customFields != null) {
-      data['custom_fields'] = customFields!.toJson();
-    }
-    data['description'] = description;
-    data['discussion_count'] = discussionCount;
-    data['event_count'] = eventCount;
-    data['group_id'] = groupId;
-    data['group_state'] = groupState;
-    data['is_ignored'] = isIgnored;
-    data['is_joined'] = isJoined;
-    data['is_owner'] = isOwner;
-    data['language_code'] = languageCode;
-    data['last_activity'] = lastActivity;
-    data['member_count'] = memberCount;
-    data['member_moderated_count'] = memberModeratedCount;
-    data['name'] = name;
-    data['owner_user_id'] = ownerUserId;
-    data['owner_username'] = ownerUsername;
-    data['privacy'] = privacy;
-    data['short_description'] = shortDescription;
-    data['tags'] = tags;
-    data['view_count'] = viewCount;
-    data['view_url'] = viewUrl;
-    return data;
-  }
-}
-
 class Category {
-  bool? canAddGroup;
-  bool? canAddSecretGroup;
+  bool? canAddBlogEntry;
   bool? canUploadAttachments;
   int? categoryId;
-  String? categoryTitle;
   String? description;
   int? displayOrder;
-  int? groupCount;
   int? parentCategoryId;
+  String? title;
 
   Category(
-      {this.canAddGroup,
-      this.canAddSecretGroup,
+      {this.canAddBlogEntry,
       this.canUploadAttachments,
       this.categoryId,
-      this.categoryTitle,
       this.description,
       this.displayOrder,
-      this.groupCount,
-      this.parentCategoryId});
+      this.parentCategoryId,
+      this.title});
 
   Category.fromJson(Map<String, dynamic> json) {
-    canAddGroup = json['can_add_group'];
-    canAddSecretGroup = json['can_add_secret_group'];
+    canAddBlogEntry = json['can_add_blog_entry'];
     canUploadAttachments = json['can_upload_attachments'];
     categoryId = json['category_id'];
-    categoryTitle = json['category_title'];
     description = json['description'];
     displayOrder = json['display_order'];
-    groupCount = json['group_count'];
     parentCategoryId = json['parent_category_id'];
+    title = json['title'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['can_add_group'] = canAddGroup;
-    data['can_add_secret_group'] = canAddSecretGroup;
+    data['can_add_blog_entry'] = canAddBlogEntry;
     data['can_upload_attachments'] = canUploadAttachments;
     data['category_id'] = categoryId;
-    data['category_title'] = categoryTitle;
     data['description'] = description;
     data['display_order'] = displayOrder;
-    data['group_count'] = groupCount;
     data['parent_category_id'] = parentCategoryId;
+    data['title'] = title;
     return data;
   }
 }
 
-class BlogEntryItem {
-  List<Attachments>? attachments;
-  int? blogEntryId;
-  bool? canComment;
-  bool? canDelete;
-  bool? canEdit;
-  bool? canReact;
-  Category? category;
-  Attachments? coverImage;
-  bool? isIgnored;
-  String? messageParsed;
-  String? messagePlainText;
-  int? reactionScore;
-  String? title;
-  User? user;
-  String? viewUrl;
+class Reactions {
+  int? userId;
+  String? username;
+  int? reactionId;
 
-  BlogEntryItem(
-      {this.attachments,
-      this.blogEntryId,
-      this.canComment,
-      this.canDelete,
-      this.canEdit,
-      this.canReact,
-      this.category,
-      this.coverImage,
-      this.isIgnored,
-      this.messageParsed,
-      this.messagePlainText,
-      this.reactionScore,
-      this.title,
-      this.user,
-      this.viewUrl});
+  Reactions({this.userId, this.username, this.reactionId});
 
-  BlogEntryItem.fromJson(Map<String, dynamic> json) {
-    if (json['Attachments'] != null) {
-      attachments = <Attachments>[];
-      json['Attachments'].forEach((v) {
-        attachments!.add(Attachments.fromJson(v));
-      });
-    }
-    blogEntryId = json['blog_entry_id'];
-    canComment = json['can_comment'];
-    canDelete = json['can_delete'];
-    canEdit = json['can_edit'];
-    canReact = json['can_react'];
-    category =
-        json['Category'] != null ? Category.fromJson(json['Category']) : null;
-    coverImage = json['CoverImage'] != null
-        ? Attachments.fromJson(json['CoverImage'])
-        : null;
-    isIgnored = json['is_ignored'];
-    messageParsed = json['message_parsed'];
-    messagePlainText = json['message_plain_text'];
-    reactionScore = json['reaction_score'];
-    title = json['title'];
-    user = json['User'] != null ? User.fromJson(json['User']) : null;
-    viewUrl = json['view_url'];
+  Reactions.fromJson(Map<String, dynamic> json) {
+    userId = json['user_id'];
+    username = json['username'];
+    reactionId = json['reaction_id'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    if (attachments != null) {
-      data['Attachments'] = attachments!.map((v) => v.toJson()).toList();
-    }
-    data['blog_entry_id'] = blogEntryId;
-    data['can_comment'] = canComment;
-    data['can_delete'] = canDelete;
-    data['can_edit'] = canEdit;
-    data['can_react'] = canReact;
-    if (category != null) {
-      data['Category'] = category!.toJson();
-    }
-    if (coverImage != null) {
-      data['CoverImage'] = coverImage!.toJson();
-    }
-    data['is_ignored'] = isIgnored;
-    data['message_parsed'] = messageParsed;
-    data['message_plain_text'] = messagePlainText;
-    data['reaction_score'] = reactionScore;
-    data['title'] = title;
-    if (user != null) {
-      data['User'] = user!.toJson();
-    }
-    data['view_url'] = viewUrl;
+    data['user_id'] = userId;
+    data['username'] = username;
+    data['reaction_id'] = reactionId;
     return data;
   }
 }

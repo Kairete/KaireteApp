@@ -4,6 +4,7 @@ import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 
 import '../../../helper/user.dart';
+import '../screens/create_newsfeed_screen.dart';
 
 class NewsFeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
@@ -23,11 +24,14 @@ class NewsFeedController extends GetxController {
     final json = await usecase.fetchItems(body: body);
     final item = BaseNewsfeedModel.fromJson(json);
     items.value = item.newsfeedItems ?? [];
-    items.removeWhere((element) => element.title == '');
     items.refresh();
   }
 
   void toDetail({required NewsfeedModel item}) {
     Get.to(() => NewsfeedDetailScreen(), arguments: {'item': item});
+  }
+
+  void toCreate() {
+    Get.to(() => CreateNewsfeedScreen(), fullscreenDialog: true);
   }
 }

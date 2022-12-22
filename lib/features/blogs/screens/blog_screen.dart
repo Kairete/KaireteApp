@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
@@ -31,26 +32,30 @@ class BlogScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Text(
-                      //   item.title ?? '',
-                      //   style: kTextRegularStyle.copyWith(
-                      //       color: kPrimaryColor, fontWeight: FontWeight.w500),
-                      // ),
-                      // SizedBox(
-                      //   height: 8,
-                      // ),
+                      Text(
+                        item.category?.title ?? '',
+                        style: kTextRegularStyle.copyWith(
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 8,
+                      ),
                       Text(
                         item.title ?? '',
-                        style: kTextRegularStyle.copyWith(
-                            color: kPrimaryColor, fontWeight: FontWeight.w600),
+                        style: kTextTitle,
                       ),
                       RichText(
                         text: TextSpan(
-                          text: item.user?.username ?? 'Empty name',
+                          text:
+                              item.user?.customFields?.fullName ?? 'Empty name',
                           style: kTextMediumtStyle.copyWith(
-                              color: Colors.grey,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.grey,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                           children: <TextSpan>[
                             const TextSpan(
                                 text: ' • ',
@@ -59,7 +64,7 @@ class BlogScreen extends StatelessWidget {
                                 text: TimeManager.instance.convertFromTimeStamp(
                                     timestamp: item.user?.lastActivity ?? 0),
                                 style: kTextMediumtStyle.copyWith(
-                                    fontSize: 13, fontWeight: FontWeight.w600)),
+                                    fontSize: 15, fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
@@ -74,11 +79,23 @@ class BlogScreen extends StatelessWidget {
                       ),
                       Text(
                         item.messagePlainText ?? '',
+                        maxLines: 10,
+                        overflow: TextOverflow.ellipsis,
                         style: kTextMediumtStyle.copyWith(
-                            color: Colors.black,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400),
+                          color: Colors.black,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      KaireteTextButton(
+                        onTap: () {
+                          controller.toDetail(item: item);
+                        },
+                        title: 'See detail',
+                      )
                     ],
                   ),
                 ),

@@ -18,28 +18,30 @@ class KaireteCacheNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      imageBuilder: (context, imageProvider) => Container(
-        height: height ?? 200,
-        width: width,
-        decoration: BoxDecoration(
-            image: DecorationImage(
-              image: imageProvider,
-              fit: BoxFit.cover,
+    return url == ""
+        ? SizedBox()
+        : CachedNetworkImage(
+            imageUrl: url,
+            imageBuilder: (context, imageProvider) => Container(
+              height: height ?? 200,
+              width: width,
+              decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                  shape: isCircle ? BoxShape.circle : BoxShape.rectangle),
             ),
-            shape: isCircle ? BoxShape.circle : BoxShape.rectangle),
-      ),
-      errorWidget: (context, error, _) {
-        return Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: kBorderDefaultColor,
-          ),
-        );
-      },
-    );
+            errorWidget: (context, error, _) {
+              return Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: kBorderDefaultColor,
+                ),
+              );
+            },
+          );
   }
 }

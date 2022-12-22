@@ -72,7 +72,9 @@ const kBorderPrimaryColor = Color(0xFF4BBFF6);
 //
 const kD9FAFBColor = Color(0xFFD9FAFB);
 const kF0512E = Color(0xFFF0512E);
-const k3EA7FF = Color(0xFF3EA7FF);
+const kECECEC = Color(0xFFECECEC);
+const kF5F5F5 = Color(0xFFF5F5F5);
+const kF7FBFE = Color(0xFFF7FBFE);
 
 //bank
 
