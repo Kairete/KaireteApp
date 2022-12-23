@@ -671,14 +671,15 @@ class CustomFields {
       this.hometown});
 
   CustomFields.fromJson(Map<String, dynamic> json) {
-    lastName = json['lastName'];
-    firstName = json['firstName'];
+    lastName = json['lastName'] ?? '';
+    firstName = json['firstName'] ?? '';
     skype = json['skype'];
     facebook = json['facebook'];
     twitter = json['twitter'];
     residence = json['residence'];
     hometown = json['hometown'];
-    fullName = '$firstName $lastName';
+    fullName =
+        firstName != '' && lastName != '' ? '$firstName $lastName' : null;
   }
 
   Map<String, dynamic> toJson() {

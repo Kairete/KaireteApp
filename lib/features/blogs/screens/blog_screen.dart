@@ -33,12 +33,12 @@ class BlogScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.category?.title ?? '',
+                        item.blog?.title ?? '',
                         style: kTextRegularStyle.copyWith(
-                          color: kPrimaryColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
+                            color: kPrimaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 17,
+                            fontStyle: FontStyle.italic),
                       ),
                       const SizedBox(
                         height: 8,
@@ -49,8 +49,9 @@ class BlogScreen extends StatelessWidget {
                       ),
                       RichText(
                         text: TextSpan(
-                          text:
-                              item.user?.customFields?.fullName ?? 'Empty name',
+                          text: item.user?.customFields?.fullName ??
+                              item.user?.username ??
+                              '',
                           style: kTextMediumtStyle.copyWith(
                             color: Colors.grey,
                             fontSize: 17,
@@ -65,6 +66,16 @@ class BlogScreen extends StatelessWidget {
                                     timestamp: item.user?.lastActivity ?? 0),
                                 style: kTextMediumtStyle.copyWith(
                                     fontSize: 15, fontWeight: FontWeight.w700)),
+                            const TextSpan(
+                                text: ' • ',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(
+                                text: item.category?.title ?? '',
+                                style: kTextMediumtStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: kPrimaryColor,
+                                )),
                           ],
                         ),
                       ),

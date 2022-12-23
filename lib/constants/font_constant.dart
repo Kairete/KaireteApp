@@ -37,6 +37,13 @@ const kTextCategory = TextStyle(
   color: kPrimaryColor,
 );
 
+const kTextTitleBlog = TextStyle(
+  fontFamily: kMyFont,
+  fontSize: 17,
+  fontWeight: FontWeight.w600,
+  color: kPrimaryColor,
+);
+
 const kTextSubTitle = TextStyle(
   fontFamily: kMyFont,
   fontSize: 17,

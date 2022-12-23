@@ -9,5 +9,11 @@ class NewsfeedDetailController extends GetxController {
   void onInit() {
     item = Get.arguments['item'];
     super.onInit();
+    print(item?.blogEntryItem?.messageParsed);
+    final a = item?.blogEntryItem?.messageParsed
+        ?.replaceAll("\n", "")
+        .replaceAll("=\\  ", "=")
+        .replaceAll("g\\", "");
+    print(a);
   }
 }

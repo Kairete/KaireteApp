@@ -9,7 +9,6 @@ import 'package:kairete/helper/user.dart';
 import '../constants/color_constant.dart';
 import '../constants/key_constant.dart';
 import '../local/data_local.dart';
-import 'error.dart';
 import 'rest_client_gen.dart';
 
 class AppApiService {

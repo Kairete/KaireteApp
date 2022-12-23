@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
@@ -37,6 +38,7 @@ class BlogDetailScreen extends StatelessWidget {
                   color: kTextCriticalColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(
@@ -67,12 +69,13 @@ class BlogDetailScreen extends StatelessWidget {
               const SizedBox(
                 height: 16,
               ),
-              Text(
-                controller.item?.messagePlainText ?? '',
-                style: kTextMediumtStyle.copyWith(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400),
+              HtmlWidget(
+                controller.item?.messageParsed
+                        ?.replaceAll("\n", "")
+                        .replaceAll("=\\  ", "=")
+                        .replaceAll("g\\", "") ??
+                    '',
+                textStyle: TextStyle(fontSize: 17),
               ),
               const SizedBox(
                 height: 16,

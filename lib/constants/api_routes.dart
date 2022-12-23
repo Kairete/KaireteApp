@@ -5,4 +5,5 @@ class ApiRoutes {
   static const createNews = 'api/profile-posts';
   static const blogs = "api/blog-entries";
   static const newsFeedSearch = "api/newsfeed-search";
+  static const newAttachKey = "api/attachments/new-key";
 }

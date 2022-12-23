@@ -7,6 +7,7 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/helper/time.dart';
+import 'package:kairete/helper/user.dart';
 
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
@@ -72,11 +73,14 @@ class NewsFeedScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   KaireteCacheNetworkImage(
-                                    url: item.user?.avatarUrls?.l ?? '',
-                                    width: 36,
-                                    height: 36,
-                                    isCircle: true,
-                                  ),
+                                      url: item.user?.avatarUrls?.l ?? '',
+                                      width: 36,
+                                      height: 36,
+                                      isCircle: true,
+                                      nameImage:
+                                          (item.user?.customFields?.fullName ??
+                                              item.user?.username ??
+                                              '')),
                                   const SizedBox(
                                     width: 8,
                                   ),
@@ -89,6 +93,7 @@ class NewsFeedScreen extends StatelessWidget {
                                           text: TextSpan(
                                             text: item.user?.customFields
                                                     ?.fullName ??
+                                                item.user?.username ??
                                                 '',
                                             style: kTextRegularStyle.copyWith(
                                               fontWeight: FontWeight.w600,
@@ -176,9 +181,10 @@ class NewsFeedScreen extends StatelessWidget {
                                     ),
                                   if (item.blogEntryItem?.attachments != null)
                                     KaireteCacheNetworkImage(
-                                        url: item.blogEntryItem?.attachments?[0]
-                                                .thumbnailUrl ??
-                                            ''),
+                                      url: item.blogEntryItem?.attachments?[0]
+                                              .thumbnailUrl ??
+                                          '',
+                                    ),
                                   if (item.blogEntryItem?.attachments != null)
                                     const SizedBox(
                                       height: 16,
@@ -226,10 +232,12 @@ class NewsFeedScreen extends StatelessWidget {
                                   KaireteIconButton(
                                     title: '${item.commentCount} Replies',
                                   ),
-                                  const KaireteIconButton(
-                                    title: 'Like',
-                                    icon: 'ic_like',
-                                  ),
+                                  if (item.user?.userId !=
+                                      UserManager.instance.user?.user?.userId)
+                                    const KaireteIconButton(
+                                      title: 'Like',
+                                      icon: 'ic_like',
+                                    ),
                                   KaireteIconButton(
                                     title: '${item.shareCount} Share',
                                     icon: 'ic_share',
@@ -239,7 +247,7 @@ class NewsFeedScreen extends StatelessWidget {
                             ),
                             const SizedBox(
                               height: 16,
-                            )
+                            ),
                           ],
                         ),
                       );

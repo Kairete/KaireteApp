@@ -23,7 +23,13 @@ class LoginController extends GetxController {
     if (Get.arguments != null) {
       nameController.text = Get.arguments['email'];
     }
+    test();
     super.onInit();
+  }
+
+  void test() {
+    nameController.text = 'demo1';
+    passController.text = 'abc123123@';
   }
 
   void onLogin() async {

@@ -5,6 +5,7 @@ import 'package:kairete/data/rest_client_gen.dart';
 abstract class NewsFeedUsecase {
   Future fetchItems({dynamic body});
   Future create({dynamic body});
+  Future uploadFile({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -25,6 +26,13 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
       body: body,
       method: HttpMethodCustom.POST,
     );
+    return json;
+  }
+
+  @override
+  Future uploadFile({body}) async {
+    final json = await appApiService.client
+        ?.uploadFile(path: ApiRoutes.newAttachKey, body: body);
     return json;
   }
 }
