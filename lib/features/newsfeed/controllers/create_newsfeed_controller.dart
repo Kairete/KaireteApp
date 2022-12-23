@@ -65,7 +65,7 @@ class CreateNewsfeedController extends GetxController {
                     .pickImage(source: ImageSource.gallery);
                 if (file != null) {
                   paths.add(file.path);
-                  uploadFile(path: file.path);
+                  // uploadFile(path: file.path);
                 }
               },
               title: 'Library',

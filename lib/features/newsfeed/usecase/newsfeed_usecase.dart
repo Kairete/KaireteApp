@@ -6,6 +6,7 @@ abstract class NewsFeedUsecase {
   Future fetchItems({dynamic body});
   Future create({dynamic body});
   Future uploadFile({dynamic body});
+  Future search({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -33,6 +34,16 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   Future uploadFile({body}) async {
     final json = await appApiService.client
         ?.uploadFile(path: ApiRoutes.newAttachKey, body: body);
+    return json;
+  }
+
+  @override
+  Future search({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.searchNews,
+      body: body,
+      method: HttpMethodCustom.GET,
+    );
     return json;
   }
 }

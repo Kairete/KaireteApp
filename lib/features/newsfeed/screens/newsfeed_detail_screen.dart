@@ -83,7 +83,8 @@ class NewsfeedDetailScreen extends StatelessWidget {
                 height: 16,
               ),
               HtmlWidget(
-                controller.item?.blogEntryItem?.messageParsed
+                (controller.item?.blogEntryItem?.messageParsed ??
+                            controller.item?.messageParsed)
                         ?.replaceAll("\n", "")
                         .replaceAll("=\\  ", "=")
                         .replaceAll("g\\", "") ??

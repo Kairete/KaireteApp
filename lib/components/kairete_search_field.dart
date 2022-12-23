@@ -10,6 +10,8 @@ class KaireteSearchField extends StatelessWidget {
     this.onSubmitted,
     this.hint,
     this.keyboardType,
+    this.readOnly,
+    this.onTap,
   }) : super(key: key);
 
   final TextEditingController? controller;
@@ -17,6 +19,8 @@ class KaireteSearchField extends StatelessWidget {
   final Function(String)? onSubmitted;
   final String? hint;
   final TextInputType? keyboardType;
+  final bool? readOnly;
+  final Function? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +42,12 @@ class KaireteSearchField extends StatelessWidget {
             onSubmitted!(value);
           }
         },
+        onTap: () {
+          if (onTap != null) {
+            onTap!();
+          }
+        },
+        readOnly: readOnly ?? false,
         keyboardType: keyboardType,
         decoration: InputDecoration(
             focusedBorder: InputBorder.none,

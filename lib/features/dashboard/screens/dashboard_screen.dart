@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 
 import '../../articles/screens/articles_screen.dart';
+import '../../newsfeed/screens/newsfeed_search_screen.dart';
 
 class DashboardScreen extends GetView {
   DashboardScreen({Key? key}) : super(key: key);
@@ -36,6 +37,10 @@ class DashboardScreen extends GetView {
         title: SizedBox(
           child: KaireteSearchField(
             onChanged: (value) {},
+            readOnly: true,
+            onTap: () {
+              Get.to(() => NewsfeedSearchScreen(), fullscreenDialog: true);
+            },
           ),
           height: 36,
         ),
