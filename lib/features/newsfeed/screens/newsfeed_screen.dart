@@ -31,6 +31,9 @@ class NewsFeedScreen extends StatelessWidget {
             onTapDetail: (item) {
               controller.toDetail(item: item);
             },
+            onFilter: () {
+              controller.onFilter();
+            },
           ));
   }
 }
@@ -42,12 +45,14 @@ class NewsfeedListItem extends StatelessWidget {
     this.onTapDetail,
     this.onCreate,
     this.isShowCreate = true,
+    this.onFilter,
   }) : super(key: key);
 
   final List<NewsfeedModel> items;
   final Function(NewsfeedModel)? onTapDetail;
   final Function? onCreate;
   final bool isShowCreate;
+  final Function? onFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -66,25 +71,46 @@ class NewsfeedListItem extends StatelessWidget {
                           onCreate!();
                         }
                       },
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                        margin: const EdgeInsets.only(
-                            left: 16, right: 16, bottom: 16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            width: 1,
-                            color: Colors.grey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(
+                                left: 16, right: 16, bottom: 16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                width: 1,
+                                color: Colors.grey,
+                              ),
+                              color: kF7FBFE,
+                            ),
+                            child: Text(
+                              'Write something…',
+                              style: kTextRegularStyle.copyWith(
+                                color: Colors.black.withAlpha(60),
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
-                          color: kF7FBFE,
-                        ),
-                        child: Text(
-                          'Write something…',
-                          style: kTextRegularStyle.copyWith(
-                            color: Colors.black.withAlpha(60),
-                            fontSize: 16,
-                          ),
-                        ),
+                          InkWell(
+                            onTap: () {
+                              if (onFilter != null) {
+                                onFilter!();
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 16, right: 16, bottom: 16),
+                              child: Icon(
+                                Icons.sort,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          )
+                        ],
                       ),
                     )
                   : SizedBox())

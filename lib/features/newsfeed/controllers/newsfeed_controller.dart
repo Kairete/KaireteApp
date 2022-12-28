@@ -35,4 +35,8 @@ class NewsFeedController extends GetxController {
   void toCreate() {
     Get.to(() => CreateNewsfeedScreen(), fullscreenDialog: true);
   }
+
+  void onFilter() {
+    print('a');
+  }
 }

@@ -63,7 +63,8 @@ class BlogScreen extends StatelessWidget {
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                             TextSpan(
                                 text: TimeManager.instance.convertFromTimeStamp(
-                                    timestamp: item.user?.lastActivity ?? 0),
+                                    timestamp:
+                                        item.attachments?[0].attachDate ?? 0),
                                 style: kTextMediumtStyle.copyWith(
                                     fontSize: 15, fontWeight: FontWeight.w700)),
                             const TextSpan(
