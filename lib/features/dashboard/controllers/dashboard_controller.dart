@@ -1,3 +1,5 @@
+import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/helper/user.dart';
@@ -6,6 +8,7 @@ import '../models/menu_item_model.dart';
 
 class DashboardController extends GetxController {
   var items = <GroupMenuModel>[].obs;
+  GlobalKey<ContainedTabBarViewState> keyTabbar = GlobalKey();
 
   @override
   void onInit() {
@@ -85,6 +88,10 @@ class DashboardController extends GetxController {
     return items;
   }
 
+  void nextStepSubMenu({required String item}) {
+    print(item);
+  }
+
   void nextStepFromMenu({required GroupMenuModel item}) {
     switch (item.type) {
       case GroupItemType.login:
@@ -92,6 +99,18 @@ class DashboardController extends GetxController {
         break;
       case GroupItemType.register:
         Get.offAllNamed(Routes.register);
+        break;
+      case GroupItemType.newsfeed:
+        Navigator.pop(Get.context!);
+        keyTabbar.currentState?.animateTo(0);
+        break;
+      case GroupItemType.blogs:
+        Navigator.pop(Get.context!);
+        keyTabbar.currentState?.animateTo(1);
+        break;
+      case GroupItemType.articles:
+        Navigator.pop(Get.context!);
+        keyTabbar.currentState?.animateTo(2);
         break;
       default:
     }

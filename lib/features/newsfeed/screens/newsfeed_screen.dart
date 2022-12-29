@@ -34,11 +34,14 @@ class NewsFeedScreen extends StatelessWidget {
             onFilter: () {
               controller.onFilter();
             },
+            onTabFilter: (value) {
+              controller.onSelectedTabFilter(index: value);
+            },
           ));
   }
 }
 
-class NewsfeedListItem extends StatelessWidget {
+class NewsfeedListItem extends GetView<NewsFeedController> {
   const NewsfeedListItem({
     Key? key,
     required this.items,
@@ -46,6 +49,7 @@ class NewsfeedListItem extends StatelessWidget {
     this.onCreate,
     this.isShowCreate = true,
     this.onFilter,
+    this.onTabFilter,
   }) : super(key: key);
 
   final List<NewsfeedModel> items;
@@ -53,6 +57,7 @@ class NewsfeedListItem extends StatelessWidget {
   final Function? onCreate;
   final bool isShowCreate;
   final Function? onFilter;
+  final Function(int)? onTabFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -95,21 +100,81 @@ class NewsfeedListItem extends StatelessWidget {
                               ),
                             ),
                           ),
-                          InkWell(
-                            onTap: () {
-                              if (onFilter != null) {
-                                onFilter!();
-                              }
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 16, right: 16, bottom: 16),
-                              child: Icon(
-                                Icons.sort,
-                                color: kPrimaryColor,
-                              ),
-                            ),
-                          )
+                          Obx(() => Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 16, right: 16, bottom: 16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    FilterButton(
+                                      icon: 'ic_user',
+                                      onTap: () {
+                                        if (onTabFilter != null) {
+                                          onTabFilter!(0);
+                                        }
+                                      },
+                                      isActive:
+                                          controller.selectedTabFilter.value ==
+                                              0,
+                                    ),
+                                    SizedBox(
+                                      width: 8,
+                                    ),
+                                    FilterButton(
+                                      icon: 'ic_news',
+                                      onTap: () {
+                                        if (onTabFilter != null) {
+                                          onTabFilter!(1);
+                                        }
+                                      },
+                                      isActive:
+                                          controller.selectedTabFilter.value ==
+                                              1,
+                                    ),
+                                    SizedBox(
+                                      width: 8,
+                                    ),
+                                    FilterButton(
+                                      icon: 'ic_friends',
+                                      onTap: () {
+                                        if (onTabFilter != null) {
+                                          onTabFilter!(2);
+                                        }
+                                      },
+                                      isActive:
+                                          controller.selectedTabFilter.value ==
+                                              2,
+                                    ),
+                                    SizedBox(
+                                      width: 8,
+                                    ),
+                                    FilterButton(
+                                      icon: 'ic_home',
+                                      onTap: () {
+                                        if (onTabFilter != null) {
+                                          onTabFilter!(3);
+                                        }
+                                      },
+                                      isActive:
+                                          controller.selectedTabFilter.value ==
+                                              3,
+                                    ),
+                                    Expanded(child: Container()),
+                                    InkWell(
+                                      onTap: () {
+                                        if (onFilter != null) {
+                                          onFilter!();
+                                        }
+                                      },
+                                      child: Icon(
+                                        Icons.sort,
+                                        color: kPrimaryColor,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
                         ],
                       ),
                     )
@@ -303,6 +368,48 @@ class NewsfeedListItem extends StatelessWidget {
                   ),
                 );
         },
+      ),
+    );
+  }
+}
+
+// ignore: must_be_immutable
+class FilterButton extends StatelessWidget {
+  FilterButton({
+    Key? key,
+    this.icon,
+    this.onTap,
+    this.isActive = false,
+  }) : super(key: key);
+
+  final String? icon;
+  final Function? onTap;
+  bool isActive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        if (onTap != null) {
+          onTap!();
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+        decoration: BoxDecoration(
+          border: Border.all(
+            width: 1,
+            color: kBorderDefaultColor,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: isActive ? kPrimaryColor : Colors.white,
+        ),
+        child: SvgIcon(
+          name: icon ?? 'ic_home',
+          width: 25,
+          height: 25,
+          color: isActive ? Colors.white : kPrimaryColor,
+        ),
       ),
     );
   }

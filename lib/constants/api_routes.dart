@@ -8,4 +8,5 @@ class ApiRoutes {
   static const articles = "api/articles";
   static const newsFeedSearch = "api/newsfeed-search";
   static const newAttachKey = "api/attachments/new-key";
+  static const filter = "api/newsfeed/filters";
 }

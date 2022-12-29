@@ -62,30 +62,36 @@ class DashboardScreen extends GetView {
                       itemCount: controller.items.length,
                       itemBuilder: (context, index) {
                         final item = controller.items[index];
-                        return InkWell(
-                          child: ExpansionTile(
-                            title: Text(
+                        return ExpansionTile(
+                          title: InkWell(
+                            onTap: () {
+                              controller.nextStepFromMenu(item: item);
+                            },
+                            child: Text(
                               item.name ?? '',
                               style: kTextHeadingStyle.copyWith(
                                   color: Colors.white, fontSize: 20),
                             ),
-                            onExpansionChanged: (value) {
-                              controller.nextStepFromMenu(item: item);
-                            },
-                            childrenPadding: const EdgeInsets.only(left: 16),
-                            collapsedIconColor: item.items!.isEmpty
-                                ? Colors.transparent
-                                : Colors.white,
-                            iconColor: item.items!.isEmpty
-                                ? Colors.transparent
-                                : Colors.white,
-                            expandedCrossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            expandedAlignment: Alignment.centerLeft,
-                            children: item.items == null
-                                ? []
-                                : item.items!
-                                    .map((e) => Padding(
+                          ),
+                          onExpansionChanged: (value) {},
+                          childrenPadding: const EdgeInsets.only(left: 16),
+                          collapsedIconColor: item.items!.isEmpty
+                              ? Colors.transparent
+                              : Colors.white,
+                          iconColor: item.items!.isEmpty
+                              ? Colors.transparent
+                              : Colors.white,
+                          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                          expandedAlignment: Alignment.centerLeft,
+                          children: item.items == null
+                              ? []
+                              : item.items!
+                                  .map((e) => InkWell(
+                                        onTap: () {
+                                          controller.nextStepSubMenu(
+                                              item: e.name ?? '');
+                                        },
+                                        child: Padding(
                                           padding:
                                               const EdgeInsets.only(bottom: 16),
                                           child: Text(
@@ -95,9 +101,9 @@ class DashboardScreen extends GetView {
                                               color: Colors.white,
                                             ),
                                           ),
-                                        ))
-                                    .toList(),
-                          ),
+                                        ),
+                                      ))
+                                  .toList(),
                         );
                       },
                     )),
@@ -106,25 +112,26 @@ class DashboardScreen extends GetView {
           ),
         )),
       ),
-      body: ContainedTabBarView(
-        tabs: const [
-          TabbarIcon(),
-          TabbarIcon(
-            title: 'Blogs',
-          ),
-          TabbarIcon(
-            title: 'Articles',
-          ),
-        ],
-        views: [
-          NewsFeedScreen(),
-          BlogScreen(),
-          ArticlesScreen(),
-        ],
-        onChange: (index) {},
-        tabBarProperties: const TabBarProperties(
-            indicatorColor: kPrimaryColor, indicatorWeight: 2),
-      ),
+      body: Obx(() => ContainedTabBarView(
+            key: controller.keyTabbar,
+            tabs: const [
+              TabbarIcon(),
+              TabbarIcon(
+                title: 'Blogs',
+              ),
+              TabbarIcon(
+                title: 'Articles',
+              ),
+            ],
+            views: [
+              NewsFeedScreen(),
+              BlogScreen(),
+              ArticlesScreen(),
+            ],
+            onChange: (index) {},
+            tabBarProperties: const TabBarProperties(
+                indicatorColor: kPrimaryColor, indicatorWeight: 2),
+          )),
     );
   }
 }
