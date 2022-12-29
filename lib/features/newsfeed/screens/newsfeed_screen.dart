@@ -162,14 +162,28 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                     Expanded(child: Container()),
                                     InkWell(
                                       onTap: () {
+                                        controller.onSort();
+                                      },
+                                      child: Icon(
+                                        Icons.sort_rounded,
+                                        color: kPrimaryColor,
+                                        size: 25,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 8,
+                                    ),
+                                    InkWell(
+                                      onTap: () {
                                         if (onFilter != null) {
                                           onFilter!();
                                         }
                                       },
-                                      child: Icon(
-                                        Icons.sort,
+                                      child: SvgIcon(
+                                        name: 'ic_filter',
                                         color: kPrimaryColor,
-                                        size: 30,
+                                        width: 25,
+                                        height: 25,
                                       ),
                                     ),
                                   ],

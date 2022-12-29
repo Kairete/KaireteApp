@@ -112,26 +112,26 @@ class DashboardScreen extends GetView {
           ),
         )),
       ),
-      body: Obx(() => ContainedTabBarView(
-            key: controller.keyTabbar,
-            tabs: const [
-              TabbarIcon(),
-              TabbarIcon(
-                title: 'Blogs',
-              ),
-              TabbarIcon(
-                title: 'Articles',
-              ),
-            ],
-            views: [
-              NewsFeedScreen(),
-              BlogScreen(),
-              ArticlesScreen(),
-            ],
-            onChange: (index) {},
-            tabBarProperties: const TabBarProperties(
-                indicatorColor: kPrimaryColor, indicatorWeight: 2),
-          )),
+      body: ContainedTabBarView(
+        key: controller.keyTabbar,
+        tabs: const [
+          TabbarIcon(),
+          TabbarIcon(
+            title: 'Blogs',
+          ),
+          TabbarIcon(
+            title: 'Articles',
+          ),
+        ],
+        views: [
+          NewsFeedScreen(),
+          BlogScreen(),
+          ArticlesScreen(),
+        ],
+        onChange: (index) {},
+        tabBarProperties: const TabBarProperties(
+            indicatorColor: kPrimaryColor, indicatorWeight: 2),
+      ),
     );
   }
 }

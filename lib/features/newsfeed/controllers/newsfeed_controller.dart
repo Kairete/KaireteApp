@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
+import 'package:kairete/constants/color.dart';
+import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
@@ -25,9 +27,16 @@ class NewsFeedController extends GetxController {
     NewsfeedFilterModel(title: 'Posts from joined groups'),
     NewsfeedFilterModel(title: 'Recent popular posts'),
   ];
+  final sortItems = [
+    NewsfeedFilterModel(title: 'Default'),
+    NewsfeedFilterModel(title: 'Last comment date'),
+    NewsfeedFilterModel(title: 'Popularity'),
+  ];
+  NewsfeedFilterModel? sortItemSelected;
 
   var selectedTabFilter = 99.obs;
   var onChangeFilter = false;
+  var onChangeSort = false;
 
   @override
   void onInit() {
@@ -56,6 +65,12 @@ class NewsFeedController extends GetxController {
 
   void resetFilter() {
     filterItems.forEach((element) {
+      element.isSelected = false;
+    });
+  }
+
+  void resetSort() {
+    sortItems.forEach((element) {
       element.isSelected = false;
     });
   }
@@ -129,15 +144,94 @@ class NewsFeedController extends GetxController {
           .firstWhere((element) => element.title == 'Recent popular posts')
           .isSelected,
     };
+    if (sortItemSelected != null) {
+      var order = '';
+      switch (sortItemSelected!.title) {
+        case 'Default':
+          order = 'default';
+          break;
+        case 'Last comment date':
+          order = 'last_comment_date';
+          break;
+        case 'Popularity':
+          order = 'popularity';
+          break;
+        default:
+          break;
+      }
+      body['order'] = order;
+    }
     final json = await usecase.filter(body: body);
+    print(body);
     if (json != null) {
       fechItems();
     }
   }
 
+  void onSort() {
+    onChangeSort = false;
+    showKaireteBottomSheet(
+        title: 'Order by',
+        customContent: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            kBottomSafea,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: sortItems
+                .map(
+                  (e) => InkWell(
+                    onTap: () {
+                      onChangeSort = true;
+                      Navigator.pop(Get.context!);
+                      sortItemSelected = e;
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            border: Border.all(width: 1, color: kPrimaryColor),
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              e.title,
+                              style: kTextRegularStyle.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (e.title == sortItemSelected?.title)
+                              Icon(
+                                Icons.check,
+                                color: kPrimaryColor,
+                              )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        onComplete: () {
+          if (onChangeSort) {
+            filter();
+          }
+        });
+  }
+
   void onFilter() {
     onChangeFilter = false;
     showKaireteBottomSheet(
+        title: 'Filter',
         customContent: Padding(
           padding: EdgeInsets.fromLTRB(
             16,
