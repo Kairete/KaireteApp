@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/helper/user.dart';
 
+import '../../../helper/notification_service.dart';
 import '../models/menu_item_model.dart';
 
 class DashboardController extends GetxController {
@@ -12,6 +13,7 @@ class DashboardController extends GetxController {
 
   @override
   void onInit() {
+    fetchFcmToken();
     items.value = addData();
     super.onInit();
   }
@@ -114,5 +116,12 @@ class DashboardController extends GetxController {
         break;
       default:
     }
+  }
+
+  fetchFcmToken() async {
+    NotificationManager.instance.requestPermission();
+    NotificationManager.instance.init();
+    NotificationManager.instance.enableNotice();
+    NotificationManager.instance.onActionSelected(ActionNoticeType.FCM);
   }
 }

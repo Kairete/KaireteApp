@@ -68,7 +68,7 @@ class AppApiService {
     dio.options.headers['accept'] = 'application/json';
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
     dio.options.headers['XF-Api-User'] =
-        UserManager.instance.user?.user?.userId ?? '1';
+        LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
     dio.options.connectTimeout = 50000;
     dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;

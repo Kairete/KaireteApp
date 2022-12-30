@@ -13,12 +13,14 @@ class KaireteCacheNetworkImage extends StatelessWidget {
     this.height,
     this.isCircle = false,
     this.nameImage,
+    this.fontSize,
   }) : super(key: key);
   final String url;
   final double? width;
   final double? height;
   final bool isCircle;
   final String? nameImage;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
                             .toUpperCase() ??
                         '',
                     style: kTextMediumtStyle.copyWith(
-                      fontSize: 17,
+                      fontSize: fontSize ?? 17,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),

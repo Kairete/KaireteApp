@@ -42,7 +42,7 @@ dependencies:
   flutter_svg: ^1.0.3
   cached_network_image: ^3.2.0
   image_picker: ^0.8.5+3
-  permission_handler: ^9.2.0
+  permission_handler: ^10.2.0
   flutter_screenutil: ^5.3.1
   timeago: ^3.2.2
   flutter_easyloading: ^3.0.5
@@ -50,7 +50,8 @@ dependencies:
   jiffy: ^5.0.0
   flutter_widget_from_html: ^0.8.5
   modal_bottom_sheet: ^2.0.1
-  firebase_messaging: ^11.2.6
+  firebase_messaging: ^14.2.1
+  awesome_notifications: ^0.6.21
 
 dev_dependencies:
   flutter_test:

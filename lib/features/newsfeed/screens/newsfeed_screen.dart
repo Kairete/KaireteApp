@@ -11,6 +11,8 @@ import 'package:kairete/helper/user.dart';
 
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
+import '../../../constants/key_constant.dart';
+import '../../../local/data_local.dart';
 import '../models/newsfeed_model.dart';
 
 // ignore: must_be_immutable
@@ -363,7 +365,8 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                               title: '${item.commentCount} Replies',
                             ),
                             if (item.user?.userId !=
-                                UserManager.instance.user?.user?.userId)
+                                LocalManager.instance
+                                    .read(key: PreferencesKey.token))
                               const KaireteIconButton(
                                 title: 'Like',
                                 icon: 'ic_like',

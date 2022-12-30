@@ -13,7 +13,7 @@ const kTextHeadingStyle = TextStyle(
 
 const kTextRegularStyle = TextStyle(
     fontFamily: kMyFont,
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: FontWeight.w400,
     color: kTextDefaultColor);
 

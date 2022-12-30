@@ -7,6 +7,7 @@ import 'package:kairete/features/blogs/screens/blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
+import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 
 import '../../articles/screens/articles_screen.dart';
 import '../../newsfeed/screens/newsfeed_search_screen.dart';
@@ -22,14 +23,19 @@ class DashboardScreen extends GetView {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(
-              children: const [
-                Icon(
-                  Icons.account_circle_outlined,
-                ),
-              ],
+          InkWell(
+            onTap: () {
+              Get.to(() => UserProfileScreen());
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Row(
+                children: const [
+                  Icon(
+                    Icons.account_circle_outlined,
+                  ),
+                ],
+              ),
             ),
           )
         ],
