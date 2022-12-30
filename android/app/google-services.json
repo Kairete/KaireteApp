@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "934645630230",
+    "project_id": "kairete-1ba8a",
+    "storage_bucket": "kairete-1ba8a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934645630230:android:56c900450c6b503f52bc37",
+        "android_client_info": {
+          "package_name": "com.example.kairete"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "934645630230-s4mg4003dou57r7rrroa8b6ed86todab.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBL-Rn85sVNgB3TY3zMRoAI6lSYg3Z-1bA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "934645630230-s4mg4003dou57r7rrroa8b6ed86todab.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
