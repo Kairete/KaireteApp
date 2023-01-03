@@ -129,12 +129,12 @@ class NotificationManager {
       if (notification != null && Platform.isAndroid) {
         print("Received notification title: ${notification.title}");
         print("Received notification body: ${notification.body}");
-        // await AwesomeNotifications().createNotification(
-        //     content: NotificationContent(
-        //         id: createUniqueId(),
-        //         channelKey: 'basic_channel',
-        //         title: notification.title,
-        //         body: notification.body));
+        await AwesomeNotifications().createNotification(
+            content: NotificationContent(
+                id: createUniqueId(),
+                channelKey: 'basic_channel',
+                title: notification.title,
+                body: notification.body));
       }
     });
 

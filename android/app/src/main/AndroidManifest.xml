@@ -9,6 +9,8 @@
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
@@ -44,8 +46,8 @@
         android:name="com.google.firebase.messaging.default_notification_channel_id"
         android:value="high_importance_channel" />
 
-        <service
-            android:name=".kotlin.MyFirebaseMessagingService"
+        <!-- <service
+            android:name=".service.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -58,7 +60,8 @@
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
+        </service> -->
+        
         
     </application>
 
