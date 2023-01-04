@@ -34,25 +34,37 @@ class NewsfeedDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                controller.item?.blogEntryItem?.category?.title ?? '',
-                style: kTextMediumtStyle.copyWith(
-                  color: kTextCriticalColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  fontStyle: FontStyle.italic,
+              if (controller.item?.blogEntryItem?.category?.title != null)
+                InkWell(
+                  onTap: () {
+                    controller.toCate();
+                  },
+                  child: Text(
+                    controller.item?.blogEntryItem?.category?.title ?? '',
+                    style: kTextMediumtStyle.copyWith(
+                      color: kTextCriticalColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              Text(
-                controller.item?.title ?? '',
-                style: kTextTitle.copyWith(color: kTextCriticalColor),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
+              if (controller.item?.title != '' &&
+                  controller.item?.groupPostItem == null)
+                const SizedBox(
+                  height: 8,
+                ),
+              if (controller.item?.title != '' &&
+                  controller.item?.groupPostItem == null)
+                Text(
+                  controller.item?.title ?? '',
+                  style: kTextTitle.copyWith(color: kTextCriticalColor),
+                ),
+              if (controller.item?.title != '' &&
+                  controller.item?.groupPostItem == null)
+                const SizedBox(
+                  height: 8,
+                ),
               RichText(
                   text: TextSpan(
                 text: controller.item?.user?.username ?? 'Empty name',
@@ -74,18 +86,26 @@ class NewsfeedDetailScreen extends StatelessWidget {
               const SizedBox(
                 height: 16,
               ),
-              if (controller.item?.blogEntryItem != null)
+              if (controller.item?.blogEntryItem?.attachments != null ||
+                  controller.item?.groupPostItem?.firstComment?.attachments !=
+                      null)
                 KaireteCacheNetworkImage(
-                    url: controller.item?.blogEntryItem?.attachments?[0]
-                            .thumbnailUrl ??
-                        ''),
-              const SizedBox(
-                height: 16,
-              ),
+                  url: controller
+                          .item?.blogEntryItem?.attachments?[0].thumbnailUrl ??
+                      controller.item?.groupPostItem?.firstComment
+                          ?.attachments?[0].thumbnailUrl ??
+                      '',
+                ),
+              if (controller.item?.blogEntryItem?.attachments != null ||
+                  controller.item?.groupPostItem?.firstComment?.attachments !=
+                      null)
+                const SizedBox(
+                  height: 16,
+                ),
               HtmlWidget(
                 (controller.item?.blogEntryItem?.messageParsed ??
                             controller.item?.messageParsed)
-                        ?.replaceAll("\n", "")
+                        ?.replaceAll("\\n", "")
                         .replaceAll("=\\  ", "=")
                         .replaceAll("g\\", "") ??
                     '',

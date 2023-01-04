@@ -5,6 +5,7 @@ import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
+import 'package:kairete/features/blogs/screens/blog_filter_screen.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
@@ -107,7 +108,7 @@ class NewsFeedController extends GetxController {
       default:
         break;
     }
-    fechItems();
+    filter();
   }
 
   void setFilterItems({required String title}) {
@@ -117,7 +118,7 @@ class NewsFeedController extends GetxController {
 
   void filter() async {
     final body = {
-      'user_id': UserManager.instance.user?.user?.userId,
+      'user_id': LocalManager.instance.read(key: PreferencesKey.token) ?? 0,
       'own': filterItems
           .firstWhere((element) => element.title == 'Your content')
           .isSelected,

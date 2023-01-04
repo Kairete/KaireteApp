@@ -5,17 +5,28 @@ import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/helper/user.dart';
 
 import '../../../helper/notification_service.dart';
+import '../../login/models/user_model.dart';
+import '../../profile/usecase/user_profile_usecase.dart';
 import '../models/menu_item_model.dart';
 
 class DashboardController extends GetxController {
   var items = <GroupMenuModel>[].obs;
   GlobalKey<ContainedTabBarViewState> keyTabbar = GlobalKey();
+  UserProfileUsecase usecase = IUserProfileUsecase();
+  var user = User().obs;
 
   @override
   void onInit() {
     fetchFcmToken();
+    fetchItems();
     items.value = addData();
+
     super.onInit();
+  }
+
+  void fetchItems() async {
+    final json = await usecase.fetchData();
+    user.value = User.fromJson(json['me']);
   }
 
   List<GroupMenuModel> addData() {

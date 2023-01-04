@@ -80,6 +80,7 @@ class NewsfeedModel {
   User? user;
   int? userId;
   String? viewUrl;
+  GroupItemModel? groupPostItem;
 
   NewsfeedModel(
       {this.blogEntryItem,
@@ -105,6 +106,9 @@ class NewsfeedModel {
   NewsfeedModel.fromJson(Map<String, dynamic> json) {
     blogEntryItem = json['BlogEntryItem'] != null
         ? BlogEntryItem.fromJson(json['BlogEntryItem'])
+        : null;
+    groupPostItem = json['GroupPost'] != null
+        ? GroupItemModel.fromJson(json['GroupPost'])
         : null;
     commentCount = json['comment_count'];
     contentId = json['content_id'];
@@ -282,6 +286,7 @@ class Attachments {
   String? thumbnailUrl;
   int? viewCount;
   int? width;
+  int? i1088;
 
   Attachments(
       {this.attachDate,
@@ -312,6 +317,7 @@ class Attachments {
     thumbnailUrl = json['thumbnail_url'];
     viewCount = json['view_count'];
     width = json['width'];
+    i1088 = json['1088'];
   }
 
   Map<String, dynamic> toJson() {
@@ -773,6 +779,326 @@ class Reactions {
     data['user_id'] = userId;
     data['username'] = username;
     data['reaction_id'] = reactionId;
+    return data;
+  }
+}
+
+class GroupItemModel {
+  bool? canComment;
+  bool? canDelete;
+  bool? canEdit;
+  bool? canReact;
+  int? commentCount;
+  int? firstCommentId;
+  FirstComment? firstComment;
+  Group? group;
+
+  GroupItemModel(
+      {this.canComment,
+      this.canDelete,
+      this.canEdit,
+      this.canReact,
+      this.commentCount,
+      this.firstCommentId,
+      this.firstComment});
+
+  GroupItemModel.fromJson(Map<String, dynamic> json) {
+    canComment = json['can_comment'];
+    canDelete = json['can_delete'];
+    canEdit = json['can_edit'];
+    canReact = json['can_react'];
+    commentCount = json['comment_count'];
+    firstCommentId = json['first_comment_id'];
+    firstComment = json['FirstComment'] != null
+        ? new FirstComment.fromJson(json['FirstComment'])
+        : null;
+    group = json['Group'] != null ? new Group.fromJson(json['Group']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['can_comment'] = this.canComment;
+    data['can_delete'] = this.canDelete;
+    data['can_edit'] = this.canEdit;
+    data['can_react'] = this.canReact;
+    data['comment_count'] = this.commentCount;
+    data['first_comment_id'] = this.firstCommentId;
+    if (this.firstComment != null) {
+      data['FirstComment'] = this.firstComment!.toJson();
+    }
+    return data;
+  }
+}
+
+class FirstComment {
+  int? attachCount;
+  List<Attachments>? attachments;
+  bool? canDelete;
+  bool? canEdit;
+  bool? canReact;
+  bool? canReply;
+  bool? canReport;
+  int? commentDate;
+  int? commentId;
+  int? commentLevel;
+  int? contentId;
+  String? contentType;
+  int? editCount;
+  EmbedMetadata? embedMetadata;
+  bool? hasMoreReplies;
+  bool? isIgnored;
+  bool? isReactedTo;
+  int? lastEditDate;
+  int? lastEditUserId;
+  String? message;
+  String? messageParsed;
+  String? messagePlainText;
+  int? parentId;
+  int? reactionScore;
+  int? replyCount;
+  User? user;
+  int? userId;
+  String? username;
+  String? viewUrl;
+
+  FirstComment(
+      {this.attachCount,
+      this.attachments,
+      this.canDelete,
+      this.canEdit,
+      this.canReact,
+      this.canReply,
+      this.canReport,
+      this.commentDate,
+      this.commentId,
+      this.commentLevel,
+      this.contentId,
+      this.contentType,
+      this.editCount,
+      this.embedMetadata,
+      this.hasMoreReplies,
+      this.isIgnored,
+      this.isReactedTo,
+      this.lastEditDate,
+      this.lastEditUserId,
+      this.message,
+      this.messageParsed,
+      this.messagePlainText,
+      this.parentId,
+      this.reactionScore,
+      this.replyCount,
+      this.user,
+      this.userId,
+      this.username,
+      this.viewUrl});
+
+  FirstComment.fromJson(Map<String, dynamic> json) {
+    attachCount = json['attach_count'];
+    if (json['Attachments'] != null) {
+      attachments = <Attachments>[];
+      json['Attachments'].forEach((v) {
+        attachments!.add(new Attachments.fromJson(v));
+      });
+    }
+    canDelete = json['can_delete'];
+    canEdit = json['can_edit'];
+    canReact = json['can_react'];
+    canReply = json['can_reply'];
+    canReport = json['can_report'];
+    commentDate = json['comment_date'];
+    commentId = json['comment_id'];
+    commentLevel = json['comment_level'];
+    contentId = json['content_id'];
+    contentType = json['content_type'];
+    editCount = json['edit_count'];
+    // embedMetadata = json['embed_metadata'] != null
+    //     ? new EmbedMetadata.fromJson(json['embed_metadata'])
+    //     : null;
+    hasMoreReplies = json['has_more_replies'];
+    isIgnored = json['is_ignored'];
+    isReactedTo = json['is_reacted_to'];
+    lastEditDate = json['last_edit_date'];
+    lastEditUserId = json['last_edit_user_id'];
+    message = json['message'];
+    messageParsed = json['message_parsed'];
+    messagePlainText = json['message_plain_text'];
+    parentId = json['parent_id'];
+    reactionScore = json['reaction_score'];
+    replyCount = json['reply_count'];
+    user = json['User'] != null ? new User.fromJson(json['User']) : null;
+    userId = json['user_id'];
+    username = json['username'];
+    viewUrl = json['view_url'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['attach_count'] = this.attachCount;
+    if (this.attachments != null) {
+      data['Attachments'] = this.attachments!.map((v) => v.toJson()).toList();
+    }
+    data['can_delete'] = this.canDelete;
+    data['can_edit'] = this.canEdit;
+    data['can_react'] = this.canReact;
+    data['can_reply'] = this.canReply;
+    data['can_report'] = this.canReport;
+    data['comment_date'] = this.commentDate;
+    data['comment_id'] = this.commentId;
+    data['comment_level'] = this.commentLevel;
+    data['content_id'] = this.contentId;
+    data['content_type'] = this.contentType;
+    data['edit_count'] = this.editCount;
+    if (this.embedMetadata != null) {
+      data['embed_metadata'] = this.embedMetadata!.toJson();
+    }
+    data['has_more_replies'] = this.hasMoreReplies;
+    data['is_ignored'] = this.isIgnored;
+    data['is_reacted_to'] = this.isReactedTo;
+    data['last_edit_date'] = this.lastEditDate;
+    data['last_edit_user_id'] = this.lastEditUserId;
+    data['message'] = this.message;
+    data['message_parsed'] = this.messageParsed;
+    data['message_plain_text'] = this.messagePlainText;
+    data['parent_id'] = this.parentId;
+    data['reaction_score'] = this.reactionScore;
+    data['reply_count'] = this.replyCount;
+    if (this.user != null) {
+      data['User'] = this.user!.toJson();
+    }
+    data['user_id'] = this.userId;
+    data['username'] = this.username;
+    data['view_url'] = this.viewUrl;
+    return data;
+  }
+}
+
+class EmbedMetadata {
+  Attachments? attachments;
+
+  EmbedMetadata({this.attachments});
+
+  EmbedMetadata.fromJson(Map<String, dynamic> json) {
+    // attachments = json['attachments'] != null
+    //     ? new Attachments.fromJson(json['attachments'])
+    //     : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (this.attachments != null) {
+      data['attachments'] = this.attachments!.toJson();
+    }
+    return data;
+  }
+}
+
+class Group {
+  int? albumCount;
+  bool? allowGuestPosting;
+  bool? alwaysModerateJoin;
+  String? avatarUrl;
+  bool? canDelete;
+  bool? canEdit;
+  bool? canEditTags;
+  bool? canHardDelete;
+  bool? canJoin;
+  bool? canLeave;
+  bool? canManageAvatar;
+  bool? canManageCover;
+  bool? canPost;
+  Category? category;
+  int? discussionCount;
+  int? eventCount;
+  int? groupId;
+  String? groupState;
+  bool? isIgnored;
+  bool? isJoined;
+  bool? isOwner;
+  String? languageCode;
+  int? lastActivity;
+  int? memberCount;
+  int? memberModeratedCount;
+  String? name;
+  int? ownerUserId;
+  String? ownerUsername;
+  String? privacy;
+  String? shortDescription;
+  List<String>? tags;
+  int? viewCount;
+  String? viewUrl;
+
+  Group(
+      {this.albumCount,
+      this.allowGuestPosting,
+      this.alwaysModerateJoin,
+      this.avatarUrl,
+      this.canDelete,
+      this.canEdit,
+      this.canEditTags,
+      this.canHardDelete,
+      this.canJoin,
+      this.canLeave,
+      this.canManageAvatar,
+      this.canManageCover,
+      this.canPost,
+      this.category});
+
+  Group.fromJson(Map<String, dynamic> json) {
+    albumCount = json['album_count'];
+    allowGuestPosting = json['allow_guest_posting'];
+    alwaysModerateJoin = json['always_moderate_join'];
+    avatarUrl = json['avatar_url'];
+    canDelete = json['can_delete'];
+    canEdit = json['can_edit'];
+    canEditTags = json['can_edit_tags'];
+    canHardDelete = json['can_hard_delete'];
+    canJoin = json['can_join'];
+    canLeave = json['can_leave'];
+    canManageAvatar = json['can_manage_avatar'];
+    canManageCover = json['can_manage_cover'];
+    canPost = json['can_post'];
+    category = json['Category'] != null
+        ? new Category.fromJson(json['Category'])
+        : null;
+    discussionCount = json['discussion_count'];
+    eventCount = json['event_count'];
+    groupId = json['group_id'];
+    groupState = json['group_state'];
+    isIgnored = json['is_ignored'];
+    isJoined = json['is_joined'];
+    isOwner = json['is_owner'];
+    languageCode = json['language_code'];
+    lastActivity = json['last_activity'];
+    memberCount = json['member_count'];
+    memberModeratedCount = json['member_moderated_count'];
+    name = json['name'];
+    ownerUserId = json['owner_user_id'];
+    ownerUsername = json['owner_username'];
+    privacy = json['privacy'];
+    shortDescription = json['short_description'];
+    tags = json['tags'].cast<String>();
+    viewCount = json['view_count'];
+    viewUrl = json['view_url'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['album_count'] = this.albumCount;
+    data['allow_guest_posting'] = this.allowGuestPosting;
+    data['always_moderate_join'] = this.alwaysModerateJoin;
+    data['avatar_url'] = this.avatarUrl;
+    data['can_delete'] = this.canDelete;
+    data['can_edit'] = this.canEdit;
+    data['can_edit_tags'] = this.canEditTags;
+    data['can_hard_delete'] = this.canHardDelete;
+    data['can_join'] = this.canJoin;
+    data['can_leave'] = this.canLeave;
+    data['can_manage_avatar'] = this.canManageAvatar;
+    data['can_manage_cover'] = this.canManageCover;
+    data['can_post'] = this.canPost;
+    if (this.category != null) {
+      data['Category'] = this.category!.toJson();
+    }
     return data;
   }
 }

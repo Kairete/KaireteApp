@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../newsfeed/models/newsfeed_model.dart';
+import '../screens/blog_filter_screen.dart';
 
 class BlogsDetailController extends GetxController {
   BlogEntryItem? item;
@@ -9,5 +10,15 @@ class BlogsDetailController extends GetxController {
   void onInit() {
     item = Get.arguments['item'];
     super.onInit();
+  }
+
+  void toCate() {
+    Get.to(() => BlogFilterScreen(), arguments: {'category': item?.category});
+  }
+
+  void toFilterWithTitle() {
+    Get.to(() => BlogFilterScreen(), arguments: {
+      'title': item?.blog?.title,
+    });
   }
 }

@@ -3,7 +3,6 @@ import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/constants/key_constant.dart';
 import 'package:kairete/features/login/models/user_model.dart';
 import 'package:kairete/features/profile/usecase/user_profile_usecase.dart';
-import 'package:kairete/helper/notification_service.dart';
 import 'package:kairete/local/data_local.dart';
 
 class UserProfileController extends GetxController {

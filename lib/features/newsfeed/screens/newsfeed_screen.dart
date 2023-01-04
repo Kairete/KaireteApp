@@ -7,8 +7,6 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/helper/time.dart';
-import 'package:kairete/helper/user.dart';
-
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
 import '../../../constants/key_constant.dart';
@@ -238,7 +236,8 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                       ),
                                       children: [
                                         if (item.blogEntryItem?.blog?.title !=
-                                            null)
+                                                null ||
+                                            item.groupPostItem != null)
                                           const WidgetSpan(
                                               child: Icon(
                                             Icons.play_arrow,
@@ -248,6 +247,8 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                         TextSpan(
                                             text: item.blogEntryItem?.blog
                                                     ?.title ??
+                                                item.groupPostItem?.group
+                                                    ?.name ??
                                                 '',
                                             style: kTextRegularStyle.copyWith(
                                               fontWeight: FontWeight.w600,
@@ -299,7 +300,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (item.title != '')
+                            if (item.title != '' && item.groupPostItem == null)
                               Text(
                                 item.title ?? '',
                                 style: kTextMediumtStyle.copyWith(
@@ -307,17 +308,23 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold),
                               ),
-                            if (item.title != '')
+                            if (item.title != '' && item.groupPostItem == null)
                               const SizedBox(
                                 height: 16,
                               ),
-                            if (item.blogEntryItem?.attachments != null)
+                            if (item.blogEntryItem?.attachments != null ||
+                                item.groupPostItem?.firstComment?.attachments !=
+                                    null)
                               KaireteCacheNetworkImage(
                                 url: item.blogEntryItem?.attachments?[0]
                                         .thumbnailUrl ??
+                                    item.groupPostItem?.firstComment
+                                        ?.attachments?[0].thumbnailUrl ??
                                     '',
                               ),
-                            if (item.blogEntryItem?.attachments != null)
+                            if (item.blogEntryItem?.attachments != null ||
+                                item.groupPostItem?.firstComment?.attachments !=
+                                    null)
                               const SizedBox(
                                 height: 16,
                               ),

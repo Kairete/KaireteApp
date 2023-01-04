@@ -22,7 +22,7 @@ class BlogDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
         title: Text(
-          'Blogs Detail detail',
+          'Blogs Detail',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
       ),
@@ -32,13 +32,18 @@ class BlogDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                controller.item?.category?.title ?? '',
-                style: kTextMediumtStyle.copyWith(
-                  color: kTextCriticalColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  fontStyle: FontStyle.italic,
+              InkWell(
+                onTap: () {
+                  controller.toCate();
+                },
+                child: Text(
+                  controller.item?.category?.title ?? '',
+                  style: kTextMediumtStyle.copyWith(
+                    color: kTextCriticalColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
               const SizedBox(
@@ -51,24 +56,29 @@ class BlogDetailScreen extends StatelessWidget {
               const SizedBox(
                 height: 8,
               ),
-              RichText(
-                  text: TextSpan(
-                text: controller.item?.user?.customFields?.fullName ??
-                    'Empty name',
-                style: kTextMediumtStyle.copyWith(
-                    color: kTextCriticalColor,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600),
-              )),
+              InkWell(
+                onTap: () {
+                  controller.toFilterWithTitle();
+                },
+                child: RichText(
+                    text: TextSpan(
+                  text: controller.item?.blog?.title ?? '',
+                  style: kTextMediumtStyle.copyWith(
+                      color: kTextCriticalColor,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600),
+                )),
+              ),
               const SizedBox(
                 height: 16,
               ),
               if (controller.item?.attachments != null)
                 KaireteCacheNetworkImage(
                     url: controller.item?.attachments![0].thumbnailUrl ?? ''),
-              const SizedBox(
-                height: 16,
-              ),
+              if (controller.item?.attachments != null)
+                const SizedBox(
+                  height: 16,
+                ),
               HtmlWidget(
                 controller.item?.messageParsed
                         ?.replaceAll("\n", "")

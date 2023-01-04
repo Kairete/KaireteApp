@@ -23,67 +23,75 @@ class UserProfileScreen extends StatelessWidget {
         ),
         backgroundColor: kPrimaryColor,
       ),
-      body: Container(
-        padding: EdgeInsets.all(16),
-        child: Obx(() => Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                KaireteCacheNetworkImage(
-                  url: controller.user.value.avatarUrls?.m ?? '',
-                  nameImage: controller.user.value.username,
-                  width: 80,
-                  height: 80,
-                  fontSize: 40,
-                ),
-                SizedBox(
-                  height: 60,
-                ),
-                InfoProfileItem(
-                  title: 'Username:',
-                  content: controller.user.value.username,
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                InfoProfileItem(
-                  title: 'Messages:',
-                  content: (controller.user.value.messageCount ?? 0).toString(),
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                InfoProfileItem(
-                  title: 'Reaction score:',
-                  content:
-                      (controller.user.value.reactionScore ?? 0).toString(),
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                InfoProfileItem(
-                  title: 'Trophy points:',
-                  content: (controller.user.value.trophyPoints ?? 0).toString(),
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                InfoProfileItem(
-                  title: 'Email:',
-                  content: controller.user.value.email,
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                Expanded(child: Container()),
-                KairetePrimaryButton(
-                  onTap: () {
-                    print('aa');
-                    controller.onLogout();
-                  },
-                  title: 'Log out',
-                )
-              ],
-            )),
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16, 15, 16, 8),
+          child: Obx(() => Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 16,
+                  ),
+                  KaireteCacheNetworkImage(
+                    url: controller.user.value.avatarUrls?.o ?? '',
+                    nameImage: controller.user.value.username,
+                    width: 120,
+                    height: 120,
+                    fontSize: 40,
+                    isCircle: true,
+                  ),
+                  SizedBox(
+                    height: 60,
+                  ),
+                  InfoProfileItem(
+                    title: 'Username:',
+                    content: controller.user.value.username,
+                  ),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  InfoProfileItem(
+                    title: 'Messages:',
+                    content:
+                        (controller.user.value.messageCount ?? 0).toString(),
+                  ),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  InfoProfileItem(
+                    title: 'Reaction score:',
+                    content:
+                        (controller.user.value.reactionScore ?? 0).toString(),
+                  ),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  InfoProfileItem(
+                    title: 'Trophy points:',
+                    content:
+                        (controller.user.value.trophyPoints ?? 0).toString(),
+                  ),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  InfoProfileItem(
+                    title: 'Email:',
+                    content: controller.user.value.email,
+                  ),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  Expanded(child: Container()),
+                  KairetePrimaryButton(
+                    onTap: () {
+                      print('aa');
+                      controller.onLogout();
+                    },
+                    title: 'Log out',
+                  )
+                ],
+              )),
+        ),
       ),
     );
   }

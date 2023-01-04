@@ -32,13 +32,18 @@ class BlogScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.blog?.title ?? '',
-                        style: kTextRegularStyle.copyWith(
-                            color: kPrimaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 17,
-                            fontStyle: FontStyle.italic),
+                      InkWell(
+                        onTap: () {
+                          controller.toFilterWithTitle(item: item);
+                        },
+                        child: Text(
+                          item.blog?.title ?? '',
+                          style: kTextRegularStyle.copyWith(
+                              color: kPrimaryColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 17,
+                              fontStyle: FontStyle.italic),
+                        ),
                       ),
                       const SizedBox(
                         height: 8,
@@ -57,7 +62,7 @@ class BlogScreen extends StatelessWidget {
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
-                          children: <TextSpan>[
+                          children: [
                             const TextSpan(
                                 text: ' • ',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -70,13 +75,20 @@ class BlogScreen extends StatelessWidget {
                             const TextSpan(
                                 text: ' • ',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(
-                                text: item.category?.title ?? '',
-                                style: kTextMediumtStyle.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: kPrimaryColor,
-                                )),
+                            WidgetSpan(
+                              child: InkWell(
+                                  onTap: () {
+                                    controller.toCate(item: item);
+                                  },
+                                  child: Text(
+                                    item.category?.title ?? '',
+                                    style: kTextMediumtStyle.copyWith(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: kPrimaryColor,
+                                    ),
+                                  )),
+                            ),
                           ],
                         ),
                       ),
@@ -86,9 +98,10 @@ class BlogScreen extends StatelessWidget {
                       if (item.coverImage != null)
                         KaireteCacheNetworkImage(
                             url: item.coverImage?.thumbnailUrl ?? ''),
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      if (item.coverImage != null)
+                        const SizedBox(
+                          height: 16,
+                        ),
                       Text(
                         item.messagePlainText ?? '',
                         maxLines: 10,

@@ -9,6 +9,8 @@ import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 
+import '../../../components/cache_image.dart';
+import '../../../helper/user.dart';
 import '../../articles/screens/articles_screen.dart';
 import '../../newsfeed/screens/newsfeed_search_screen.dart';
 
@@ -23,21 +25,32 @@ class DashboardScreen extends GetView {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          InkWell(
-            onTap: () {
-              Get.to(() => UserProfileScreen());
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Row(
-                children: const [
-                  Icon(
-                    Icons.account_circle_outlined,
-                  ),
-                ],
-              ),
-            ),
-          )
+          Obx(() => InkWell(
+                onTap: () {
+                  Get.to(() => UserProfileScreen());
+                },
+                child: controller.user.value.avatarUrls != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: KaireteCacheNetworkImage(
+                          url: controller.user.value.avatarUrls?.o ?? '',
+                          nameImage: controller.user.value.username,
+                          width: 30,
+                          height: 30,
+                          isCircle: true,
+                        ),
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.account_circle_outlined,
+                            ),
+                          ],
+                        ),
+                      ),
+              ))
         ],
         backgroundColor: kPrimaryColor,
         title: SizedBox(
