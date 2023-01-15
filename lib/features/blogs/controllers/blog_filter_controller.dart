@@ -28,7 +28,7 @@ class BlogFilterController extends GetxController {
   void fetchItems() async {
     Map<String, dynamic> body = {};
     if (title != null) {
-      body['creator'] = title;
+      body['title'] = title;
     }
     if (cate != null) {
       body['category_ids[]'] = cate?.categoryId;
