@@ -8,14 +8,14 @@ import '../models/blog_model.dart';
 class BlogFilterController extends GetxController {
   BlogUsecase usecase = IBlogUsecase();
   Category? cate;
-  String? title;
+  int? blogId;
   var items = <BlogEntryItem>[].obs;
 
   @override
   void onInit() {
     if (Get.arguments != null) {
-      if (Get.arguments['title'] != null) {
-        title = Get.arguments['title'];
+      if (Get.arguments['blogId'] != null) {
+        blogId = Get.arguments['blogId'];
       }
       if (Get.arguments['category'] != null) {
         cate = Get.arguments['category'];
@@ -27,8 +27,8 @@ class BlogFilterController extends GetxController {
 
   void fetchItems() async {
     Map<String, dynamic> body = {};
-    if (title != null) {
-      body['title'] = title;
+    if (blogId != null) {
+      body['blog_ids[]'] = blogId;
     }
     if (cate != null) {
       body['category_ids[]'] = cate?.categoryId;

@@ -27,7 +27,7 @@ class BlogController extends GetxController {
 
   void toFilterWithTitle({required BlogEntryItem item}) {
     Get.to(() => BlogFilterScreen(), arguments: {
-      'title': item.blog?.title,
+      'blogId': item.blog?.blogId,
     });
   }
 

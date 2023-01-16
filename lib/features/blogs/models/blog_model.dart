@@ -13,6 +13,12 @@ class BlogModel {
         blogEntryItems!.add(BlogEntryItem.fromJson(v));
       });
     }
+    if (json['blogItems'] != null) {
+      blogEntryItems = <BlogEntryItem>[];
+      json['blogItems'].forEach((v) {
+        blogEntryItems!.add(BlogEntryItem.fromJson(v));
+      });
+    }
     pagination = json['pagination'] != null
         ? Pagination.fromJson(json['pagination'])
         : null;
