@@ -15,7 +15,7 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   Future fetchItems({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.newsfeed,
-      body: body,
+      // body: body,
       method: HttpMethodCustom.GET,
     );
     return json;

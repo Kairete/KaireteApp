@@ -2,6 +2,7 @@ class BaseNewsfeedModel {
   int? newsfeedTabId;
   List<NewsfeedModel>? newsfeedItems;
   Pagination? pagination;
+  dynamic filters;
 
   BaseNewsfeedModel({this.newsfeedTabId, this.newsfeedItems, this.pagination});
 
@@ -16,6 +17,12 @@ class BaseNewsfeedModel {
     pagination = json['pagination'] != null
         ? Pagination.fromJson(json['pagination'])
         : null;
+    if (json['filters'] != null) {
+      filters = <String>[];
+      json['filters'].forEach((v) {
+        filters!.add(v);
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {

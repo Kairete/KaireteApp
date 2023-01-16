@@ -5,13 +5,11 @@ import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
-import 'package:kairete/features/blogs/screens/blog_filter_screen.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 
 import '../../../constants/key_constant.dart';
-import '../../../helper/user.dart';
 import '../../../local/data_local.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
@@ -49,13 +47,70 @@ class NewsFeedController extends GetxController {
 
   void fechItems() async {
     final body = {
-      'user_id': LocalManager.instance.read(key: PreferencesKey.token) ?? 0,
-      'page': 1,
+      // 'user_id': LocalManager.instance.read(key: PreferencesKey.token) ?? 0,
+      // 'page': 1,
     };
     final json = await usecase.fetchItems(body: body);
     final item = BaseNewsfeedModel.fromJson(json);
+    setFilterItem(items: item.filters ?? []);
     items.value = item.newsfeedItems ?? [];
     items.refresh();
+  }
+
+  void setFilterItem({required List<String> items}) {
+    for (var element in items) {
+      switch (element) {
+        case 'own':
+          filterItems
+              .firstWhere((element) => element.title == 'Your content')
+              .isSelected = true;
+          break;
+        case 'followed':
+          filterItems
+              .firstWhere((element) => element.title == 'Members you follow')
+              .isSelected = true;
+          break;
+        case 'follower':
+          filterItems
+              .firstWhere((element) => element.title == 'Members follow you')
+              .isSelected = true;
+          break;
+        case 'samegroup':
+          filterItems
+              .firstWhere(
+                  (element) => element.title == 'Members in same groups')
+              .isSelected = true;
+          break;
+        case 'friend':
+          filterItems
+              .firstWhere((element) => element.title == 'Your friends')
+              .isSelected = true;
+          break;
+        case 'contain_keyword':
+          filterItems
+              .firstWhere(
+                  (element) => element.title == 'Posts containing keywords')
+              .isSelected = true;
+          break;
+        case 'watched_content':
+          filterItems
+              .firstWhere((element) => element.title == 'Watched content')
+              .isSelected = true;
+          break;
+        case 'joined_groups':
+          filterItems
+              .firstWhere(
+                  (element) => element.title == 'Posts from joined groups')
+              .isSelected = true;
+          break;
+        case 'recent_popular':
+          filterItems
+              .firstWhere((element) => element.title == 'Recent popular posts')
+              .isSelected = true;
+          break;
+        default:
+      }
+    }
   }
 
   void toDetail({required NewsfeedModel item}) {
@@ -67,15 +122,15 @@ class NewsFeedController extends GetxController {
   }
 
   void resetFilter() {
-    filterItems.forEach((element) {
+    for (var element in filterItems) {
       element.isSelected = false;
-    });
+    }
   }
 
   void resetSort() {
-    sortItems.forEach((element) {
+    for (var element in sortItems) {
       element.isSelected = false;
-    });
+    }
   }
 
   void onSelectedTabFilter({required int index}) {
@@ -86,24 +141,24 @@ class NewsFeedController extends GetxController {
     selectedTabFilter.value = index;
     switch (index) {
       case 0:
-        [filterItems[0], filterItems[1]].forEach((element) {
+        for (var element in [filterItems[0], filterItems[1]]) {
           setFilterItems(title: element.title);
-        });
+        }
         break;
       case 1:
-        [filterItems[0], filterItems[5], filterItems[6]].forEach((element) {
+        for (var element in [filterItems[0], filterItems[5], filterItems[6]]) {
           setFilterItems(title: element.title);
-        });
+        }
         break;
       case 2:
-        [filterItems[1]].forEach((element) {
+        for (var element in [filterItems[1]]) {
           setFilterItems(title: element.title);
-        });
+        }
         break;
       case 3:
-        [filterItems[3]].forEach((element) {
+        for (var element in [filterItems[3]]) {
           setFilterItems(title: element.title);
-        });
+        }
         break;
       default:
         break;
@@ -117,35 +172,55 @@ class NewsFeedController extends GetxController {
   }
 
   void filter() async {
-    final body = {
-      'user_id': LocalManager.instance.read(key: PreferencesKey.token) ?? 0,
+    Map<String, dynamic> body = {
       'own': filterItems
-          .firstWhere((element) => element.title == 'Your content')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Your content')
+              .isSelected
+          ? 1
+          : null,
       'followed': filterItems
-          .firstWhere((element) => element.title == 'Members you follow')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Members you follow')
+              .isSelected
+          ? 1
+          : null,
       'follower': filterItems
-          .firstWhere((element) => element.title == 'Members follow you')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Members follow you')
+              .isSelected
+          ? 1
+          : null,
       'samegroup': filterItems
-          .firstWhere((element) => element.title == 'Members in same groups')
-          .isSelected,
+              .firstWhere(
+                  (element) => element.title == 'Members in same groups')
+              .isSelected
+          ? 1
+          : null,
       'friend': filterItems
-          .firstWhere((element) => element.title == 'Your friends')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Your friends')
+              .isSelected
+          ? 1
+          : null,
       'contain_keyword': filterItems
-          .firstWhere((element) => element.title == 'Posts containing keywords')
-          .isSelected,
+              .firstWhere(
+                  (element) => element.title == 'Posts containing keywords')
+              .isSelected
+          ? 1
+          : null,
       'watched_content': filterItems
-          .firstWhere((element) => element.title == 'Watched content')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Watched content')
+              .isSelected
+          ? 1
+          : null,
       'joined_groups': filterItems
-          .firstWhere((element) => element.title == 'Posts from joined groups')
-          .isSelected,
+              .firstWhere(
+                  (element) => element.title == 'Posts from joined groups')
+              .isSelected
+          ? 1
+          : null,
       'recent_popular': filterItems
-          .firstWhere((element) => element.title == 'Recent popular posts')
-          .isSelected,
+              .firstWhere((element) => element.title == 'Recent popular posts')
+              .isSelected
+          ? 1
+          : null,
     };
     if (sortItemSelected != null) {
       var order = '';
@@ -164,8 +239,8 @@ class NewsFeedController extends GetxController {
       }
       body['order'] = order;
     }
-    final json = await usecase.filter(body: body);
     print(body);
+    final json = await usecase.filter(body: body);
     if (json != null) {
       fechItems();
     }
