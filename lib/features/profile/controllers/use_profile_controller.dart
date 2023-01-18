@@ -5,6 +5,8 @@ import 'package:kairete/features/login/models/user_model.dart';
 import 'package:kairete/features/profile/usecase/user_profile_usecase.dart';
 import 'package:kairete/local/data_local.dart';
 
+import '../../../helper/notification_service.dart';
+
 class UserProfileController extends GetxController {
   var user = User().obs;
   UserProfileUsecase usecase = IUserProfileUsecase();
@@ -21,7 +23,7 @@ class UserProfileController extends GetxController {
   }
 
   void onLogout() {
-    // NotificationManager.instance.disableNotice();
+    NotificationManager.instance.disableNotice();
     LocalManager.instance.remove(key: PreferencesKey.token);
     Get.offAllNamed(Routes.login);
   }

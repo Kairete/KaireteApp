@@ -21,12 +21,12 @@ class AppApiService {
 
   CancelToken cancelToken = CancelToken();
 
-  void create({bool isShowErrorPopup = true}) {
+  void create({bool isShowErrorPopup = true, String? userId}) {
     EasyLoading.instance
       ..indicatorType = EasyLoadingIndicatorType.circle
       ..backgroundColor = kTextPrimaryColor
       ..indicatorColor = Colors.white;
-    addDioHeader();
+    addDioHeader(userId: userId);
     client = RestClient(dio: dio, cancelToken: cancelToken);
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -61,13 +61,13 @@ class AppApiService {
     );
   }
 
-  void addDioHeader({Map<String, String>? headers}) async {
+  void addDioHeader({Map<String, String>? headers, String? userId}) async {
     dio.options.headers.clear();
     dio.options.headers['content-type'] = 'application/json';
     dio.options.headers['accept'] = 'application/json';
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
     dio.options.headers['XF-Api-User'] =
-        LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
+        userId ?? LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
     dio.options.connectTimeout = 50000;
     dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;

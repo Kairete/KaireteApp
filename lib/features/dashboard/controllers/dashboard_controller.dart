@@ -20,7 +20,6 @@ class DashboardController extends GetxController {
     fetchFcmToken();
     fetchItems();
     items.value = addData();
-
     super.onInit();
   }
 

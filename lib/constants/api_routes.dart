@@ -11,4 +11,5 @@ class ApiRoutes {
   static const filter = "api/newsfeed/filters";
   static const me = "api/me";
   static const blogsCate = 'api/blog-entries';
+  static const pushFCM = 'api/users/';
 }

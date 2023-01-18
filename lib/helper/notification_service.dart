@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../features/profile/usecase/user_profile_usecase.dart';
 import 'notice_navigator.dart';
 
 class NotificationManager {
@@ -105,14 +106,14 @@ class NotificationManager {
   }
 
   updateFCM(String fcmToken) async {
-    // FCMUsecase usecase = IFCMUsecase();
-    // final body = {
-    //   'device_token': fcmToken,
-    // };
-    // final json = await usecase.pushToken(body);
-    // if (json != null) {
-    //   print('Push FCM success');
-    // }
+    FCMUsecase usecase = IFCMUsecase();
+    final body = {
+      'token': fcmToken,
+    };
+    final json = await usecase.pushFCM(body: body);
+    if (json != null) {
+      print('Push FCM success');
+    }
   }
 
   handlerMessage() async {
