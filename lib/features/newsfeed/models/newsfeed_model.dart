@@ -459,7 +459,7 @@ class User {
   int? questionSolutionCount;
   int? reactionScore;
   int? registerDate;
-  List<String>? secondaryGroupIds;
+  List<dynamic>? secondaryGroupIds;
   bool? sgCanAddGroup;
   String? signature;
   int? trophyPoints;
@@ -558,7 +558,7 @@ class User {
     reactionScore = json['reaction_score'];
     registerDate = json['register_date'];
     if (json['secondary_group_ids'] != null) {
-      secondaryGroupIds = <String>[];
+      secondaryGroupIds = <dynamic>[];
       json['secondary_group_ids'].forEach((v) {
         secondaryGroupIds!.add(v);
       });

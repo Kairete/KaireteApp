@@ -19,9 +19,9 @@ class TimeManager {
     return timeago.format(targetTime);
   }
 
-  String convertFromTimeStamp({required int timestamp}) {
+  String convertFromTimeStamp({required int timestamp, String? format}) {
     var date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    var dateString = Jiffy(date).format("MMM do, yyyy - hh:mm");
+    var dateString = Jiffy(date).format(format ?? "MMM do, yyyy - hh:mm");
     return dateString;
   }
 }

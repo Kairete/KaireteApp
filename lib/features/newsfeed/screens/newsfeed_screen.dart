@@ -22,7 +22,7 @@ class NewsFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => controller.items.isEmpty
-        ? SizedBox()
+        ? const SizedBox()
         : NewsfeedListItem(
             items: controller.items.value,
             onCreate: () {
@@ -117,7 +117,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                           controller.selectedTabFilter.value ==
                                               0,
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 8,
                                     ),
                                     FilterButton(
@@ -131,7 +131,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                           controller.selectedTabFilter.value ==
                                               1,
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 8,
                                     ),
                                     FilterButton(
@@ -145,7 +145,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                           controller.selectedTabFilter.value ==
                                               2,
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 8,
                                     ),
                                     FilterButton(
@@ -164,13 +164,13 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                       onTap: () {
                                         controller.onSort();
                                       },
-                                      child: Icon(
+                                      child: const Icon(
                                         Icons.sort_rounded,
                                         color: kPrimaryColor,
                                         size: 25,
                                       ),
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 8,
                                     ),
                                     InkWell(
@@ -179,7 +179,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                           onFilter!();
                                         }
                                       },
-                                      child: SvgIcon(
+                                      child: const SvgIcon(
                                         name: 'ic_filter',
                                         color: kPrimaryColor,
                                         width: 25,
@@ -192,7 +192,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                         ],
                       ),
                     )
-                  : SizedBox())
+                  : const SizedBox())
               : Container(
                   color: Colors.white,
                   child: Column(
@@ -419,7 +419,7 @@ class FilterButton extends StatelessWidget {
         }
       },
       child: Container(
-        padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
         decoration: BoxDecoration(
           border: Border.all(
             width: 1,

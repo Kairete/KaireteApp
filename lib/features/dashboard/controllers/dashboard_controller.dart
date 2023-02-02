@@ -2,6 +2,7 @@ import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
+import 'package:kairete/features/forum/screens/forum_screen.dart';
 import 'package:kairete/helper/user.dart';
 
 import '../../../helper/notification_service.dart';
@@ -123,6 +124,10 @@ class DashboardController extends GetxController {
       case GroupItemType.articles:
         Navigator.pop(Get.context!);
         keyTabbar.currentState?.animateTo(2);
+        break;
+      case GroupItemType.forums:
+        Navigator.pop(Get.context!);
+        Get.to(() => ForumScreen());
         break;
       default:
     }
