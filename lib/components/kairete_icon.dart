@@ -27,6 +27,7 @@ class SvgIcon extends StatelessWidget {
         width: width,
         height: height,
         color: color ?? kPrimaryColor,
+        fit: BoxFit.scaleDown,
       ),
     );
   }

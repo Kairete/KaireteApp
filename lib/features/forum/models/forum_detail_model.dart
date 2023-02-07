@@ -54,7 +54,7 @@ class Threads {
   int? nodeId;
   int? postDate;
   int? prefixId;
-  dynamic reactions;
+  List<Reactions>? reactions;
   int? replyCount;
   bool? sticky;
   List<String>? tags;
@@ -66,6 +66,7 @@ class Threads {
   int? viewCount;
   String? viewUrl;
   int? visitorPostCount;
+  String? message;
 
   Threads(
       {this.canEdit,
@@ -119,6 +120,7 @@ class Threads {
     discussionType = json['discussion_type'];
     firstPostId = json['first_post_id'];
     firstPostReactionScore = json['first_post_reaction_score'];
+    message = json['message'];
     // if (json['highlighted_post_ids'] != null) {
     // 	highlightedPostIds = <Null>[];
     // 	json['highlighted_post_ids'].forEach((v) { highlightedPostIds!.add(Null.fromJson(v)); });
@@ -133,7 +135,12 @@ class Threads {
     nodeId = json['node_id'];
     postDate = json['post_date'];
     prefixId = json['prefix_id'];
-    reactions = json['reactions'];
+    if (json['reactions'] != null) {
+      reactions = <Reactions>[];
+      json['reactions'].forEach((v) {
+        reactions!.add(Reactions.fromJson(v));
+      });
+    }
     replyCount = json['reply_count'];
     sticky = json['sticky'];
     tags = json['tags'].cast<String>();

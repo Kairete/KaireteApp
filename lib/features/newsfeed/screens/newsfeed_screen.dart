@@ -444,10 +444,14 @@ class KaireteIconButton extends StatelessWidget {
     Key? key,
     this.title,
     this.icon,
+    this.width,
+    this.height,
   }) : super(key: key);
 
   final String? title;
   final String? icon;
+  final double? width;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -461,8 +465,8 @@ class KaireteIconButton extends StatelessWidget {
         children: [
           SvgIcon(
             name: icon ?? 'ic_reply',
-            width: 21,
-            height: 16,
+            width: width ?? 21,
+            height: height ?? 16,
             color: Colors.white,
           ),
           const SizedBox(

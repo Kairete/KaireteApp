@@ -14,4 +14,5 @@ class ApiRoutes {
   static const pushFCM = 'api/users/';
   static const nodeList = 'api/nodes';
   static const nodeDetail = 'api/forums/';
+  static const createThread = 'api/threads';
 }

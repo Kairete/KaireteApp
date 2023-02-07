@@ -5,6 +5,7 @@ import 'package:kairete/data/rest_client_gen.dart';
 abstract class ForumUsecase {
   Future nodeList({dynamic body});
   Future nodeDetail({dynamic body});
+  Future createThread({dynamic body});
 }
 
 class IForumUsecase extends BaseClient implements ForumUsecase {
@@ -29,6 +30,16 @@ class IForumUsecase extends BaseClient implements ForumUsecase {
       path: ApiRoutes.nodeDetail + body['id'].toString() + '/threads',
       body: body,
       method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
+  Future createThread({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.createThread,
+      body: body,
+      method: HttpMethodCustom.POST,
     );
     return json;
   }
