@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../features/profile/usecase/user_profile_usecase.dart';
 import 'notice_navigator.dart';
@@ -18,23 +17,21 @@ class NotificationManager {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   FCMNavigator navigator = IFCMNavigator();
 
-  void init() {
-    AwesomeNotifications().initialize(
-        null,
-        [
-          NotificationChannel(
-              channelGroupKey: 'basic_channel_group',
-              channelKey: 'basic_channel',
-              channelName: 'Basic notifications',
-              channelDescription: 'Notification channel for basic tests',
-              ledColor: Colors.white)
-        ],
-        channelGroups: [
-          NotificationChannelGroup(
-              channelGroupkey: 'basic_channel_group',
-              channelGroupName: 'Basic group')
-        ],
-        debug: true);
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  AndroidNotificationChannel channel = const AndroidNotificationChannel(
+    'your channel id 2',
+    'your channel name 2',
+    description: 'your channel description 2',
+  );
+
+  void init() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   disableNotice() async {
@@ -125,17 +122,27 @@ class NotificationManager {
       }
     });
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
-      if (notification != null && Platform.isAndroid) {
-        print("Received notification title: ${notification.title}");
-        print("Received notification body: ${notification.body}");
-        await AwesomeNotifications().createNotification(
-            content: NotificationContent(
-                id: createUniqueId(),
-                channelKey: 'basic_channel',
-                title: notification.title,
-                body: notification.body));
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null) {
+        print(notification.body);
+        print(notification.title);
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+                iOS: const DarwinNotificationDetails(
+                    presentAlert: true,
+                    presentSound: true,
+                    subtitle: '12312312'),
+                android: AndroidNotificationDetails(
+                  channel.id,
+                  channel.name,
+                  channelDescription: channel.description,
+                  icon: android?.smallIcon,
+                )));
       }
     });
 

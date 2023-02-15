@@ -82,11 +82,11 @@ class AppApiService {
       cancelToken.cancel('cancelled');
       return;
     }
-    showKairetePopup(
-      onTapDone: () {},
-      title: 'Notice',
-      content: error.response?.data["errors"][0]['message'],
-    );
-    // handler.next(error);
+    // showKairetePopup(
+    //   onTapDone: () {},
+    //   title: 'Notice',
+    //   content: error.response?.data["errors"][0]['message'],
+    // );
+    handler.next(error);
   }
 }

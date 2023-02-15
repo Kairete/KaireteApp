@@ -52,7 +52,7 @@ dependencies:
   modal_bottom_sheet: ^2.0.1
   firebase_messaging: ^14.2.1
   awesome_notifications: ^0.6.21
-
+  flutter_local_notifications: ^13.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

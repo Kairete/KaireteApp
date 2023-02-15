@@ -41,8 +41,8 @@ class LoginController extends GetxController {
       final json = await usecase.login(body: body);
       if (json != null) {
         final user = UserModel.fromJson(json);
-        LocalManager.instance
-            .save(key: PreferencesKey.token, value: user.user?.userId);
+        // LocalManager.instance
+        //     .save(key: PreferencesKey.token, value: user.user?.userId);
         UserManager.instance.user = user;
         Get.offAllNamed(Routes.home);
       }
