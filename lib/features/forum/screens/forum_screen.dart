@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
 import '../../../helper/time.dart';
+import 'package:cupertino_listview/cupertino_listview.dart';
 
 // ignore: must_be_immutable
 class ForumScreen extends StatelessWidget {
@@ -23,89 +24,128 @@ class ForumScreen extends StatelessWidget {
       body: SafeArea(
         child: Container(
           color: Colors.grey.shade200,
-          child: Obx(() => ListView.builder(
-                itemCount: controller.items.length,
-                itemBuilder: (context, index) {
-                  final item = controller.items[index];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(top: 16),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            controller.toDetail(item: item);
-                          },
+          margin: const EdgeInsets.only(top: 8),
+          child: GetX<ForumController>(
+            builder: ((controller) {
+              return controller.items.isEmpty
+                  ? Container()
+                  : CupertinoListView.builder(
+                      sectionCount: controller.items.length,
+                      sectionBuilder: (BuildContext context, SectionPath index,
+                          bool isFloating) {
+                        return Container(
+                          color: kPrimaryColor,
+                          padding: const EdgeInsets.all(16),
                           child: Text(
-                            item.title ?? '',
-                            style: kTextTitle.copyWith(fontSize: 18),
+                            controller.items[index.section].title ?? '',
+                            style: kTextHeadingStyle.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              'Threads: ',
-                              style: kTextSubTitle.copyWith(
-                                  color: Colors.grey.shade600, fontSize: 16),
-                            ),
-                            Text(
-                              item.typeData?.discussionCount.toString() ?? '',
-                              style: kTextSubTitle.copyWith(fontSize: 16),
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Text(
-                              'Messages: ',
-                              style: kTextSubTitle.copyWith(
-                                color: Colors.grey.shade600,
-                                fontSize: 16,
+                        );
+                      },
+                      itemInSectionCount: (section) =>
+                          controller.items[section].items?.length ?? 0,
+                      childBuilder: (context, index) {
+                        final item =
+                            controller.items[index.section].items?[index.child];
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          color: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  print(item);
+                                  if (item != null) {
+                                    controller.toDetail(item: item);
+                                  }
+                                },
+                                child: Text(
+                                  item?.title ?? '',
+                                  style: kTextTitle.copyWith(fontSize: 18),
+                                ),
                               ),
-                            ),
-                            Text(
-                              item.typeData?.messageCount.toString() ?? '',
-                              style: kTextSubTitle.copyWith(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              item.typeData?.lastThreadTitle ?? '',
-                              style: kTextTitle.copyWith(fontSize: 16),
-                            ),
-                            const SizedBox(
-                              width: 4,
-                            ),
-                            Text(
-                              TimeManager.instance.convertFromTimeStamp(
-                                  timestamp: item.typeData?.lastPostDate ?? 0,
-                                  format: 'MMM do, yyyy'),
-                              style: kTextTitle.copyWith(
-                                  fontSize: 16, color: Colors.grey.shade600),
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Text(
-                              item.typeData?.lastPostUsername ?? '',
-                              style: kTextTitle.copyWith(fontSize: 16),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  );
-                },
-              )),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Threads: ',
+                                    style: kTextSubTitle.copyWith(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 16),
+                                  ),
+                                  Text(
+                                    item?.typeData?.discussionCount
+                                            .toString() ??
+                                        '',
+                                    style: kTextSubTitle.copyWith(fontSize: 16),
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  Text(
+                                    'Messages: ',
+                                    style: kTextSubTitle.copyWith(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Text(
+                                    item?.typeData?.messageCount.toString() ??
+                                        '',
+                                    style: kTextSubTitle.copyWith(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                item?.typeData?.lastThreadTitle ?? 'None',
+                                style: kTextTitle.copyWith(
+                                  fontSize: 18,
+                                  color: item?.typeData?.lastThreadTitle == null
+                                      ? Colors.grey.shade600
+                                      : kPrimaryColor,
+                                ),
+                              ),
+                              if (item?.typeData?.lastPostDate != 0)
+                                const SizedBox(
+                                  height: 4,
+                                ),
+                              if (item?.typeData?.lastPostDate != 0)
+                                Row(
+                                  children: [
+                                    Text(
+                                      TimeManager.instance.getCalendar(
+                                          timestamp:
+                                              item?.typeData?.lastPostDate ??
+                                                  0),
+                                      style: kTextTitle.copyWith(
+                                        fontSize: 16,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const Text(' • '),
+                                    Text(
+                                      item?.typeData?.lastPostUsername ?? '',
+                                      style: kTextTitle.copyWith(fontSize: 18),
+                                    ),
+                                  ],
+                                )
+                            ],
+                          ),
+                        );
+                      },
+                    );
+            }),
+          ),
         ),
       ),
     );

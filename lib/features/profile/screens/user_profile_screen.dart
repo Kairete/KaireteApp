@@ -3,6 +3,7 @@ import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/profile/controllers/use_profile_controller.dart';
 import 'package:get/get.dart';
 
@@ -22,6 +23,16 @@ class UserProfileScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: kPrimaryColor,
+      ),
+      bottomSheet: Padding(
+        padding: EdgeInsets.fromLTRB(24, 0, 24, kBottomSafea),
+        child: KairetePrimaryButton(
+          onTap: () {
+            print('aa');
+            controller.onLogout();
+          },
+          title: 'Log out',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -82,14 +93,7 @@ class UserProfileScreen extends StatelessWidget {
                     const SizedBox(
                       height: 16,
                     ),
-                    Expanded(child: Container()),
-                    KairetePrimaryButton(
-                      onTap: () {
-                        print('aa');
-                        controller.onLogout();
-                      },
-                      title: 'Log out',
-                    )
+                    // Expanded(child: Container()),
                   ],
                 )),
           ),

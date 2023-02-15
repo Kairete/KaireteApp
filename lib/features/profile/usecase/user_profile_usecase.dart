@@ -27,6 +27,9 @@ class IUserProfileUsecase extends BaseClient implements UserProfileUsecase {
 
 class IFCMUsecase extends BaseClient implements FCMUsecase {
   @override
+  bool get isShowPopupError => false;
+
+  @override
   Future pushFCM({body}) async {
     final id = LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
     final json = await appApiService.client?.requestApi(

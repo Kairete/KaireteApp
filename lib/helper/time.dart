@@ -1,5 +1,6 @@
 import 'package:jiffy/jiffy.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:moment_dart/moment_dart.dart';
 
 class TimeManager {
   static TimeManager? _instance;
@@ -23,5 +24,10 @@ class TimeManager {
     var date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     var dateString = Jiffy(date).format(format ?? "MMM do, yyyy - hh:mm");
     return dateString;
+  }
+
+  String getCalendar({required int timestamp}) {
+    var date = Moment.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return date.calendar();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../features/profile/usecase/user_profile_usecase.dart';
 import 'notice_navigator.dart';
+import 'package:http/http.dart' as http;
 
 class NotificationManager {
   NotificationManager._privateConstructor();
@@ -113,6 +116,11 @@ class NotificationManager {
     }
   }
 
+  Future<Uint8List> _getByteArrayFromUrl(String url) async {
+    final http.Response response = await http.get(Uri.parse(url));
+    return response.bodyBytes;
+  }
+
   handlerMessage() async {
     FirebaseMessaging.instance
         .getInitialMessage()
@@ -121,6 +129,8 @@ class NotificationManager {
         print('subscriber message');
       }
     });
+    final ByteArrayAndroidBitmap bigPicture = ByteArrayAndroidBitmap(
+        await _getByteArrayFromUrl('https://dummyimage.com/400x800'));
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;

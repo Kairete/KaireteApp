@@ -162,7 +162,8 @@ class TypeData {
     lastPostUsername = json['last_post_username'];
     lastThreadId = json['last_thread_id'];
     lastThreadPrefixId = json['last_thread_prefix_id'];
-    lastThreadTitle = json['last_thread_title'];
+    lastThreadTitle =
+        json['last_thread_title'] == '' ? null : json['last_thread_title'];
     messageCount = json['message_count'];
     minTags = json['min_tags'];
     requirePrefix = json['require_prefix'];
@@ -215,4 +216,16 @@ class Discussion {
     data['allow_answer_downvote'] = allowAnswerDownvote;
     return data;
   }
+}
+
+class GroupNodes {
+  String? title;
+  List<Nodes>? items;
+  int? id;
+
+  GroupNodes({
+    this.title,
+    this.items,
+    this.id,
+  });
 }

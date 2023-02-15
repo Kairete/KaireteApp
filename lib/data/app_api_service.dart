@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:kairete/components/kairete_popup.dart';
+import 'package:kairete/helper/user.dart';
 import '../constants/color_constant.dart';
 import '../constants/key_constant.dart';
 import '../local/data_local.dart';
@@ -15,9 +16,8 @@ class AppApiService {
 
   RestClient? client;
   final Dio dio = Dio();
-  bool isShowPopup = false;
 
-  AppApiService({bool isShowErrorPopup = true});
+  AppApiService();
 
   CancelToken cancelToken = CancelToken();
 
@@ -55,7 +55,7 @@ class AppApiService {
               '''[api-${DateFormat('mm:ss').format(DateTime.now())}]-> Error    \turl:[${error.requestOptions.baseUrl}${error.requestOptions.path}] type:${error.type} message: ${error.message}''');
           print('''[api-error]-> response  \t${error.response}''');
           EasyLoading.dismiss();
-          return hanlderError(error, handler);
+          return hanlderError(error, handler, isShowErrorPopup);
         },
       ),
     );
@@ -67,7 +67,7 @@ class AppApiService {
     dio.options.headers['accept'] = 'application/json';
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
     dio.options.headers['XF-Api-User'] =
-        userId ?? LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
+        userId ?? UserManager.instance.user?.user?.userId ?? '1';
     dio.options.connectTimeout = 50000;
     dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;
@@ -77,16 +77,18 @@ class AppApiService {
     }
   }
 
-  hanlderError(DioError error, ErrorInterceptorHandler handler) {
+  hanlderError(
+      DioError error, ErrorInterceptorHandler handler, bool isShowErrorPopup) {
     if (error.response!.statusCode == 401) {
       cancelToken.cancel('cancelled');
       return;
     }
-    // showKairetePopup(
-    //   onTapDone: () {},
-    //   title: 'Notice',
-    //   content: error.response?.data["errors"][0]['message'],
-    // );
-    handler.next(error);
+    if (isShowErrorPopup) {
+      showKairetePopup(
+        onTapDone: () {},
+        title: 'Notice',
+        content: error.response?.data["errors"][0]['message'],
+      );
+    }
   }
 }
