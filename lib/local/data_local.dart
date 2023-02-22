@@ -1,4 +1,4 @@
-import 'package:get_storage/get_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LocalManager {
   static LocalManager? _instance;
@@ -7,17 +7,17 @@ class LocalManager {
 
   static LocalManager get instance => _instance ??= LocalManager._();
 
-  GetStorage box = GetStorage();
+  final storage = const FlutterSecureStorage();
 
-  void save({required dynamic key, required dynamic value}) {
-    box.write(key, value);
+  Future save({required dynamic key, required dynamic value}) async {
+    await storage.write(key: key, value: value.toString());
   }
 
-  dynamic read({required String key}) {
-    return box.read(key);
+  Future read({required String key}) async {
+    return await storage.read(key: key);
   }
 
-  dynamic remove({required String key}) {
-    return box.remove(key);
+  Future remove({required String key}) async {
+    return await storage.delete(key: key);
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:kairete/constants/app_routes.dart';
 
 import 'helper/localization_service.dart';
 import 'routes/app_pages.dart';
@@ -23,7 +24,7 @@ class _MyAppState extends State<MyApp> {
         return GetCupertinoApp(
           debugShowCheckedModeBanner: false,
           enableLog: true,
-          initialRoute: AppPages.getCurrenState(),
+          initialRoute: AuthMiddleware.instance.currentState,
           getPages: AppPages.routes,
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,

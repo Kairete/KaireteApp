@@ -67,14 +67,10 @@ class AppApiService {
     dio.options.headers['accept'] = 'application/json';
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
     dio.options.headers['XF-Api-User'] =
-        userId ?? UserManager.instance.user?.user?.userId ?? '1';
+        userId ?? UserManager.instance.userId ?? '1';
     dio.options.connectTimeout = 50000;
     dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;
-    final token = LocalManager.instance.read(key: PreferencesKey.token);
-    if (token != null) {
-      dio.options.headers['Authorization'] = 'Bearer $token';
-    }
   }
 
   hanlderError(

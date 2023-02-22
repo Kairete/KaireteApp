@@ -31,7 +31,8 @@ class IFCMUsecase extends BaseClient implements FCMUsecase {
 
   @override
   Future pushFCM({body}) async {
-    final id = LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
+    final id =
+        await LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.pushFCM + '$id/firebase-device-token',
       body: body,

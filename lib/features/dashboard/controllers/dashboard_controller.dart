@@ -82,7 +82,7 @@ class DashboardController extends GetxController {
         ],
       ),
     ];
-    if (UserManager.instance.user == null) {
+    if (UserManager.instance.userId == null) {
       items.insert(
           0,
           GroupMenuModel(

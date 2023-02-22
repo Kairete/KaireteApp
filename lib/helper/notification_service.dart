@@ -151,7 +151,7 @@ class NotificationManager {
                   channel.id,
                   channel.name,
                   channelDescription: channel.description,
-                  icon: android?.smallIcon,
+                  // icon: android?.smallIcon,
                 )));
       }
     });

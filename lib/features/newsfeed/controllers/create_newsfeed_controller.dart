@@ -8,7 +8,6 @@ import 'package:kairete/constants/key_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/helper/image_picker.dart';
-import 'package:kairete/helper/user.dart';
 import 'package:kairete/local/data_local.dart';
 
 import '../../../components/kairete_icon.dart';
@@ -31,10 +30,12 @@ class CreateNewsfeedController extends GetxController {
   }
 
   void onCreate() async {
+    final id = await LocalManager.instance.read(key: PreferencesKey.token);
     final body = {
-      'user_id': LocalManager.instance.read(key: PreferencesKey.token),
+      'user_id': id,
       'message': textController.text,
     };
+    print(body);
     final json = await usecase.create(body: body);
     if (json != null) {
       showKairetePopup(
