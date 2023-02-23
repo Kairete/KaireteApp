@@ -24,7 +24,7 @@ class ForumScreen extends StatelessWidget {
       body: SafeArea(
         child: Container(
           color: Colors.grey.shade200,
-          margin: const EdgeInsets.only(top: 8),
+          margin: const EdgeInsets.only(top: 4),
           child: GetX<ForumController>(
             builder: ((controller) {
               return controller.items.isEmpty
@@ -51,7 +51,7 @@ class ForumScreen extends StatelessWidget {
                             controller.items[index.section].items?[index.child];
                         return Container(
                           padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.only(bottom: 16),
+                          margin: const EdgeInsets.only(bottom: 4),
                           color: Colors.white,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
