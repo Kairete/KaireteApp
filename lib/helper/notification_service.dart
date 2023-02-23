@@ -1,9 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:kairete/constants/color.dart';
 
 import '../features/profile/usecase/user_profile_usecase.dart';
 import 'notice_navigator.dart';
@@ -31,7 +30,7 @@ class NotificationManager {
 
   void init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
@@ -147,12 +146,11 @@ class NotificationManager {
                     presentAlert: true,
                     presentSound: true,
                     subtitle: '12312312'),
-                android: AndroidNotificationDetails(
-                  channel.id,
-                  channel.name,
-                  channelDescription: channel.description,
-                  // icon: android?.smallIcon,
-                )));
+                android: AndroidNotificationDetails(channel.id, channel.name,
+                    channelDescription: channel.description,
+                    color: kPrimaryColor
+                    // icon: android?.smallIcon,
+                    )));
       }
     });
 
