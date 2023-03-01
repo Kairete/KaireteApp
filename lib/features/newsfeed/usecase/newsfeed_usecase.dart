@@ -8,6 +8,8 @@ abstract class NewsFeedUsecase {
   Future uploadFile({dynamic body});
   Future search({dynamic body});
   Future filter({dynamic body});
+  Future reactions({dynamic body});
+  Future comments({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -54,6 +56,26 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
       path: ApiRoutes.filter,
       body: body,
       method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future reactions({dynamic body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.groupComments + '${body['id']}' + '/react',
+      method: HttpMethodCustom.POST,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future comments({dynamic body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.groupComments + '${body['id']}' + '/replies',
+      method: HttpMethodCustom.POST,
+      body: body,
     );
     return json;
   }

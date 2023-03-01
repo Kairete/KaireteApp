@@ -15,4 +15,6 @@ class ApiRoutes {
   static const nodeList = 'api/nodes';
   static const nodeDetail = 'api/forums/';
   static const createThread = 'api/threads';
+  static const reactions = 'api/group-comments/';
+  static const groupComments = 'api/group-comments/';
 }

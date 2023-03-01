@@ -37,6 +37,7 @@ class AppApiService {
           print('''[api-Request]-> Url  \t${options.baseUrl}''');
           print('''[api-Request]-> Body  \t${options.data}''');
           print('''[api-Request]-> Parameter  \t${options.queryParameters}''');
+          print('''[api-Request]-> Header  \t${options.headers}''');
           return handler.next(options);
         },
         onResponse: (response, handler) async {

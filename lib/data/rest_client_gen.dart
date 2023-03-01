@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:async';
 
-import 'error.dart';
-
 class RestClient {
   Dio dio;
   CancelToken cancelToken;

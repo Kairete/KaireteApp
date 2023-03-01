@@ -374,9 +374,13 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                             if (item.user?.userId !=
                                 LocalManager.instance
                                     .read(key: PreferencesKey.token))
-                              const KaireteIconButton(
+                              KaireteIconButton(
                                 title: 'Like',
                                 icon: 'ic_like',
+                                onTap: () {
+                                  controller.onReactions(
+                                      postId: item.itemId ?? 0);
+                                },
                               ),
                             KaireteIconButton(
                               title: '${item.shareCount} Share',
@@ -446,41 +450,50 @@ class KaireteIconButton extends StatelessWidget {
     this.icon,
     this.width,
     this.height,
+    this.onTap,
   }) : super(key: key);
 
   final String? title;
   final String? icon;
   final double? width;
   final double? height;
+  final Function? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: kPrimaryColor,
-          border: Border.all(color: kBorderDefaultColor, width: 1)),
-      child: Row(
-        children: [
-          SvgIcon(
-            name: icon ?? 'ic_reply',
-            width: width ?? 21,
-            height: height ?? 16,
-            color: Colors.white,
-          ),
-          const SizedBox(
-            width: 4,
-          ),
-          Text(
-            title ?? '0 replies',
-            style: kTextRegularStyle.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+    return InkWell(
+      onTap: () {
+        if (onTap != null) {
+          onTap!();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: kPrimaryColor,
+            border: Border.all(color: kBorderDefaultColor, width: 1)),
+        child: Row(
+          children: [
+            SvgIcon(
+              name: icon ?? 'ic_reply',
+              width: width ?? 21,
+              height: height ?? 16,
               color: Colors.white,
             ),
-          ),
-        ],
+            const SizedBox(
+              width: 4,
+            ),
+            Text(
+              title ?? '0 replies',
+              style: kTextRegularStyle.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

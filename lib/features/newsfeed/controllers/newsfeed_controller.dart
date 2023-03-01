@@ -345,4 +345,11 @@ class NewsFeedController extends GetxController {
           }
         });
   }
+
+  void onReactions({required int postId}) async {
+    final body = {'id': postId, 'reaction_id': 1};
+    final json = usecase.reactions(body: body);
+  }
+
+  void onComment() {}
 }
