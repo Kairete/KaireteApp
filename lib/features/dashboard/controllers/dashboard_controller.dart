@@ -2,8 +2,10 @@ import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
+import 'package:kairete/features/dashboard/usecase/master_data_usecase.dart';
 import 'package:kairete/features/forum/screens/forum_screen.dart';
 import 'package:kairete/helper/user.dart';
+import 'package:kairete/local/master_data.dart';
 
 import '../../../helper/notification_service.dart';
 import '../../login/models/user_model.dart';
@@ -15,11 +17,13 @@ class DashboardController extends GetxController {
   GlobalKey<ContainedTabBarViewState> keyTabbar = GlobalKey();
   UserProfileUsecase usecase = IUserProfileUsecase();
   var user = User().obs;
+  MasterDataUsecase masterDataUsecase = IMasterDataUsecase();
 
   @override
   void onInit() {
     fetchFcmToken();
     fetchItems();
+    fetchIcons();
     items.value = addData();
     super.onInit();
   }
@@ -27,6 +31,14 @@ class DashboardController extends GetxController {
   void fetchItems() async {
     final json = await usecase.fetchData();
     user.value = User.fromJson(json['me']);
+  }
+
+  void fetchIcons() async {
+    final json = await masterDataUsecase.fetchReactionIcons();
+    final item = ReactionIconModel.fromJson(json);
+    if (item.reactions != null) {
+      MasterDataManager.instance.reactionIcons = item.reactions!;
+    }
   }
 
   List<GroupMenuModel> addData() {

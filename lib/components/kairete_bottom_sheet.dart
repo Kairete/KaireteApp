@@ -14,26 +14,29 @@ void showKaireteBottomSheet(
     BuildContext? context,
     bool isDismissible = true,
     bool enableDrag = true,
+    Color? backgroundColor,
     String? title}) {
   Get.bottomSheet(
     SingleChildScrollView(
-      child: Column(
-        children: [
-          SizedBox(
-            height: 16,
-          ),
-          if (title != null)
-            Text(
-              title,
-              style: kTextHeadingStyle.copyWith(
-                  fontSize: 20, fontWeight: FontWeight.w600),
+      child: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 16,
             ),
-          customContent ??
-              SizedBox(
-                height: 1.sh - (paddingTop ?? kTopSafea + 70),
-                child: child,
-              )
-        ],
+            if (title != null)
+              Text(
+                title,
+                style: kTextHeadingStyle.copyWith(
+                    fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+            customContent ??
+                SizedBox(
+                  height: 1.sh - (paddingTop ?? kTopSafea + 70),
+                  child: child,
+                )
+          ],
+        ),
       ),
     ),
     // context: context ?? Get.context!,
@@ -41,7 +44,7 @@ void showKaireteBottomSheet(
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     // bounce: true,
-    backgroundColor: Colors.white,
+    backgroundColor: backgroundColor ?? Colors.white,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.only(
         topRight: Radius.circular(16),

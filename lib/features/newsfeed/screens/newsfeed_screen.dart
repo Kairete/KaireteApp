@@ -7,6 +7,7 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/helper/time.dart';
+import 'package:kairete/helper/user.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
 import '../../../constants/key_constant.dart';
@@ -372,8 +373,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                               title: '${item.commentCount} Replies',
                             ),
                             if (item.user?.userId !=
-                                LocalManager.instance
-                                    .read(key: PreferencesKey.token))
+                                UserManager.instance.userId)
                               KaireteIconButton(
                                 title: 'Like',
                                 icon: 'ic_like',
@@ -381,6 +381,10 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                   controller.onReactions(
                                       postId: item.itemId ?? 0);
                                 },
+                                url: item.isReation
+                                    ? item.reactionIconUrl
+                                    : null,
+                                color: item.isReation ? Colors.blue : null,
                               ),
                             KaireteIconButton(
                               title: '${item.shareCount} Share',
@@ -451,6 +455,8 @@ class KaireteIconButton extends StatelessWidget {
     this.width,
     this.height,
     this.onTap,
+    this.color,
+    this.url,
   }) : super(key: key);
 
   final String? title;
@@ -458,9 +464,12 @@ class KaireteIconButton extends StatelessWidget {
   final double? width;
   final double? height;
   final Function? onTap;
+  final Color? color;
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
+    print(url);
     return InkWell(
       onTap: () {
         if (onTap != null) {
@@ -475,12 +484,16 @@ class KaireteIconButton extends StatelessWidget {
             border: Border.all(color: kBorderDefaultColor, width: 1)),
         child: Row(
           children: [
-            SvgIcon(
-              name: icon ?? 'ic_reply',
-              width: width ?? 21,
-              height: height ?? 16,
-              color: Colors.white,
-            ),
+            url != null
+                ? SvgIconNetwork(
+                    url: url!,
+                  )
+                : SvgIcon(
+                    name: icon ?? 'ic_reply',
+                    width: width ?? 21,
+                    height: height ?? 16,
+                    color: color ?? Colors.white,
+                  ),
             const SizedBox(
               width: 4,
             ),

@@ -63,7 +63,7 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   @override
   Future reactions({dynamic body}) async {
     final json = await appApiService.client?.requestApi(
-      path: ApiRoutes.groupComments + '${body['id']}' + '/react',
+      path: ApiRoutes.reactions + '${body['id']}' + '/react',
       method: HttpMethodCustom.POST,
       body: body,
     );

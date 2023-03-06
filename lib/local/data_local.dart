@@ -10,11 +10,15 @@ class LocalManager {
   final storage = const FlutterSecureStorage();
 
   Future save({required dynamic key, required dynamic value}) async {
-    await storage.write(key: key, value: value.toString());
+    await storage.write(
+      key: key,
+      value: value.toString(),
+    );
   }
 
   Future read({required String key}) async {
-    return await storage.read(key: key);
+    final data = await storage.read(key: key);
+    return data == null ? null : int.parse(data);
   }
 
   Future remove({required String key}) async {

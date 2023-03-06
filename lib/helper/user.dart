@@ -5,5 +5,5 @@ class UserManager {
 
   static UserManager get instance => _instance ??= UserManager._();
 
-  String? userId;
+  int? userId;
 }

@@ -43,7 +43,7 @@ class LoginController extends GetxController {
         final user = UserModel.fromJson(json);
         await LocalManager.instance
             .save(key: PreferencesKey.token, value: user.user?.userId);
-        UserManager.instance.userId = user.user?.userId.toString();
+        UserManager.instance.userId = user.user?.userId;
         Get.offAllNamed(Routes.home);
       }
     }

@@ -1,3 +1,7 @@
+import 'package:kairete/helper/user.dart';
+import 'package:get/get.dart';
+import 'package:kairete/local/master_data.dart';
+
 class BaseNewsfeedModel {
   int? newsfeedTabId;
   List<NewsfeedModel>? newsfeedItems;
@@ -88,6 +92,8 @@ class NewsfeedModel {
   int? userId;
   String? viewUrl;
   GroupItemModel? groupPostItem;
+  bool isReation = false;
+  String? reactionIconUrl;
 
   NewsfeedModel(
       {this.blogEntryItem,
@@ -140,6 +146,18 @@ class NewsfeedModel {
     user = json['User'] != null ? User.fromJson(json['User']) : null;
     userId = json['user_id'];
     viewUrl = json['view_url'];
+    if (reactions != null) {
+      final userId = UserManager.instance.userId;
+      final item =
+          reactions!.firstWhereOrNull((element) => element.userId == userId);
+      if (item != null) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == item.reactionId)
+            .imageUrl;
+        reactionIconUrl = 'https://www.kairete.net/$path';
+      }
+      isReation = item != null;
+    }
   }
 
   Map<String, dynamic> toJson() {

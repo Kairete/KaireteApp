@@ -33,23 +33,6 @@ class SvgIcon extends StatelessWidget {
   }
 }
 
-class SvgImage extends StatelessWidget {
-  const SvgImage(
-      {Key? key, required this.name, this.width, this.height, this.color})
-      : super(key: key);
-
-  final String name;
-  final double? width;
-  final double? height;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SvgPicture.asset('assets/icons/$name.svg',
-        package: 'mbpcomponents', width: width, height: height, color: color);
-  }
-}
-
 class KaireteImage extends StatelessWidget {
   const KaireteImage(
       {Key? key, required this.name, this.width, this.height, this.fit})
@@ -67,6 +50,37 @@ class KaireteImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit ?? BoxFit.cover,
+    );
+  }
+}
+
+class SvgIconNetwork extends StatelessWidget {
+  const SvgIconNetwork(
+      {Key? key,
+      required this.url,
+      this.width,
+      this.height,
+      this.color,
+      this.leftPadding})
+      : super(key: key);
+
+  final String url;
+  final double? width;
+  final double? height;
+  final Color? color;
+  final double? leftPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: leftPadding ?? 0),
+      child: SvgPicture.network(
+        url,
+        width: width,
+        height: height,
+        color: color ?? kPrimaryColor,
+        fit: BoxFit.scaleDown,
+      ),
     );
   }
 }

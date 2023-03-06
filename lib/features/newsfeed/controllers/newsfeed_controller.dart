@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
+import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
@@ -270,7 +271,7 @@ class NewsFeedController extends GetxController {
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Container(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                             border: Border.all(width: 1, color: kPrimaryColor),
                             borderRadius: BorderRadius.circular(16),
@@ -286,7 +287,7 @@ class NewsFeedController extends GetxController {
                               ),
                             ),
                             if (e.title == sortItemSelected?.title)
-                              Icon(
+                              const Icon(
                                 Icons.check,
                                 color: kPrimaryColor,
                               )
@@ -347,9 +348,57 @@ class NewsFeedController extends GetxController {
   }
 
   void onReactions({required int postId}) async {
-    final body = {'id': postId, 'reaction_id': 1};
-    final json = usecase.reactions(body: body);
+    // final body = {'id': postId, 'reaction_id': 1};
+    // final json = await usecase.reactions(body: body);
+    // if (json['success'] == true) {
+    //   fechItems();
+    // }
+    showReactionsPopup();
   }
 
   void onComment() {}
+
+  void showReactionsPopup() {
+    showKaireteBottomSheet(
+      customContent: Container(
+        margin: const EdgeInsets.only(left: 36, right: 36),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: const [
+            SvgIcon(
+              name: 'ic_like',
+              width: 30,
+              height: 30,
+            ),
+            SvgIcon(
+              name: 'ic_like',
+              width: 30,
+              height: 30,
+            ),
+            SvgIcon(
+              name: 'ic_like',
+              width: 30,
+              height: 30,
+            ),
+            SvgIcon(
+              name: 'ic_like',
+              width: 30,
+              height: 30,
+            ),
+            SvgIcon(
+              name: 'ic_like',
+              width: 30,
+              height: 30,
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
 }
