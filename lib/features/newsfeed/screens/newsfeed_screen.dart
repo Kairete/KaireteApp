@@ -371,6 +371,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                           children: [
                             KaireteIconButton(
                               title: '${item.commentCount} Replies',
+                              onTap: () {
+                                controller.toReplies();
+                              },
                             ),
                             if (item.user?.userId !=
                                 UserManager.instance.userId)
@@ -378,7 +381,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                 title: 'Like',
                                 icon: 'ic_like',
                                 onTap: () {
-                                  controller.onReactions(
+                                  controller.showReactionsPopup(
                                       postId: item.itemId ?? 0);
                                 },
                                 url: item.isReation
@@ -485,8 +488,10 @@ class KaireteIconButton extends StatelessWidget {
         child: Row(
           children: [
             url != null
-                ? SvgIconNetwork(
+                ? KaireteCacheNetworkImage(
                     url: url!,
+                    width: 20,
+                    height: 20,
                   )
                 : SvgIcon(
                     name: icon ?? 'ic_reply',

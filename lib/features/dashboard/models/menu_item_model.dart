@@ -59,7 +59,7 @@ class ReactionsIcon {
 
   ReactionsIcon.fromJson(Map<String, dynamic> json) {
     active = json['active'];
-    imageUrl = json['image_url'];
+    imageUrl = 'https://www.kairete.net/' + json['image_url'];
     reactionId = json['reaction_id'];
     title = json['title'];
   }

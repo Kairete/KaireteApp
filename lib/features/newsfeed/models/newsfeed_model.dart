@@ -154,7 +154,7 @@ class NewsfeedModel {
         final path = MasterDataManager.instance.reactionIcons
             .firstWhere((element) => element.reactionId == item.reactionId)
             .imageUrl;
-        reactionIconUrl = 'https://www.kairete.net/$path';
+        reactionIconUrl = path;
       }
       isReation = item != null;
     }

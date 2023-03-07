@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/components/kairete_icon.dart';
@@ -9,11 +10,13 @@ import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
+import 'package:kairete/local/master_data.dart';
 
 import '../../../constants/key_constant.dart';
 import '../../../local/data_local.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
+import '../screens/reply_screen.dart';
 
 class NewsFeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
@@ -347,18 +350,20 @@ class NewsFeedController extends GetxController {
         });
   }
 
-  void onReactions({required int postId}) async {
-    // final body = {'id': postId, 'reaction_id': 1};
-    // final json = await usecase.reactions(body: body);
-    // if (json['success'] == true) {
-    //   fechItems();
-    // }
-    showReactionsPopup();
+  void onReactions({required int postId, required int reactionId}) async {
+    final body = {
+      'id': postId,
+      'reaction_id': reactionId,
+    };
+    final json = await usecase.reactions(body: body);
+    if (json['success'] == true) {
+      fechItems();
+    }
   }
 
   void onComment() {}
 
-  void showReactionsPopup() {
+  void showReactionsPopup({required int postId}) {
     showKaireteBottomSheet(
       customContent: Container(
         margin: const EdgeInsets.only(left: 36, right: 36),
@@ -369,36 +374,30 @@ class NewsFeedController extends GetxController {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const [
-            SvgIcon(
-              name: 'ic_like',
-              width: 30,
-              height: 30,
-            ),
-            SvgIcon(
-              name: 'ic_like',
-              width: 30,
-              height: 30,
-            ),
-            SvgIcon(
-              name: 'ic_like',
-              width: 30,
-              height: 30,
-            ),
-            SvgIcon(
-              name: 'ic_like',
-              width: 30,
-              height: 30,
-            ),
-            SvgIcon(
-              name: 'ic_like',
-              width: 30,
-              height: 30,
-            ),
-          ],
+          children: MasterDataManager.instance.reactionIcons
+              .map(
+                (e) => InkWell(
+                  child: KaireteCacheNetworkImage(
+                    url: e.imageUrl ?? '',
+                    width: 30,
+                    height: 30,
+                  ),
+                  onTap: () {
+                    Get.back();
+                    onReactions(postId: postId, reactionId: e.reactionId ?? 1);
+                  },
+                ),
+              )
+              .toList(),
         ),
       ),
       backgroundColor: Colors.transparent,
+    );
+  }
+
+  void toReplies() {
+    Get.to(
+      () => ReplyScreen(),
     );
   }
 }
