@@ -395,9 +395,7 @@ class NewsFeedController extends GetxController {
     );
   }
 
-  void toReplies() {
-    Get.to(
-      () => ReplyScreen(),
-    );
+  void toReplies({required int? id}) {
+    Get.to(() => ReplyScreen(), arguments: {'id': id});
   }
 }

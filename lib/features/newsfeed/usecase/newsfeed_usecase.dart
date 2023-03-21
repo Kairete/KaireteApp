@@ -74,7 +74,7 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   Future comments({dynamic body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.groupComments + '${body['id']}' + '/replies',
-      method: HttpMethodCustom.POST,
+      method: HttpMethodCustom.GET,
       body: body,
     );
     return json;

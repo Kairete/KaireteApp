@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/constants/color_constant.dart';
+import 'package:kairete/features/newsfeed/controllers/reply_controller.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 
 import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
+import 'package:get/get.dart';
 
 class ReplyScreen extends StatelessWidget {
-  const ReplyScreen({Key? key}) : super(key: key);
+  ReplyScreen({Key? key}) : super(key: key);
+
+  ReplyController cotroller = Get.put(ReplyController());
 
   @override
   Widget build(BuildContext context) {
