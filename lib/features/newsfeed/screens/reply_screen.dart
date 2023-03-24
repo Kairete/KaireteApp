@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/reply_controller.dart';
@@ -11,7 +12,7 @@ import 'package:get/get.dart';
 class ReplyScreen extends StatelessWidget {
   ReplyScreen({Key? key}) : super(key: key);
 
-  ReplyController cotroller = Get.put(ReplyController());
+  ReplyController controller = Get.put(ReplyController());
 
   @override
   Widget build(BuildContext context) {
@@ -25,21 +26,26 @@ class ReplyScreen extends StatelessWidget {
       ),
       // backgroundColor: Colors.white,
       body: Container(
-        padding: EdgeInsets.all(8),
-        child: ListView.builder(
-          itemCount: 5,
-          itemBuilder: (context, index) {
-            return CommentItem(
-              child: Padding(
-                padding: EdgeInsets.only(left: 4, top: 8),
-                child: CommentItem(
-                  backgroundColor: Colors.grey.shade200,
-                  isReplyAction: false,
-                ),
-              ),
-            );
-          },
-        ),
+        padding: const EdgeInsets.all(8),
+        child: Obx(() => ListView.builder(
+              itemCount: controller.items.length,
+              itemBuilder: (context, index) {
+                final item = controller.items[index];
+                return CommentItem(
+                  content: item.messageParsed ?? '',
+                  name: item.username ??
+                      ((item.user?.customFields?.firstName ?? '') +
+                          (item.user?.customFields?.lastName ?? '')),
+                  // child: Padding(
+                  //   padding: const EdgeInsets.only(left: 4, top: 8),
+                  //   child: CommentItem(
+                  //     backgroundColor: Colors.grey.shade200,
+                  //     isReplyAction: false, content: '',
+                  //   ),
+                  // ),
+                );
+              },
+            )),
       ),
     );
   }
@@ -51,17 +57,21 @@ class CommentItem extends StatelessWidget {
     this.child,
     this.backgroundColor,
     this.isReplyAction = true,
+    required this.name,
+    required this.content,
   }) : super(key: key);
 
   final Widget? child;
   final Color? backgroundColor;
   final bool isReplyAction;
+  final String name;
+  final String content;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(
           width: 1,
@@ -74,14 +84,14 @@ class CommentItem extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              KaireteCacheNetworkImage(
+              const KaireteCacheNetworkImage(
                 url: '',
                 width: 36,
                 height: 36,
                 isCircle: true,
                 nameImage: ('AAA'),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 16,
               ),
               Expanded(
@@ -89,30 +99,37 @@ class CommentItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'asdasd',
+                      name,
                       style: kTextRegularStyle.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 4,
                     ),
-                    Text(
-                      'Davvero contenta per te Frà. Facebook mi ha a tua scelta di andartene e di emigrare su FB',
-                      maxLines: 5,
-                      overflow: TextOverflow.ellipsis,
-                      style: kTextMediumtStyle.copyWith(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400),
-                    ),
+                    // Text(
+                    //   content,
+                    //   maxLines: 5,
+                    //   overflow: TextOverflow.ellipsis,
+                    //   style: kTextMediumtStyle.copyWith(
+                    //       color: Colors.black,
+                    //       fontSize: 18,
+                    //       fontWeight: FontWeight.w400),
+                    // )0,
+                    HtmlWidget(
+                      content
+                          .replaceAll("\n", "")
+                          .replaceAll("=\\  ", "=")
+                          .replaceAll("g\\", ""),
+                      textStyle: const TextStyle(fontSize: 17),
+                    )
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(
+          const SizedBox(
             height: 8,
           ),
           Row(
@@ -124,7 +141,7 @@ class CommentItem extends StatelessWidget {
                 onTap: () {},
               ),
               if (isReplyAction)
-                SizedBox(
+                const SizedBox(
                   width: 8,
                 ),
               if (isReplyAction)

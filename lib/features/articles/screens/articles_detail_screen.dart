@@ -37,7 +37,7 @@ class ArticlesDetailScreen extends StatelessWidget {
                 controller.item?.title ?? '',
                 style: kTextTitle.copyWith(color: kTextCriticalColor),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 8,
               ),
               RichText(
@@ -79,7 +79,7 @@ class ArticlesDetailScreen extends StatelessWidget {
                         .replaceAll("=\\  ", "=")
                         .replaceAll("g\\", "") ??
                     '',
-                textStyle: TextStyle(fontSize: 17),
+                textStyle: const TextStyle(fontSize: 17),
               ),
               const SizedBox(
                 height: 16,

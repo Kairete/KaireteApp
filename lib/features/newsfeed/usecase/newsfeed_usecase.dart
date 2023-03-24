@@ -9,7 +9,7 @@ abstract class NewsFeedUsecase {
   Future search({dynamic body});
   Future filter({dynamic body});
   Future reactions({dynamic body});
-  Future comments({dynamic body});
+  Future comments({dynamic body, required String path});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -71,9 +71,9 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   }
 
   @override
-  Future comments({dynamic body}) async {
+  Future comments({dynamic body, required String path}) async {
     final json = await appApiService.client?.requestApi(
-      path: ApiRoutes.groupComments + '${body['id']}' + '/replies',
+      path: 'api/' + path,
       method: HttpMethodCustom.GET,
       body: body,
     );

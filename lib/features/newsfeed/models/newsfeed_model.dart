@@ -94,6 +94,7 @@ class NewsfeedModel {
   GroupItemModel? groupPostItem;
   bool isReation = false;
   String? reactionIconUrl;
+  ContentTypeNewFeed? type;
 
   NewsfeedModel(
       {this.blogEntryItem,
@@ -157,6 +158,32 @@ class NewsfeedModel {
         reactionIconUrl = path;
       }
       isReation = item != null;
+    }
+    if (contentType != null) {
+      switch (contentType) {
+        case 'thread':
+          type = ContentTypeNewFeed.thread;
+          break;
+        case 'profile_post':
+          type = ContentTypeNewFeed.profilePost;
+          break;
+        case 'tl_group_post':
+          type = ContentTypeNewFeed.tlGroupPost;
+          break;
+        case 'xfmg_media':
+          type = ContentTypeNewFeed.media;
+          break;
+        case 'xfmg_album':
+          type = ContentTypeNewFeed.album;
+          break;
+        case 'ubs_blog_entry':
+          type = ContentTypeNewFeed.blogEntry;
+          break;
+        case 'ams_article':
+          type = ContentTypeNewFeed.article;
+          break;
+        default:
+      }
     }
   }
 
@@ -842,14 +869,14 @@ class GroupItemModel {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['can_comment'] = this.canComment;
-    data['can_delete'] = this.canDelete;
-    data['can_edit'] = this.canEdit;
-    data['can_react'] = this.canReact;
-    data['comment_count'] = this.commentCount;
-    data['first_comment_id'] = this.firstCommentId;
-    if (this.firstComment != null) {
-      data['FirstComment'] = this.firstComment!.toJson();
+    data['can_comment'] = canComment;
+    data['can_delete'] = canDelete;
+    data['can_edit'] = canEdit;
+    data['can_react'] = canReact;
+    data['comment_count'] = commentCount;
+    data['first_comment_id'] = firstCommentId;
+    if (firstComment != null) {
+      data['FirstComment'] = firstComment!.toJson();
     }
     return data;
   }
@@ -958,41 +985,41 @@ class FirstComment {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['attach_count'] = this.attachCount;
-    if (this.attachments != null) {
-      data['Attachments'] = this.attachments!.map((v) => v.toJson()).toList();
+    data['attach_count'] = attachCount;
+    if (attachments != null) {
+      data['Attachments'] = attachments!.map((v) => v.toJson()).toList();
     }
-    data['can_delete'] = this.canDelete;
-    data['can_edit'] = this.canEdit;
-    data['can_react'] = this.canReact;
-    data['can_reply'] = this.canReply;
-    data['can_report'] = this.canReport;
-    data['comment_date'] = this.commentDate;
-    data['comment_id'] = this.commentId;
-    data['comment_level'] = this.commentLevel;
-    data['content_id'] = this.contentId;
-    data['content_type'] = this.contentType;
-    data['edit_count'] = this.editCount;
-    if (this.embedMetadata != null) {
-      data['embed_metadata'] = this.embedMetadata!.toJson();
+    data['can_delete'] = canDelete;
+    data['can_edit'] = canEdit;
+    data['can_react'] = canReact;
+    data['can_reply'] = canReply;
+    data['can_report'] = canReport;
+    data['comment_date'] = commentDate;
+    data['comment_id'] = commentId;
+    data['comment_level'] = commentLevel;
+    data['content_id'] = contentId;
+    data['content_type'] = contentType;
+    data['edit_count'] = editCount;
+    if (embedMetadata != null) {
+      data['embed_metadata'] = embedMetadata!.toJson();
     }
-    data['has_more_replies'] = this.hasMoreReplies;
-    data['is_ignored'] = this.isIgnored;
-    data['is_reacted_to'] = this.isReactedTo;
-    data['last_edit_date'] = this.lastEditDate;
-    data['last_edit_user_id'] = this.lastEditUserId;
-    data['message'] = this.message;
-    data['message_parsed'] = this.messageParsed;
-    data['message_plain_text'] = this.messagePlainText;
-    data['parent_id'] = this.parentId;
-    data['reaction_score'] = this.reactionScore;
-    data['reply_count'] = this.replyCount;
-    if (this.user != null) {
-      data['User'] = this.user!.toJson();
+    data['has_more_replies'] = hasMoreReplies;
+    data['is_ignored'] = isIgnored;
+    data['is_reacted_to'] = isReactedTo;
+    data['last_edit_date'] = lastEditDate;
+    data['last_edit_user_id'] = lastEditUserId;
+    data['message'] = message;
+    data['message_parsed'] = messageParsed;
+    data['message_plain_text'] = messagePlainText;
+    data['parent_id'] = parentId;
+    data['reaction_score'] = reactionScore;
+    data['reply_count'] = replyCount;
+    if (user != null) {
+      data['User'] = user!.toJson();
     }
-    data['user_id'] = this.userId;
-    data['username'] = this.username;
-    data['view_url'] = this.viewUrl;
+    data['user_id'] = userId;
+    data['username'] = username;
+    data['view_url'] = viewUrl;
     return data;
   }
 }
@@ -1010,8 +1037,8 @@ class EmbedMetadata {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.attachments != null) {
-      data['attachments'] = this.attachments!.toJson();
+    if (attachments != null) {
+      data['attachments'] = attachments!.toJson();
     }
     return data;
   }
@@ -1108,22 +1135,32 @@ class Group {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['album_count'] = this.albumCount;
-    data['allow_guest_posting'] = this.allowGuestPosting;
-    data['always_moderate_join'] = this.alwaysModerateJoin;
-    data['avatar_url'] = this.avatarUrl;
-    data['can_delete'] = this.canDelete;
-    data['can_edit'] = this.canEdit;
-    data['can_edit_tags'] = this.canEditTags;
-    data['can_hard_delete'] = this.canHardDelete;
-    data['can_join'] = this.canJoin;
-    data['can_leave'] = this.canLeave;
-    data['can_manage_avatar'] = this.canManageAvatar;
-    data['can_manage_cover'] = this.canManageCover;
-    data['can_post'] = this.canPost;
-    if (this.category != null) {
-      data['Category'] = this.category!.toJson();
+    data['album_count'] = albumCount;
+    data['allow_guest_posting'] = allowGuestPosting;
+    data['always_moderate_join'] = alwaysModerateJoin;
+    data['avatar_url'] = avatarUrl;
+    data['can_delete'] = canDelete;
+    data['can_edit'] = canEdit;
+    data['can_edit_tags'] = canEditTags;
+    data['can_hard_delete'] = canHardDelete;
+    data['can_join'] = canJoin;
+    data['can_leave'] = canLeave;
+    data['can_manage_avatar'] = canManageAvatar;
+    data['can_manage_cover'] = canManageCover;
+    data['can_post'] = canPost;
+    if (category != null) {
+      data['Category'] = category!.toJson();
     }
     return data;
   }
+}
+
+enum ContentTypeNewFeed {
+  thread,
+  profilePost,
+  tlGroupPost,
+  media,
+  album,
+  blogEntry,
+  article,
 }

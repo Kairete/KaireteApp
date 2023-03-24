@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
-import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
@@ -11,9 +10,6 @@ import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/local/master_data.dart';
-
-import '../../../constants/key_constant.dart';
-import '../../../local/data_local.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
 import '../screens/reply_screen.dart';
@@ -395,7 +391,8 @@ class NewsFeedController extends GetxController {
     );
   }
 
-  void toReplies({required int? id}) {
-    Get.to(() => ReplyScreen(), arguments: {'id': id});
+  void toReplies({required NewsfeedModel item}) {
+    print(item.type);
+    Get.to(() => ReplyScreen(), arguments: {'item': item});
   }
 }

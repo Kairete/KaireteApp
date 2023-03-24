@@ -372,7 +372,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                             KaireteIconButton(
                               title: '${item.commentCount} Replies',
                               onTap: () {
-                                controller.toReplies(id: item.contentId);
+                                controller.toReplies(item: item);
                               },
                             ),
                             if (item.user?.userId !=
