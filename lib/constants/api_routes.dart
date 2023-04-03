@@ -15,9 +15,11 @@ class ApiRoutes {
   static const nodeList = 'api/nodes';
   static const nodeDetail = 'api/forums/';
   static const createThread = 'api/threads';
+  static const reactionThread = 'api/posts/';
   static const reactions = 'api/newsfeed-items/';
   static const groupComments = 'api/profile-post-comments/';
   static const reactionIcons = 'api/reactions/';
+
   static const commentsLv2 = 'api/newsfeed-comments/';
   static const commentsLv1 = 'api/newsfeed-items/';
 }

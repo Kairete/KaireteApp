@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kairete/constants/color_constant.dart';
-import 'package:kairete/features/newsfeed/screens/reply_screen.dart';
+import 'package:get/get.dart';
 
 import '../../../components/kairete_button.dart';
 import '../../../components/kairete_form.dart';
 import '../../../constants/color.dart';
+import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
-import 'package:get/get.dart';
+import '../../newsfeed/screens/reply_screen.dart';
+import '../controllers/thread_reply_controller.dart';
 
-import '../controllers/sub_reply_controller.dart';
+class ThreadReplyScreen extends StatelessWidget {
+  ThreadReplyScreen({Key? key}) : super(key: key);
 
-class SubReplyScreen extends StatelessWidget {
-  SubReplyScreen({Key? key}) : super(key: key);
-
-  SubreplyController controller = Get.put(SubreplyController());
+  ThreadReplyController controller = Get.put(ThreadReplyController());
 
   @override
   Widget build(BuildContext context) {
@@ -86,11 +85,11 @@ class SubReplyScreen extends StatelessWidget {
                                     content: item.messageParsed ?? '',
                                     name: item.user?.username ?? '',
                                     avatar: item.user?.avatarUrls?.h,
-                                    isLikeAction: item.canReact ?? true,
                                     isReplyAction: false,
                                     backgroundColor: const Color(0xFFF5F5F5),
                                     reactions: item.reactions,
                                     urlReaction: item.reactionIconUrl,
+                                    isLikeAction: item.canReact ?? true,
                                     onTapLike: () {
                                       controller.showReactions(
                                           commentId: item.commentId ?? 0);

@@ -6,14 +6,10 @@ abstract class ForumUsecase {
   Future nodeList({dynamic body});
   Future nodeDetail({dynamic body});
   Future createThread({dynamic body});
+  Future reactions({dynamic body});
 }
 
 class IForumUsecase extends BaseClient implements ForumUsecase {
-  @override
-  void onCreate({userId}) {
-    appApiService.create(isShowErrorPopup: isShowPopupError, userId: '1');
-  }
-
   @override
   Future nodeList({body}) async {
     final json = await appApiService.client?.requestApi(
@@ -38,6 +34,16 @@ class IForumUsecase extends BaseClient implements ForumUsecase {
   Future createThread({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.createThread,
+      body: body,
+      method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future reactions({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.reactionThread + body['id'].toString() + '/react',
       body: body,
       method: HttpMethodCustom.POST,
     );

@@ -386,7 +386,6 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                 url: item.isReation
                                     ? item.reactionIconUrl
                                     : null,
-                                // color: item.isReation ? Colors.blue : null,
                               ),
                             KaireteIconButton(
                               title: '${item.shareCount} Share',

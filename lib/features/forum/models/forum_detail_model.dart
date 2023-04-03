@@ -1,3 +1,7 @@
+import 'package:get/get.dart';
+
+import '../../../helper/user.dart';
+import '../../../local/master_data.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 
 class ForumDetailModel {
@@ -67,6 +71,8 @@ class Threads {
   String? viewUrl;
   int? visitorPostCount;
   String? message;
+  bool isReation = false;
+  String? reactionIconUrl;
 
   Threads(
       {this.canEdit,
@@ -152,6 +158,18 @@ class Threads {
     viewCount = json['view_count'];
     viewUrl = json['view_url'];
     visitorPostCount = json['visitor_post_count'];
+    if (reactions != null) {
+      final userId = UserManager.instance.userId;
+      final item =
+          reactions!.firstWhereOrNull((element) => element.userId == userId);
+      if (item != null) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == item.reactionId)
+            .imageUrl;
+        reactionIconUrl = path;
+      }
+      isReation = item != null;
+    }
   }
 
   Map<String, dynamic> toJson() {

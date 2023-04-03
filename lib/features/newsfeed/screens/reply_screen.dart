@@ -71,6 +71,7 @@ class ReplyScreen extends StatelessWidget {
                             },
                             urlReaction: item.reactionIconUrl,
                             reactions: item.reactions,
+                            isLikeAction: item.canReact ?? true,
                             onTapLike: () {
                               controller.showReactions(
                                   commentId: item.commentId ?? 0);
@@ -106,6 +107,7 @@ class CommentItem extends StatelessWidget {
     this.isBorder = false,
     this.reactions,
     this.urlReaction,
+    this.isLikeAction = true,
   }) : super(key: key);
 
   final Widget? child;
@@ -119,6 +121,7 @@ class CommentItem extends StatelessWidget {
   final bool isBorder;
   final List<Reactions>? reactions;
   final String? urlReaction;
+  final bool isLikeAction;
 
   @override
   Widget build(BuildContext context) {
@@ -172,18 +175,19 @@ class CommentItem extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              KaireteIconButton(
-                title: 'Like',
-                icon: 'ic_like',
-                color: backgroundColor ?? Colors.white,
-                textColor: kPrimaryColor,
-                url: urlReaction,
-                onTap: () {
-                  if (onTapLike != null) {
-                    onTapLike!();
-                  }
-                },
-              ),
+              if (isLikeAction)
+                KaireteIconButton(
+                  title: 'Like',
+                  icon: 'ic_like',
+                  color: backgroundColor ?? Colors.white,
+                  textColor: kPrimaryColor,
+                  url: urlReaction,
+                  onTap: () {
+                    if (onTapLike != null) {
+                      onTapLike!();
+                    }
+                  },
+                ),
               if (isReplyAction)
                 const SizedBox(
                   width: 8,

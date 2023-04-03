@@ -150,14 +150,13 @@ class BlogScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // KaireteIconButton(
-                            //   title: '${item.commentCount} Replies',
-                            //   onTap: () {
-                            //     // controller.toReplies(item: item);
-                            //   },
-                            // ),
-                            if (item.user?.userId !=
-                                UserManager.instance.userId)
+                            KaireteIconButton(
+                              title: 'Replies',
+                              onTap: () {
+                                controller.toComment(item: item);
+                              },
+                            ),
+                            if (item.canReact ?? true)
                               KaireteIconButton(
                                 title: 'Like',
                                 icon: 'ic_like',
@@ -168,12 +167,11 @@ class BlogScreen extends StatelessWidget {
                                 url: item.isReation
                                     ? item.reactionIconUrl
                                     : null,
-                                // color: item.isReation ? Colors.blue : null,
                               ),
-                            // KaireteIconButton(
-                            //   title: '${item.shareCount} Share',
-                            //   icon: 'ic_share',
-                            // ),
+                            KaireteIconButton(
+                              title: 'Share',
+                              icon: 'ic_share',
+                            ),
                           ],
                         ),
                       ),

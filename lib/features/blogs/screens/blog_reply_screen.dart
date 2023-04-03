@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kairete/constants/color_constant.dart';
-import 'package:kairete/features/newsfeed/screens/reply_screen.dart';
+import 'package:get/get.dart';
+import 'package:kairete/features/blogs/controllers/blog_reply_controller.dart';
 
 import '../../../components/kairete_button.dart';
 import '../../../components/kairete_form.dart';
 import '../../../constants/color.dart';
+import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
-import 'package:get/get.dart';
+import '../../newsfeed/screens/reply_screen.dart';
 
-import '../controllers/sub_reply_controller.dart';
+class BlogReplyScreen extends StatelessWidget {
+  BlogReplyScreen({Key? key}) : super(key: key);
 
-class SubReplyScreen extends StatelessWidget {
-  SubReplyScreen({Key? key}) : super(key: key);
-
-  SubreplyController controller = Get.put(SubreplyController());
+  BlogReplyController controller = Get.put(BlogReplyController());
 
   @override
   Widget build(BuildContext context) {

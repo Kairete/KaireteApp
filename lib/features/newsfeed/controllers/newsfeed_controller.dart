@@ -374,17 +374,9 @@ class NewsFeedController extends GetxController {
   void onComment() {}
 
   void showReactionPopup({required NewsfeedModel item}) {
-    print(item.type);
     showReactionsPopup(
       onBack: (reactionId) {
-        switch (item.type) {
-          case ContentTypeNewFeed.blogEntry:
-            onReactionsBlog(reactionId: reactionId, blogId: item.itemId ?? 0);
-            break;
-          default:
-            onReactions(postId: item.itemId ?? 0, reactionId: reactionId);
-            break;
-        }
+        onReactions(postId: item.itemId ?? 0, reactionId: reactionId);
       },
     );
   }

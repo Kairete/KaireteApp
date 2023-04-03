@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kairete/features/blogs/screens/blog_comment_screen.dart';
 import 'package:kairete/features/blogs/screens/blog_detail_screen.dart';
 import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
 import '../../../components/kairete_popup.dart';
@@ -56,5 +57,11 @@ class BlogController extends GetxController {
     if (json != null) {
       fetchItems();
     }
+  }
+
+  void toComment({required BlogEntryItem item}) {
+    Get.to(() => BlogCommentScreen(), arguments: {
+      'item': item,
+    });
   }
 }

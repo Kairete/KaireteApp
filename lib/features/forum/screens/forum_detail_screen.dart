@@ -7,6 +7,7 @@ import '../../../components/reactions_view.dart';
 import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
+import '../../../helper/user.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 
 // ignore: must_be_immutable
@@ -170,6 +171,20 @@ class ForumDetailScreen extends StatelessWidget {
                                     children: [
                                       KaireteIconButton(
                                         title: '${item.replyCount ?? 0}',
+                                        onTap: () {
+                                          controller.toComment(item: item);
+                                        },
+                                      ),
+                                      KaireteIconButton(
+                                        title: 'Like',
+                                        icon: 'ic_like',
+                                        onTap: () {
+                                          controller.showReactionPopup(
+                                              item: item);
+                                        },
+                                        url: item.isReation
+                                            ? item.reactionIconUrl
+                                            : null,
                                       ),
                                       KaireteIconButton(
                                         title: '${item.viewCount ?? 0}',
