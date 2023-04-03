@@ -20,6 +20,8 @@ class NewsfeedSearchController extends GetxController {
   }
 
   void toDetail({required NewsfeedModel item}) {
-    Get.to(() => NewsfeedDetailScreen(), arguments: {'item': item});
+    Get.to(() => NewsfeedDetailScreen(), arguments: {
+      'item': item,
+    });
   }
 }

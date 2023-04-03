@@ -24,7 +24,7 @@ class ReactionsItemView extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 width: 1,
-                color: kBorderDefaultColor,
+                color: const Color(0xFFE7E7E7),
               ),
               color: kECECEC,
             ),

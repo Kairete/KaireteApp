@@ -381,13 +381,12 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                                 title: 'Like',
                                 icon: 'ic_like',
                                 onTap: () {
-                                  controller.showReactionsPopup(
-                                      postId: item.itemId ?? 0);
+                                  controller.showReactionPopup(item: item);
                                 },
                                 url: item.isReation
                                     ? item.reactionIconUrl
                                     : null,
-                                color: item.isReation ? Colors.blue : null,
+                                // color: item.isReation ? Colors.blue : null,
                               ),
                             KaireteIconButton(
                               title: '${item.shareCount} Share',
@@ -460,6 +459,7 @@ class KaireteIconButton extends StatelessWidget {
     this.onTap,
     this.color,
     this.url,
+    this.textColor,
   }) : super(key: key);
 
   final String? title;
@@ -468,6 +468,7 @@ class KaireteIconButton extends StatelessWidget {
   final double? height;
   final Function? onTap;
   final Color? color;
+  final Color? textColor;
   final String? url;
 
   @override
@@ -483,8 +484,8 @@ class KaireteIconButton extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: kPrimaryColor,
-            border: Border.all(color: kBorderDefaultColor, width: 1)),
+            color: color ?? kPrimaryColor,
+            border: Border.all(color: color ?? kBorderDefaultColor, width: 1)),
         child: Row(
           children: [
             url != null
@@ -497,7 +498,7 @@ class KaireteIconButton extends StatelessWidget {
                     name: icon ?? 'ic_reply',
                     width: width ?? 21,
                     height: height ?? 16,
-                    color: color ?? Colors.white,
+                    color: textColor ?? Colors.white,
                   ),
             const SizedBox(
               width: 4,
@@ -507,7 +508,7 @@ class KaireteIconButton extends StatelessWidget {
               style: kTextRegularStyle.copyWith(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: textColor ?? Colors.white,
               ),
             ),
           ],

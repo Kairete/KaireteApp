@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/components/cache_image.dart';
-import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/features/newsfeed/controllers/reply_controller.dart';
+import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 
+import '../../../components/kairete_button.dart';
+import '../../../components/kairete_form.dart';
+import '../../../components/reactions_view.dart';
 import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
 import 'package:get/get.dart';
@@ -23,29 +26,67 @@ class ReplyScreen extends StatelessWidget {
           'Replies',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
+        actions: [
+          Obx(() => KairetePrimaryButton(
+                onTap: () {
+                  controller.postComent();
+                },
+                title: 'POST',
+                width: 100,
+                state: controller.isEnable.value
+                    ? StateButton.active
+                    : StateButton.disable,
+              ))
+        ],
       ),
       // backgroundColor: Colors.white,
-      body: Container(
-        padding: const EdgeInsets.all(8),
-        child: Obx(() => ListView.builder(
-              itemCount: controller.items.length,
-              itemBuilder: (context, index) {
-                final item = controller.items[index];
-                return CommentItem(
-                  content: item.messageParsed ?? '',
-                  name: item.username ??
-                      ((item.user?.customFields?.firstName ?? '') +
-                          (item.user?.customFields?.lastName ?? '')),
-                  // child: Padding(
-                  //   padding: const EdgeInsets.only(left: 4, top: 8),
-                  //   child: CommentItem(
-                  //     backgroundColor: Colors.grey.shade200,
-                  //     isReplyAction: false, content: '',
-                  //   ),
-                  // ),
-                );
-              },
-            )),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: KaireteTextField(
+                onChanged: (value) {
+                  controller.textOnChanged(text: value);
+                },
+                hint: 'Write something…',
+                maxLine: 3,
+                borderColor: kPrimaryColor,
+                controller: controller.textEditingController,
+              ),
+            ),
+            Obx(() => Expanded(
+                  child: ListView.builder(
+                    itemCount: controller.items.length,
+                    itemBuilder: (context, index) {
+                      final item = controller.items[index];
+                      return Column(
+                        children: [
+                          CommentItem(
+                            content: item.messageParsed ?? '',
+                            name: item.user?.username ?? 'Unknown',
+                            avatar: item.user?.avatarUrls?.h,
+                            onTapReply: () {
+                              controller.toSubReply(item: item);
+                            },
+                            urlReaction: item.reactionIconUrl,
+                            reactions: item.reactions,
+                            onTapLike: () {
+                              controller.showReactions(
+                                  commentId: item.commentId ?? 0);
+                            },
+                          ),
+                          Container(
+                            height: 0.5,
+                            color: Colors.grey,
+                          )
+                        ],
+                      );
+                    },
+                  ),
+                )),
+          ],
+        ),
       ),
     );
   }
@@ -59,6 +100,12 @@ class CommentItem extends StatelessWidget {
     this.isReplyAction = true,
     required this.name,
     required this.content,
+    this.avatar,
+    this.onTapReply,
+    this.onTapLike,
+    this.isBorder = false,
+    this.reactions,
+    this.urlReaction,
   }) : super(key: key);
 
   final Widget? child;
@@ -66,30 +113,29 @@ class CommentItem extends StatelessWidget {
   final bool isReplyAction;
   final String name;
   final String content;
+  final String? avatar;
+  final Function? onTapReply;
+  final Function? onTapLike;
+  final bool isBorder;
+  final List<Reactions>? reactions;
+  final String? urlReaction;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          width: 1,
-          color: kBorderDefaultColor,
-        ),
-        color: backgroundColor,
-      ),
+      padding: const EdgeInsets.all(8),
+      color: backgroundColor ?? Colors.white,
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const KaireteCacheNetworkImage(
-                url: '',
+              KaireteCacheNetworkImage(
+                url: avatar ?? '',
                 width: 36,
                 height: 36,
                 isCircle: true,
-                nameImage: ('AAA'),
+                nameImage: name,
               ),
               const SizedBox(
                 width: 16,
@@ -108,15 +154,6 @@ class CommentItem extends StatelessWidget {
                     const SizedBox(
                       height: 4,
                     ),
-                    // Text(
-                    //   content,
-                    //   maxLines: 5,
-                    //   overflow: TextOverflow.ellipsis,
-                    //   style: kTextMediumtStyle.copyWith(
-                    //       color: Colors.black,
-                    //       fontSize: 18,
-                    //       fontWeight: FontWeight.w400),
-                    // )0,
                     HtmlWidget(
                       content
                           .replaceAll("\n", "")
@@ -138,7 +175,14 @@ class CommentItem extends StatelessWidget {
               KaireteIconButton(
                 title: 'Like',
                 icon: 'ic_like',
-                onTap: () {},
+                color: backgroundColor ?? Colors.white,
+                textColor: kPrimaryColor,
+                url: urlReaction,
+                onTap: () {
+                  if (onTapLike != null) {
+                    onTapLike!();
+                  }
+                },
               ),
               if (isReplyAction)
                 const SizedBox(
@@ -147,12 +191,23 @@ class CommentItem extends StatelessWidget {
               if (isReplyAction)
                 KaireteIconButton(
                   title: 'Reply',
-                  onTap: () {},
+                  onTap: () {
+                    if (onTapReply != null) {
+                      onTapReply!();
+                    }
+                  },
                   width: 60,
+                  color: backgroundColor ?? Colors.white,
+                  textColor: kPrimaryColor,
                 ),
             ],
           ),
-          if (child != null) child!
+          if (child != null) child!,
+          if (reactions != null) ReactionsItemView(reactions: reactions ?? []),
+          if (reactions != null)
+            const SizedBox(
+              height: 8,
+            ),
         ],
       ),
     );

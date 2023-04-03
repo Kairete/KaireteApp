@@ -1,15 +1,22 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment_model.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 
+import '../../../components/kairete_popup.dart';
+import '../screens/sub_reply_screen.dart';
+
 class ReplyController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
   NewsfeedModel? item;
 
+  TextEditingController textEditingController = TextEditingController();
+
   CommentModel? comment;
   var items = <Comment>[].obs;
+  var isEnable = false.obs;
 
   @override
   void onInit() {
@@ -22,34 +29,60 @@ class ReplyController extends GetxController {
     if (item == null) {
       return;
     }
-    String path = '';
-    final id = item!.contentId;
-    switch (item!.type) {
-      case ContentTypeNewFeed.thread:
-        path = 'threads/$id/posts';
-        break;
-      case ContentTypeNewFeed.profilePost:
-        path = 'profile-posts/$id/comments';
-        break;
-      case ContentTypeNewFeed.tlGroupPost:
-        path = 'group-posts/$id/comments';
-        break;
-      case ContentTypeNewFeed.media:
-        path = 'media/$id/comments';
-        break;
-      case ContentTypeNewFeed.album:
-        path = 'media-albums/$id/comments';
-        break;
-      case ContentTypeNewFeed.blogEntry:
-        path = 'blog-entries/$id/comments';
-        break;
-      case ContentTypeNewFeed.article:
-        path = 'articles/$id/comments';
-        break;
-      default:
-    }
-    final json = await usecase.comments(body: null, path: path);
+    final json = await usecase.comments(
+      body: null,
+      id: item!.itemId ?? 0,
+    );
     comment = CommentModel.fromJson(json);
-    items.value = comment?.comments ?? [];
+    final data = comment?.comments ?? [];
+    items.value = data;
+  }
+
+  void toSubReply({required Comment item}) {
+    Get.to(() => SubReplyScreen(), arguments: {
+      'item': item,
+      'type': this.item?.contentType,
+    });
+  }
+
+  void textOnChanged({required text}) {
+    isEnable.value = text.isNotEmpty;
+  }
+
+  void postComent() async {
+    if (textEditingController.text.isEmpty) {
+      return;
+    }
+    final body = {
+      'message': textEditingController.text,
+      'id': item!.itemId,
+    };
+    final json = await usecase.postCommentsLv1(body: body);
+    if (json != null) {
+      fetchItems();
+    }
+  }
+
+  void showReactions({required int commentId}) {
+    showReactionsPopup(
+      onBack: (reactionId) {
+        onReaction(
+          reactionId: reactionId,
+          commentId: commentId,
+        );
+      },
+    );
+  }
+
+  void onReaction({required int reactionId, required int commentId}) async {
+    final body = {
+      'id': commentId,
+      'reaction_id': reactionId,
+      'content_type': item!.contentType,
+    };
+    final json = await usecase.reactionsComment(body: body);
+    if (json != null) {
+      fetchItems();
+    }
   }
 }

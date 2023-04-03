@@ -236,6 +236,8 @@ class BlogEntryItem {
   String? title;
   User? user;
   String? viewUrl;
+  bool isReation = false;
+  String? reactionIconUrl;
 
   BlogEntryItem(
       {this.attachments,
@@ -287,6 +289,18 @@ class BlogEntryItem {
     title = json['title'];
     user = json['User'] != null ? User.fromJson(json['User']) : null;
     viewUrl = json['view_url'];
+    if (reactions != null) {
+      final userId = UserManager.instance.userId;
+      final item =
+          reactions!.firstWhereOrNull((element) => element.userId == userId);
+      if (item != null) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == item.reactionId)
+            .imageUrl;
+        reactionIconUrl = path;
+      }
+      isReation = item != null;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -320,6 +334,7 @@ class BlogEntryItem {
       data['User'] = user!.toJson();
     }
     data['view_url'] = viewUrl;
+
     return data;
   }
 }

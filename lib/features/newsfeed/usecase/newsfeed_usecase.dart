@@ -9,7 +9,14 @@ abstract class NewsFeedUsecase {
   Future search({dynamic body});
   Future filter({dynamic body});
   Future reactions({dynamic body});
-  Future comments({dynamic body, required String path});
+  Future comments({
+    dynamic body,
+    required int id,
+  });
+  Future postCommentsLv1({dynamic body});
+  Future commentsLv2({dynamic body});
+  Future postComments({dynamic body});
+  Future reactionsComment({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -71,10 +78,56 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   }
 
   @override
-  Future comments({dynamic body, required String path}) async {
+  Future comments({
+    dynamic body,
+    required int id,
+  }) async {
+    final path = '$id/comments';
     final json = await appApiService.client?.requestApi(
-      path: 'api/' + path,
+      path: ApiRoutes.commentsLv1 + path,
       method: HttpMethodCustom.GET,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future commentsLv2({dynamic body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.commentsLv2 + '${body['id']}' + '/replies',
+      method: HttpMethodCustom.GET,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future postComments({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.commentsLv2 + '${body['id']}' + '/replies',
+      method: HttpMethodCustom.POST,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future postCommentsLv1({body}) async {
+    final path = '${body['id']}/comments';
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.commentsLv1 + path,
+      method: HttpMethodCustom.POST,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future reactionsComment({body}) async {
+    final path = '${body['id']}/react';
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.commentsLv2 + path,
+      method: HttpMethodCustom.POST,
       body: body,
     );
     return json;

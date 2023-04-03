@@ -53,7 +53,7 @@ const kIconHighlightColor = Color(0xFF367CF8);
 const kIconPrimaryColor = Color(0xFF0BA4EE);
 
 //border
-const kBorderDefaultColor = Color(0xFFE6E8F0);
+const kBorderDefaultColor = Color(0xFFDFDFDF);
 const kBorderSubduedColor = Color(0xFFEDEFF5);
 const kBorderDividerColor = Color(0xFFD8DAE5);
 const kBorderDisabledColor = Color(0xFFEDEFF5);

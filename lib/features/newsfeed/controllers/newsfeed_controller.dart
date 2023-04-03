@@ -6,16 +6,19 @@ import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
+import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/local/master_data.dart';
+import '../../../components/kairete_popup.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
 import '../screens/reply_screen.dart';
 
 class NewsFeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
+  BlogUsecase blogUsecase = IBlogUsecase();
   var items = <NewsfeedModel>[].obs;
   final filterItems = [
     NewsfeedFilterModel(title: 'Your content'),
@@ -357,42 +360,36 @@ class NewsFeedController extends GetxController {
     }
   }
 
+  void onReactionsBlog({required int reactionId, required int blogId}) async {
+    final body = {
+      'id': blogId,
+      'reaction_id': reactionId,
+    };
+    final json = await blogUsecase.reactions(body: body);
+    if (json != null) {
+      fechItems();
+    }
+  }
+
   void onComment() {}
 
-  void showReactionsPopup({required int postId}) {
-    showKaireteBottomSheet(
-      customContent: Container(
-        margin: const EdgeInsets.only(left: 36, right: 36),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: MasterDataManager.instance.reactionIcons
-              .map(
-                (e) => InkWell(
-                  child: KaireteCacheNetworkImage(
-                    url: e.imageUrl ?? '',
-                    width: 30,
-                    height: 30,
-                  ),
-                  onTap: () {
-                    Get.back();
-                    onReactions(postId: postId, reactionId: e.reactionId ?? 1);
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
-      backgroundColor: Colors.transparent,
+  void showReactionPopup({required NewsfeedModel item}) {
+    print(item.type);
+    showReactionsPopup(
+      onBack: (reactionId) {
+        switch (item.type) {
+          case ContentTypeNewFeed.blogEntry:
+            onReactionsBlog(reactionId: reactionId, blogId: item.itemId ?? 0);
+            break;
+          default:
+            onReactions(postId: item.itemId ?? 0, reactionId: reactionId);
+            break;
+        }
+      },
     );
   }
 
   void toReplies({required NewsfeedModel item}) {
-    print(item.type);
     Get.to(() => ReplyScreen(), arguments: {'item': item});
   }
 }

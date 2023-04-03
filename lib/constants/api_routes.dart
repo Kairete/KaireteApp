@@ -18,4 +18,6 @@ class ApiRoutes {
   static const reactions = 'api/newsfeed-items/';
   static const groupComments = 'api/profile-post-comments/';
   static const reactionIcons = 'api/reactions/';
+  static const commentsLv2 = 'api/newsfeed-comments/';
+  static const commentsLv1 = 'api/newsfeed-items/';
 }

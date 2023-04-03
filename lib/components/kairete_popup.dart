@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 
 import '../constants/color_constant.dart';
 import '../constants/font_constant.dart';
+import '../local/master_data.dart';
+import 'cache_image.dart';
+import 'kairete_bottom_sheet.dart';
 import 'kairete_button.dart';
 
 class KairetePopUpDefault extends StatelessWidget {
@@ -138,4 +141,36 @@ void showKairetePopup(
       ),
       barrierDismissible: barrierDismissible,
       transitionDuration: const Duration(milliseconds: 300));
+}
+
+showReactionsPopup({required Function(int reactionId) onBack}) {
+  showKaireteBottomSheet(
+    customContent: Container(
+      margin: const EdgeInsets.only(left: 36, right: 36),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: MasterDataManager.instance.reactionIcons
+            .map(
+              (e) => InkWell(
+                child: KaireteCacheNetworkImage(
+                  url: e.imageUrl ?? '',
+                  width: 30,
+                  height: 30,
+                ),
+                onTap: () {
+                  Get.back();
+                  onBack(e.reactionId ?? 1);
+                },
+              ),
+            )
+            .toList(),
+      ),
+    ),
+    backgroundColor: Colors.transparent,
+  );
 }
