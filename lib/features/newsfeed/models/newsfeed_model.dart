@@ -118,8 +118,8 @@ class NewsfeedModel {
       this.viewUrl});
 
   NewsfeedModel.fromJson(Map<String, dynamic> json) {
-    blogEntryItem = json['BlogEntryItem'] != null
-        ? BlogEntryItem.fromJson(json['BlogEntryItem'])
+    blogEntryItem = json['Content'] != null
+        ? BlogEntryItem.fromJson(json['Content'])
         : null;
     groupPostItem = json['GroupPost'] != null
         ? GroupItemModel.fromJson(json['GroupPost'])
@@ -238,6 +238,7 @@ class BlogEntryItem {
   String? viewUrl;
   bool isReation = false;
   String? reactionIconUrl;
+  int? commentCount;
 
   BlogEntryItem(
       {this.attachments,
@@ -265,6 +266,7 @@ class BlogEntryItem {
         attachments!.add(Attachments.fromJson(v));
       });
     }
+    commentCount = json['comment_count'];
     blog = json['Blog'] != null ? Blog.fromJson(json['Blog']) : null;
     blogEntryId = json['blog_entry_id'];
     canComment = json['can_comment'];

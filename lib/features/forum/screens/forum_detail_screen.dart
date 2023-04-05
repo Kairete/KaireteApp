@@ -7,6 +7,7 @@ import '../../../components/reactions_view.dart';
 import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
+import '../../../helper/time.dart';
 import '../../../helper/user.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 
@@ -111,13 +112,30 @@ class ForumDetailScreen extends StatelessWidget {
                                               style: kTextTitle.copyWith(
                                                   fontSize: 16),
                                             ),
-                                            Text(
-                                              item.username ?? '',
-                                              style: kTextTitle.copyWith(
-                                                fontSize: 16,
-                                                color: Colors.grey.shade600,
+                                            RichText(
+                                              text: TextSpan(
+                                                text: '${item.username} - ',
+                                                style:
+                                                    kTextMediumtStyle.copyWith(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.w600),
+                                                children: <TextSpan>[
+                                                  TextSpan(
+                                                      text: TimeManager.instance
+                                                          .convertFromTimeStamp(
+                                                              timestamp:
+                                                                  item.lastPostDate ??
+                                                                      0),
+                                                      style: kTextMediumtStyle
+                                                          .copyWith(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      )),
+                                                ],
                                               ),
-                                            ),
+                                            )
                                           ],
                                         ),
                                       ),
