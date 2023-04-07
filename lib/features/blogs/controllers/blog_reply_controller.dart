@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/blogs/controllers/blog_comment_controller.dart';
 import 'package:kairete/features/blogs/usecase/blog_comment_usecase.dart';
 
 import '../../../components/kairete_popup.dart';
+import '../../../local/master_data.dart';
 import '../../newsfeed/models/comment_model/comment.dart';
 import '../../newsfeed/models/comment_model/comment_model.dart';
 
@@ -71,6 +73,13 @@ class BlogReplyController extends GetxController {
     };
     final json = await usecase.reactions(body: body);
     if (json != null) {
+      if (commentId == item?.commentId) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == reactionId)
+            .imageUrl;
+        item?.reactionIconUrl = path;
+        Get.find<BlogCommentController>().fetchItems();
+      }
       fetchItems();
     }
   }

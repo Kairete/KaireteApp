@@ -200,6 +200,10 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       onTapDetail!(item);
                     }
                   },
+                  // titleCate: item.blogEntryItem?.title,
+                  authorBlog: item.type == ContentTypeNewFeed.blogEntry
+                      ? item.blogEntryItem?.user?.username
+                      : null,
                   onTapReply: () {
                     controller.toReplies(item: item);
                   },
@@ -257,6 +261,8 @@ class NewfeedCell extends StatelessWidget {
     this.title,
     this.thumbnailUrl,
     this.isShowShare = true,
+    this.titleCate,
+    this.authorBlog,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -277,6 +283,8 @@ class NewfeedCell extends StatelessWidget {
   final bool isShowShare;
   final Function? onTapReply;
   final Function? onTapReactions;
+  final String? titleCate;
+  final String? authorBlog;
 
   @override
   Widget build(BuildContext context) {
@@ -347,6 +355,14 @@ class NewfeedCell extends StatelessWidget {
                               fontSize: 15,
                               fontWeight: FontWeight.w600),
                           children: <TextSpan>[
+                            if (authorBlog != null)
+                              TextSpan(
+                                  text: authorBlog,
+                                  style: kTextMediumtStyle.copyWith(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  )),
+                            if (authorBlog != null) TextSpan(text: ' - '),
                             TextSpan(
                                 text: TimeManager.instance
                                     .convertFromTimeStamp(timestamp: date ?? 0),
@@ -354,6 +370,15 @@ class NewfeedCell extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 )),
+                            if (titleCate != null) TextSpan(text: ' - '),
+                            if (titleCate != null)
+                              TextSpan(
+                                  text: titleCate,
+                                  style: kTextMediumtStyle.copyWith(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: kPrimaryColor,
+                                  )),
                           ],
                         ),
                       )

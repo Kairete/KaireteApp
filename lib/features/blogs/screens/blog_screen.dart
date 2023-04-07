@@ -27,18 +27,19 @@ class BlogScreen extends StatelessWidget {
               onTapDetail: () {
                 controller.toDetail(item: item);
               },
+              titleCate: item.blog?.title,
               userName: item.user?.customFields?.fullName ??
                   item.user?.username ??
                   '',
               avatar: item.user?.avatarUrls?.l,
               date: item.attachments?[0].attachDate,
-              blogTitle: item.blog?.title,
+              blogTitle: item.title,
               thumbnailUrl: item.coverImage?.thumbnailUrl,
               messagePlainText: item.messagePlainText,
               reactionIconUrl: item.reactionIconUrl,
               reactions: item.reactions,
               shareCount: 0,
-              isShowShare: false,
+              // isShowShare: false,
               commentCount: item.commentCount,
               isShowLike: item.canReact ?? true,
               onTapReactions: () {
