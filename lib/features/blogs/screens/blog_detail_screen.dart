@@ -8,7 +8,6 @@ import 'package:kairete/features/blogs/controllers/blog_detail_controller.dart';
 
 import '../../../components/cache_image.dart';
 import '../../../components/reactions_view.dart';
-import '../../../helper/time.dart';
 
 // ignore: must_be_immutable
 class BlogDetailScreen extends StatelessWidget {
