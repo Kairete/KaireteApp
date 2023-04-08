@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
@@ -200,6 +201,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       onTapDetail!(item);
                     }
                   },
+                  onTapAvatar: () {
+                    controller.toProfile(user: item.user);
+                  },
                   // titleCate: item.blogEntryItem?.title,
                   authorBlog: item.type == ContentTypeNewFeed.blogEntry
                       ? item.blogEntryItem?.user?.username
@@ -263,6 +267,7 @@ class NewfeedCell extends StatelessWidget {
     this.isShowShare = true,
     this.titleCate,
     this.authorBlog,
+    this.onTapAvatar,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -285,6 +290,7 @@ class NewfeedCell extends StatelessWidget {
   final Function? onTapReactions;
   final String? titleCate;
   final String? authorBlog;
+  final Function? onTapAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -305,12 +311,19 @@ class NewfeedCell extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                KaireteCacheNetworkImage(
-                  url: avatar ?? '',
-                  width: 36,
-                  height: 36,
-                  isCircle: true,
-                  nameImage: nameImage,
+                InkWell(
+                  onTap: () {
+                    if (onTapAvatar != null) {
+                      onTapAvatar!();
+                    }
+                  },
+                  child: KaireteCacheNetworkImage(
+                    url: avatar ?? '',
+                    width: 36,
+                    height: 36,
+                    isCircle: true,
+                    nameImage: nameImage,
+                  ),
                 ),
                 const SizedBox(
                   width: 8,
@@ -326,6 +339,12 @@ class NewfeedCell extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              if (onTapAvatar != null) {
+                                onTapAvatar!();
+                              }
+                            },
                           children: [
                             if (blogTitle != null || groupTitle != null)
                               const WidgetSpan(

@@ -25,32 +25,34 @@ class DashboardScreen extends GetView {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          Obx(() => InkWell(
-                onTap: () {
-                  Get.to(() => UserProfileScreen());
-                },
-                child: controller.user.value.avatarUrls != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: KaireteCacheNetworkImage(
-                          url: controller.user.value.avatarUrls?.o ?? '',
-                          nameImage: controller.user.value.username,
-                          width: 30,
-                          height: 30,
-                          isCircle: true,
-                        ),
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Row(
-                          children: const [
-                            Icon(
-                              Icons.account_circle_outlined,
-                            ),
-                          ],
-                        ),
-                      ),
-              ))
+          Obx(
+            () => InkWell(
+              onTap: () {
+                Get.to(() => UserProfileScreen());
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.notifications,
+                      size: 30,
+                    ),
+                    const SizedBox(
+                      width: 4,
+                    ),
+                    KaireteCacheNetworkImage(
+                      url: controller.user.value.avatarUrls?.o ?? '',
+                      nameImage: controller.user.value.username,
+                      width: 30,
+                      height: 30,
+                      isCircle: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
         ],
         backgroundColor: kPrimaryColor,
         title: SizedBox(

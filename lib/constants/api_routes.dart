@@ -10,6 +10,7 @@ class ApiRoutes {
   static const newAttachKey = "api/attachments/new-key";
   static const filter = "api/newsfeed/filters";
   static const me = "api/me";
+  static const user = "api/users/";
   static const blogsCate = 'api/blog-entries';
   static const pushFCM = 'api/users/';
   static const nodeList = 'api/nodes';

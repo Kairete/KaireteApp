@@ -10,6 +10,7 @@ import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
+import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 import 'package:kairete/local/master_data.dart';
 import '../../../components/kairete_popup.dart';
 import '../models/newsfeed_filter_model.dart';
@@ -383,5 +384,14 @@ class NewsFeedController extends GetxController {
 
   void toReplies({required NewsfeedModel item}) {
     Get.to(() => ReplyScreen(), arguments: {'item': item});
+  }
+
+  void toProfile({User? user}) {
+    if (user != null) {
+      Get.to(
+        () => UserProfileScreen(),
+        arguments: {'id': user.userId},
+      );
+    }
   }
 }

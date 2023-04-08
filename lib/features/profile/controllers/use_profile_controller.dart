@@ -12,15 +12,27 @@ class UserProfileController extends GetxController {
   var user = User().obs;
   UserProfileUsecase usecase = IUserProfileUsecase();
 
+  int? id;
+
   @override
   void onInit() {
+    if (Get.arguments != null) {
+      id = Get.arguments['id'];
+    }
     fetchItems();
+
     super.onInit();
   }
 
   void fetchItems() async {
-    final json = await usecase.fetchData();
-    user.value = User.fromJson(json['me']);
+    if (id != null) {
+      final body = {'id': id};
+      final json = await usecase.fetchUser(body: body);
+      user.value = User.fromJson(json['user']);
+    } else {
+      final json = await usecase.fetchData();
+      user.value = User.fromJson(json['me']);
+    }
   }
 
   void onLogout() async {

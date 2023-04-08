@@ -7,10 +7,16 @@ import '../../../local/data_local.dart';
 
 abstract class UserProfileUsecase {
   Future fetchData({dynamic body});
+  Future fetchUser({dynamic body});
 }
 
 abstract class FCMUsecase {
   Future pushFCM({dynamic body});
+}
+
+abstract class UserUsecase {
+  Future fetchData({dynamic body});
+  Future fetchUser({dynamic body});
 }
 
 class IUserProfileUsecase extends BaseClient implements UserProfileUsecase {
@@ -18,6 +24,16 @@ class IUserProfileUsecase extends BaseClient implements UserProfileUsecase {
   Future fetchData({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.me,
+      body: body,
+      method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
+  Future fetchUser({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.user + '${body['id']}',
       body: body,
       method: HttpMethodCustom.GET,
     );

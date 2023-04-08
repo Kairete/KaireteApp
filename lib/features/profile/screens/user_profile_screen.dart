@@ -26,13 +26,14 @@ class UserProfileScreen extends StatelessWidget {
       ),
       bottomSheet: Padding(
         padding: EdgeInsets.fromLTRB(24, 0, 24, kBottomSafea),
-        child: KairetePrimaryButton(
-          onTap: () {
-            print('aa');
-            controller.onLogout();
-          },
-          title: 'Log out',
-        ),
+        child: controller.id == null
+            ? KairetePrimaryButton(
+                onTap: () {
+                  controller.onLogout();
+                },
+                title: 'Log out',
+              )
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(

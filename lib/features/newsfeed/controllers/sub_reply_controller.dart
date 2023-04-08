@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/newsfeed/controllers/reply_controller.dart';
 
 import '../../../components/kairete_popup.dart';
+import '../../../local/master_data.dart';
 import '../models/comment_model/comment.dart';
 import '../models/comment_model/comment_model.dart';
 import '../usecase/newsfeed_usecase.dart';
@@ -73,6 +75,13 @@ class SubreplyController extends GetxController {
     };
     final json = await usecase.reactionsComment(body: body);
     if (json != null) {
+      if (commentId == item?.commentId) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == reactionId)
+            .imageUrl;
+        item?.reactionIconUrl = path;
+        Get.find<ReplyController>().fetchItems();
+      }
       fetchItems();
     }
   }
