@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/components/kairete_button.dart';
-import 'package:kairete/constants/color.dart';
-import 'package:kairete/constants/color_constant.dart';
-import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/blogs/controllers/blog_controller.dart';
-
-import '../../../components/cache_image.dart';
-import '../../../helper/time.dart';
-import '../../../helper/user.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 
 class BlogScreen extends StatelessWidget {
@@ -27,13 +19,14 @@ class BlogScreen extends StatelessWidget {
               onTapDetail: () {
                 controller.toDetail(item: item);
               },
-              titleCate: item.blog?.title,
+              titleCate: item.category?.title,
               userName: item.user?.customFields?.fullName ??
                   item.user?.username ??
                   '',
+              title: item.title,
               avatar: item.user?.avatarUrls?.l,
               date: item.attachments?[0].attachDate,
-              blogTitle: item.title,
+              blogTitle: item.blog?.title,
               thumbnailUrl: item.coverImage?.thumbnailUrl,
               messagePlainText: item.messagePlainText,
               reactionIconUrl: item.reactionIconUrl,

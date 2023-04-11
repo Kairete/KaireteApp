@@ -230,7 +230,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                   isShowLike: item.user?.userId != UserManager.instance.userId,
                   reactions: item.reactions,
                   messagePlainText: item.messagePlainText,
-                  title: (item.title != '' && item.groupPostItem == null)
+                  title: (item.title != '' &&
+                          item.groupPostItem == null &&
+                          item.type != ContentTypeNewFeed.tlGroupPost)
                       ? item.title
                       : null,
                   thumbnailUrl:
@@ -329,80 +331,14 @@ class NewfeedCell extends StatelessWidget {
                   width: 8,
                 ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          text: userName,
-                          style: kTextRegularStyle.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              if (onTapAvatar != null) {
-                                onTapAvatar!();
-                              }
-                            },
-                          children: [
-                            if (blogTitle != null || groupTitle != null)
-                              const WidgetSpan(
-                                  child: Icon(
-                                Icons.play_arrow,
-                                color: kPrimaryColor,
-                                size: 16,
-                              )),
-                            TextSpan(
-                                text: blogTitle ?? groupTitle ?? '',
-                                style: kTextRegularStyle.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrimaryColor,
-                                  fontSize: 16,
-                                )),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      RichText(
-                        text: TextSpan(
-                          text: '',
-                          style: kTextMediumtStyle.copyWith(
-                              color: Colors.grey,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
-                          children: <TextSpan>[
-                            if (authorBlog != null)
-                              TextSpan(
-                                  text: authorBlog,
-                                  style: kTextMediumtStyle.copyWith(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  )),
-                            if (authorBlog != null) TextSpan(text: ' - '),
-                            TextSpan(
-                                text: TimeManager.instance
-                                    .convertFromTimeStamp(timestamp: date ?? 0),
-                                style: kTextMediumtStyle.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                )),
-                            if (titleCate != null) TextSpan(text: ' - '),
-                            if (titleCate != null)
-                              TextSpan(
-                                  text: titleCate,
-                                  style: kTextMediumtStyle.copyWith(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: kPrimaryColor,
-                                  )),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
+                  child: HeaderInfoCellItem(
+                      userName: userName,
+                      onTapAvatar: onTapAvatar,
+                      blogTitle: blogTitle,
+                      groupTitle: groupTitle,
+                      authorBlog: authorBlog,
+                      date: date,
+                      titleCate: titleCate),
                 ),
               ],
             ),
@@ -463,50 +399,181 @@ class NewfeedCell extends StatelessWidget {
           const SizedBox(
             height: 8,
           ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            decoration: BoxDecoration(
-              border: Border.all(
-                width: 0.5,
-                color: Colors.grey.shade400,
-              ),
-              color: kF5F5F5,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                KaireteIconButton(
-                  title: '$commentCount Replies',
-                  onTap: () {
-                    if (onTapReply != null) {
-                      onTapReply!();
-                    }
-                  },
-                ),
-                if (isShowLike)
-                  KaireteIconButton(
-                    title: 'Like',
-                    icon: 'ic_like',
-                    onTap: () {
-                      if (onTapReactions != null) {
-                        onTapReactions!();
-                      }
-                    },
-                    url: reactionIconUrl,
-                  ),
-                if (isShowShare)
-                  KaireteIconButton(
-                    title: '$shareCount Share',
-                    icon: 'ic_share',
-                  ),
-              ],
-            ),
+          ReationsItemView(
+            commentCount: commentCount,
+            onTapReply: onTapReply,
+            isShowLike: isShowLike,
+            onTapReactions: onTapReactions,
+            reactionIconUrl: reactionIconUrl,
+            isShowShare: isShowShare,
+            shareCount: shareCount,
           ),
           const SizedBox(
             height: 16,
           ),
         ],
       ),
+    );
+  }
+}
+
+class ReationsItemView extends StatelessWidget {
+  const ReationsItemView({
+    Key? key,
+    required this.commentCount,
+    required this.onTapReply,
+    required this.isShowLike,
+    required this.onTapReactions,
+    required this.reactionIconUrl,
+    required this.isShowShare,
+    required this.shareCount,
+  }) : super(key: key);
+
+  final int? commentCount;
+  final Function? onTapReply;
+  final bool isShowLike;
+  final Function? onTapReactions;
+  final String? reactionIconUrl;
+  final bool isShowShare;
+  final int? shareCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 0.5,
+          color: Colors.grey.shade400,
+        ),
+        color: kF5F5F5,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          KaireteIconButton(
+            title: '$commentCount Replies',
+            onTap: () {
+              if (onTapReply != null) {
+                onTapReply!();
+              }
+            },
+          ),
+          if (isShowLike)
+            KaireteIconButton(
+              title: 'Like',
+              icon: 'ic_like',
+              onTap: () {
+                if (onTapReactions != null) {
+                  onTapReactions!();
+                }
+              },
+              url: reactionIconUrl,
+            ),
+          if (isShowShare)
+            KaireteIconButton(
+              title: '$shareCount Share',
+              icon: 'ic_share',
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class HeaderInfoCellItem extends StatelessWidget {
+  const HeaderInfoCellItem({
+    Key? key,
+    required this.userName,
+    required this.onTapAvatar,
+    required this.blogTitle,
+    required this.groupTitle,
+    required this.authorBlog,
+    required this.date,
+    required this.titleCate,
+  }) : super(key: key);
+
+  final String? userName;
+  final Function? onTapAvatar;
+  final String? blogTitle;
+  final String? groupTitle;
+  final String? authorBlog;
+  final int? date;
+  final String? titleCate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            text: userName,
+            style: kTextRegularStyle.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                if (onTapAvatar != null) {
+                  onTapAvatar!();
+                }
+              },
+            children: [
+              if (blogTitle != null || groupTitle != null)
+                const WidgetSpan(
+                    child: Icon(
+                  Icons.play_arrow,
+                  color: kPrimaryColor,
+                  size: 16,
+                )),
+              TextSpan(
+                  text: blogTitle ?? groupTitle ?? '',
+                  style: kTextRegularStyle.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: kPrimaryColor,
+                    fontSize: 16,
+                  )),
+            ],
+          ),
+        ),
+        const SizedBox(
+          height: 4,
+        ),
+        RichText(
+          text: TextSpan(
+            text: '',
+            style: kTextMediumtStyle.copyWith(
+                color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w600),
+            children: <TextSpan>[
+              if (authorBlog != null)
+                TextSpan(
+                    text: authorBlog,
+                    style: kTextMediumtStyle.copyWith(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    )),
+              if (authorBlog != null) TextSpan(text: ' - '),
+              TextSpan(
+                  text: TimeManager.instance
+                      .convertFromTimeStamp(timestamp: date ?? 0),
+                  style: kTextMediumtStyle.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  )),
+              if (titleCate != null) TextSpan(text: ' - '),
+              if (titleCate != null)
+                TextSpan(
+                    text: titleCate,
+                    style: kTextMediumtStyle.copyWith(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: kPrimaryColor,
+                    )),
+            ],
+          ),
+        )
+      ],
     );
   }
 }

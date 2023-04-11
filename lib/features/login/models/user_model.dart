@@ -81,6 +81,7 @@ class User {
   int? voteScore;
   int? warningPoints;
   String? website;
+  AvatarUrls? profileBannerUrls;
 
   User(
       {this.about,
@@ -155,6 +156,9 @@ class User {
     allowViewProfile = json['allow_view_profile'];
     avatarUrls = json['avatar_urls'] != null
         ? AvatarUrls.fromJson(json['avatar_urls'])
+        : null;
+    profileBannerUrls = json['profile_banner_urls'] != null
+        ? AvatarUrls.fromJson(json['profile_banner_urls'])
         : null;
     canBan = json['can_ban'];
     canConverse = json['can_converse'];

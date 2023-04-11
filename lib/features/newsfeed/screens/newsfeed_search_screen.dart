@@ -27,9 +27,9 @@ class NewsfeedSearchScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() => controller.items.isEmpty
-          ? SizedBox()
+          ? const SizedBox()
           : NewsfeedListItem(
-              items: controller.items.value,
+              items: controller.items,
               isShowCreate: false,
               onTapDetail: (item) {
                 controller.toDetail(item: item);

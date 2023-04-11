@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
+import 'package:kairete/features/forum/models/forum_detail_model.dart';
 
 import '../../../components/cache_image.dart';
+import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
 import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
@@ -71,157 +74,198 @@ class ForumDetailScreen extends StatelessWidget {
                               ],
                             ),
                           )
-                        : Container(
-                            color: Colors.white,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      width: 1,
-                                      color: kBorderDefaultColor,
-                                    ),
-                                    color: Colors.grey.shade200,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      KaireteCacheNetworkImage(
-                                          url: item.user?.avatarUrls?.l ?? '',
-                                          width: 36,
-                                          height: 36,
-                                          isCircle: true,
-                                          nameImage: (item.user?.customFields
-                                                  ?.fullName ??
-                                              item.user?.username ??
-                                              '')),
-                                      const SizedBox(
-                                        width: 8,
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.title ?? '',
-                                              style: kTextTitle.copyWith(
-                                                  fontSize: 16),
-                                            ),
-                                            RichText(
-                                              text: TextSpan(
-                                                text: '${item.username} - ',
-                                                style:
-                                                    kTextMediumtStyle.copyWith(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                children: <TextSpan>[
-                                                  TextSpan(
-                                                      text: TimeManager.instance
-                                                          .convertFromTimeStamp(
-                                                              timestamp:
-                                                                  item.lastPostDate ??
-                                                                      0),
-                                                      style: kTextMediumtStyle
-                                                          .copyWith(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      )),
-                                                ],
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 16,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 16, right: 16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.message ?? '',
-                                        maxLines: 5,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: kTextMediumtStyle.copyWith(
-                                            color: Colors.black,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w400),
-                                      ),
-                                      const SizedBox(
-                                        height: 8,
-                                      ),
-                                      if (item.reactions != null)
-                                        ReactionsItemView(
-                                            reactions: item.reactions ?? [])
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                Container(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      width: 0.5,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    color: kF5F5F5,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      KaireteIconButton(
-                                        title: '${item.replyCount ?? 0}',
-                                        onTap: () {
-                                          controller.toComment(item: item);
-                                        },
-                                      ),
-                                      KaireteIconButton(
-                                        title: 'Like',
-                                        icon: 'ic_like',
-                                        onTap: () {
-                                          controller.showReactionPopup(
-                                              item: item);
-                                        },
-                                        url: item.isReation
-                                            ? item.reactionIconUrl
-                                            : null,
-                                      ),
-                                      KaireteIconButton(
-                                        title: '${item.viewCount ?? 0}',
-                                        icon: 'ic_view_eye',
-                                        width: 10,
-                                        height: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 16,
-                                ),
-                              ],
-                            ),
+                        : ThreadItemCell(
+                            item: item,
+                            onTapComment: () {
+                              controller.toComment(item: item);
+                            },
+                            onTapReactions: () {
+                              controller.showReactionPopup(item: item);
+                            },
+                            onTapDetail: () {
+                              controller.toDetail(item: item);
+                            },
+                            maxLine: 5,
                           );
                   },
                 )),
         ),
+      ),
+    );
+  }
+}
+
+class ThreadItemCell extends StatelessWidget {
+  const ThreadItemCell({
+    Key? key,
+    required this.item,
+    this.onTapComment,
+    this.onTapReactions,
+    this.maxLine,
+    this.onTapDetail,
+    this.isShowDetail = true,
+  }) : super(key: key);
+
+  final Threads item;
+  final Function? onTapComment;
+  final Function? onTapReactions;
+  final Function? onTapDetail;
+  final int? maxLine;
+  final bool isShowDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: 1,
+                color: kBorderDefaultColor,
+              ),
+              color: Colors.grey.shade200,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                KaireteCacheNetworkImage(
+                    url: item.user?.avatarUrls?.l ?? '',
+                    width: 36,
+                    height: 36,
+                    isCircle: true,
+                    nameImage: (item.user?.customFields?.fullName ??
+                        item.user?.username ??
+                        '')),
+                const SizedBox(
+                  width: 8,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title ?? '',
+                        style: kTextTitle.copyWith(fontSize: 16),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          text: '${item.username} - ',
+                          style: kTextMediumtStyle.copyWith(
+                              fontSize: 15, fontWeight: FontWeight.w600),
+                          children: <TextSpan>[
+                            TextSpan(
+                                text: TimeManager.instance.convertFromTimeStamp(
+                                    timestamp: item.lastPostDate ?? 0),
+                                style: kTextMediumtStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                )),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                !isShowDetail
+                    ? HtmlWidget(
+                        (item.message)
+                                ?.replaceAll("\\n", "")
+                                .replaceAll("=\\  ", "=")
+                                .replaceAll("g\\", "") ??
+                            '',
+                        textStyle: const TextStyle(fontSize: 17),
+                      )
+                    : Text(
+                        item.message ?? '',
+                        maxLines: maxLine,
+                        overflow: TextOverflow.ellipsis,
+                        style: kTextMediumtStyle.copyWith(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w400),
+                      ),
+                if (isShowDetail)
+                  const SizedBox(
+                    height: 8,
+                  ),
+                if (isShowDetail)
+                  KaireteTextButton(
+                    onTap: () {
+                      if (onTapDetail != null) {
+                        onTapDetail!();
+                      }
+                    },
+                    title: 'See detail',
+                  ),
+                const SizedBox(
+                  height: 8,
+                ),
+                if (item.reactions != null)
+                  ReactionsItemView(reactions: item.reactions ?? [])
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 8,
+          ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: 0.5,
+                color: Colors.grey.shade400,
+              ),
+              color: kF5F5F5,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                KaireteIconButton(
+                  title: '${item.replyCount ?? 0}',
+                  onTap: () {
+                    if (onTapComment != null) {
+                      onTapComment!();
+                    }
+                  },
+                ),
+                KaireteIconButton(
+                  title: 'Like',
+                  icon: 'ic_like',
+                  onTap: () {
+                    if (onTapReactions != null) {
+                      onTapReactions!();
+                    }
+                  },
+                  url: item.isReation ? item.reactionIconUrl : null,
+                ),
+                KaireteIconButton(
+                  title: '${item.viewCount ?? 0}',
+                  icon: 'ic_view_eye',
+                  width: 10,
+                  height: 20,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+        ],
       ),
     );
   }

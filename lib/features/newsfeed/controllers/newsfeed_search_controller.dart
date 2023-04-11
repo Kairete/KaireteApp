@@ -15,7 +15,7 @@ class NewsfeedSearchController extends GetxController {
     final json = await usecase.search(body: body);
     final item = BaseNewsfeedModel.fromJson(json);
     items.value = item.newsfeedItems ?? [];
-    items.removeWhere((element) => element.blogEntryItem?.category == null);
+    // items.removeWhere((element) => element.blogEntryItem?.category == null);
     items.refresh();
   }
 

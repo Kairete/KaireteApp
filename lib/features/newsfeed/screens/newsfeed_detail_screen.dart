@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/constants/color.dart';
-import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_detail_controller.dart';
-
-import '../../../components/cache_image.dart';
+import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
+import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import '../../../components/reactions_view.dart';
-import '../../../helper/time.dart';
+import '../../../helper/user.dart';
 
 // ignore: must_be_immutable
 class NewsfeedDetailScreen extends StatelessWidget {
@@ -31,93 +30,75 @@ class NewsfeedDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(
             16,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (controller.item?.blogEntryItem?.category?.title != null)
-                InkWell(
-                  onTap: () {
-                    controller.toCate();
-                  },
-                  child: Text(
-                    controller.item?.blogEntryItem?.category?.title ?? '',
-                    style: kTextMediumtStyle.copyWith(
-                      color: kTextCriticalColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      fontStyle: FontStyle.italic,
-                    ),
+          child: Obx(() => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HeaderInfoCellItem(
+                    userName:
+                        controller.item.value.user?.username ?? 'Empty name',
+                    onTapAvatar: () {},
+                    blogTitle: controller.item.value.blogEntryItem?.blog?.title,
+                    groupTitle:
+                        controller.item.value.groupPostItem?.group?.name,
+                    authorBlog: controller.item.value.type ==
+                            ContentTypeNewFeed.blogEntry
+                        ? controller.item.value.blogEntryItem?.user?.username
+                        : null,
+                    date: controller.item.value.itemDate,
+                    titleCate: '',
                   ),
-                ),
-              if (controller.item?.title != '' &&
-                  controller.item?.groupPostItem == null)
-                const SizedBox(
-                  height: 8,
-                ),
-              if (controller.item?.title != '' &&
-                  controller.item?.groupPostItem == null)
-                Text(
-                  controller.item?.title ?? '',
-                  style: kTextTitle.copyWith(color: kTextCriticalColor),
-                ),
-              if (controller.item?.title != '' &&
-                  controller.item?.groupPostItem == null)
-                const SizedBox(
-                  height: 8,
-                ),
-              RichText(
-                  text: TextSpan(
-                text: controller.item?.user?.username ?? 'Empty name',
-                style: kTextMediumtStyle.copyWith(
-                    color: kTextCriticalColor,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600),
-                children: <TextSpan>[
-                  const TextSpan(
-                      text: ' • ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextSpan(
-                      text: TimeManager.instance.convertFromTimeStamp(
-                          timestamp: controller.item?.itemDate ?? 0),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  if (controller.item.value.title != '' &&
+                      controller.item.value.groupPostItem == null &&
+                      controller.item.value.type !=
+                          ContentTypeNewFeed.tlGroupPost)
+                    Text(
+                      (controller.item.value.title != '' &&
+                              controller.item.value.groupPostItem == null &&
+                              controller.item.value.type !=
+                                  ContentTypeNewFeed.tlGroupPost)
+                          ? (controller.item.value.title ?? '')
+                          : '',
                       style: kTextMediumtStyle.copyWith(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
+                          color: Colors.black,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  HtmlWidget(
+                    (controller.item.value.blogEntryItem?.messageParsed ??
+                                controller.item.value.messageParsed)
+                            ?.replaceAll("\\n", "")
+                            .replaceAll("=\\  ", "=")
+                            .replaceAll("g\\", "") ??
+                        '',
+                    textStyle: const TextStyle(fontSize: 17),
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  if (controller.item.value.reactions != null)
+                    ReactionsItemView(
+                        reactions: controller.item.value.reactions ?? []),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  ReationsItemView(
+                      commentCount: controller.item.value.commentCount,
+                      onTapReply: () {
+                        controller.toReplies();
+                      },
+                      isShowLike: controller.item.value.user?.userId !=
+                          UserManager.instance.userId,
+                      onTapReactions: () {
+                        controller.showReactionPopup();
+                      },
+                      reactionIconUrl: controller.item.value.reactionIconUrl,
+                      isShowShare: true,
+                      shareCount: controller.item.value.shareCount)
                 ],
               )),
-              const SizedBox(
-                height: 16,
-              ),
-              if (controller.item?.blogEntryItem?.attachments != null ||
-                  controller.item?.groupPostItem?.firstComment?.attachments !=
-                      null)
-                KaireteCacheNetworkImage(
-                  url: controller
-                          .item?.blogEntryItem?.attachments?[0].thumbnailUrl ??
-                      controller.item?.groupPostItem?.firstComment
-                          ?.attachments?[0].thumbnailUrl ??
-                      '',
-                ),
-              if (controller.item?.blogEntryItem?.attachments != null ||
-                  controller.item?.groupPostItem?.firstComment?.attachments !=
-                      null)
-                const SizedBox(
-                  height: 16,
-                ),
-              HtmlWidget(
-                (controller.item?.blogEntryItem?.messageParsed ??
-                            controller.item?.messageParsed)
-                        ?.replaceAll("\\n", "")
-                        .replaceAll("=\\  ", "=")
-                        .replaceAll("g\\", "") ??
-                    '',
-                textStyle: TextStyle(fontSize: 17),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              if (controller.item?.reactions != null)
-                ReactionsItemView(reactions: controller.item?.reactions ?? [])
-            ],
-          ),
         ),
       ),
     );

@@ -361,19 +361,6 @@ class NewsFeedController extends GetxController {
     }
   }
 
-  void onReactionsBlog({required int reactionId, required int blogId}) async {
-    final body = {
-      'id': blogId,
-      'reaction_id': reactionId,
-    };
-    final json = await blogUsecase.reactions(body: body);
-    if (json != null) {
-      fechItems();
-    }
-  }
-
-  void onComment() {}
-
   void showReactionPopup({required NewsfeedModel item}) {
     showReactionsPopup(
       onBack: (reactionId) {
