@@ -33,7 +33,7 @@ class NewsfeedDetailScreen extends StatelessWidget {
           child: Obx(() => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HeaderInfoCellItem(
+                  HeaderInfoCellWithAvatar(
                     userName:
                         controller.item.value.user?.username ?? 'Empty name',
                     onTapAvatar: () {},
@@ -46,6 +46,11 @@ class NewsfeedDetailScreen extends StatelessWidget {
                         : null,
                     date: controller.item.value.itemDate,
                     titleCate: '',
+                    avatar: controller.item.value.user?.avatarUrls?.h,
+                    nameImage:
+                        (controller.item.value.user?.customFields?.fullName ??
+                            controller.item.value.user?.username ??
+                            ''),
                   ),
                   const SizedBox(
                     height: 16,

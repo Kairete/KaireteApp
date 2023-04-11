@@ -35,70 +35,97 @@ class BlogDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RichText(
-                  text: TextSpan(
-                text: controller.item.value.user?.customFields?.fullName ??
-                    controller.item.value.user?.username ??
-                    '',
-                style: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-                recognizer: TapGestureRecognizer()..onTap = () {},
+              Row(
                 children: [
-                  if (controller.item.value.blog?.title != null)
-                    const WidgetSpan(
-                        child: Icon(
-                      Icons.play_arrow,
-                      color: kPrimaryColor,
-                      size: 16,
-                    )),
-                  TextSpan(
-                      text: controller.item.value.blog?.title ?? '',
-                      style: kTextRegularStyle.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: kPrimaryColor,
-                        fontSize: 16,
-                      )),
-                ],
-              )),
-              const SizedBox(
-                height: 8,
-              ),
-              RichText(
-                text: TextSpan(
-                  text: '',
-                  style: kTextMediumtStyle.copyWith(
-                      color: Colors.grey,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
-                  children: <TextSpan>[
-                    TextSpan(
-                        text: TimeManager.instance.convertFromTimeStamp(
-                            timestamp: controller
-                                    .item.value.attachments?[0].attachDate ??
-                                0),
-                        style: kTextMediumtStyle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        )),
-                    if (controller.item.value.blog?.title != null)
-                      const TextSpan(text: ' - '),
-                    if (controller.item.value.blog?.title != null)
-                      TextSpan(
-                        text: controller.item.value.category?.title ?? '',
-                        style: kTextMediumtStyle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: kPrimaryColor,
+                  InkWell(
+                    onTap: () {},
+                    child: KaireteCacheNetworkImage(
+                      url: controller.item.value.user?.avatarUrls?.h ?? '',
+                      width: 36,
+                      height: 36,
+                      isCircle: true,
+                      nameImage:
+                          controller.item.value.user?.customFields?.fullName ??
+                              controller.item.value.user?.username ??
+                              '',
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                          text: TextSpan(
+                        text: controller
+                                .item.value.user?.customFields?.fullName ??
+                            controller.item.value.user?.username ??
+                            '',
+                        style: kTextRegularStyle.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            controller.toCate();
-                          },
+                        recognizer: TapGestureRecognizer()..onTap = () {},
+                        children: [
+                          if (controller.item.value.blog?.title != null)
+                            const WidgetSpan(
+                                child: Icon(
+                              Icons.play_arrow,
+                              color: kPrimaryColor,
+                              size: 16,
+                            )),
+                          TextSpan(
+                              text: controller.item.value.blog?.title ?? '',
+                              style: kTextRegularStyle.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: kPrimaryColor,
+                                fontSize: 16,
+                              )),
+                        ],
+                      )),
+                      const SizedBox(
+                        height: 4,
                       ),
-                  ],
-                ),
+                      RichText(
+                        text: TextSpan(
+                          text: '',
+                          style: kTextMediumtStyle.copyWith(
+                              color: Colors.grey,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600),
+                          children: <TextSpan>[
+                            TextSpan(
+                                text: TimeManager.instance.convertFromTimeStamp(
+                                    timestamp: controller.item.value
+                                            .attachments?[0].attachDate ??
+                                        0),
+                                style: kTextMediumtStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                )),
+                            if (controller.item.value.blog?.title != null)
+                              const TextSpan(text: ' - '),
+                            if (controller.item.value.blog?.title != null)
+                              TextSpan(
+                                text:
+                                    controller.item.value.category?.title ?? '',
+                                style: kTextMediumtStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: kPrimaryColor,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    controller.toCate();
+                                  },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                ],
               ),
               const SizedBox(
                 height: 8,

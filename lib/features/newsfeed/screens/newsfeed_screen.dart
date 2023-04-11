@@ -310,38 +310,16 @@ class NewfeedCell extends StatelessWidget {
               ),
               color: Colors.grey.shade200,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () {
-                    if (onTapAvatar != null) {
-                      onTapAvatar!();
-                    }
-                  },
-                  child: KaireteCacheNetworkImage(
-                    url: avatar ?? '',
-                    width: 36,
-                    height: 36,
-                    isCircle: true,
-                    nameImage: nameImage,
-                  ),
-                ),
-                const SizedBox(
-                  width: 8,
-                ),
-                Expanded(
-                  child: HeaderInfoCellItem(
-                      userName: userName,
-                      onTapAvatar: onTapAvatar,
-                      blogTitle: blogTitle,
-                      groupTitle: groupTitle,
-                      authorBlog: authorBlog,
-                      date: date,
-                      titleCate: titleCate),
-                ),
-              ],
-            ),
+            child: HeaderInfoCellWithAvatar(
+                onTapAvatar: onTapAvatar,
+                avatar: avatar,
+                nameImage: nameImage,
+                userName: userName,
+                blogTitle: blogTitle,
+                groupTitle: groupTitle,
+                authorBlog: authorBlog,
+                date: date,
+                titleCate: titleCate),
           ),
           const SizedBox(
             height: 16,
@@ -413,6 +391,67 @@ class NewfeedCell extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class HeaderInfoCellWithAvatar extends StatelessWidget {
+  const HeaderInfoCellWithAvatar({
+    Key? key,
+    required this.onTapAvatar,
+    required this.avatar,
+    required this.nameImage,
+    required this.userName,
+    required this.blogTitle,
+    required this.groupTitle,
+    required this.authorBlog,
+    required this.date,
+    required this.titleCate,
+  }) : super(key: key);
+
+  final Function? onTapAvatar;
+  final String? avatar;
+  final String? nameImage;
+  final String? userName;
+  final String? blogTitle;
+  final String? groupTitle;
+  final String? authorBlog;
+  final int? date;
+  final String? titleCate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            if (onTapAvatar != null) {
+              onTapAvatar!();
+            }
+          },
+          child: KaireteCacheNetworkImage(
+            url: avatar ?? '',
+            width: 36,
+            height: 36,
+            isCircle: true,
+            nameImage: nameImage,
+          ),
+        ),
+        const SizedBox(
+          width: 8,
+        ),
+        Expanded(
+          child: HeaderInfoCellItem(
+              userName: userName,
+              onTapAvatar: onTapAvatar,
+              blogTitle: blogTitle,
+              groupTitle: groupTitle,
+              authorBlog: authorBlog,
+              date: date,
+              titleCate: titleCate),
+        ),
+      ],
     );
   }
 }
