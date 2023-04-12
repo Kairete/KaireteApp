@@ -8,6 +8,7 @@ import '../../../local/data_local.dart';
 abstract class UserProfileUsecase {
   Future fetchData({dynamic body});
   Future fetchUser({dynamic body});
+  Future follow({dynamic body});
 }
 
 abstract class FCMUsecase {
@@ -36,6 +37,16 @@ class IUserProfileUsecase extends BaseClient implements UserProfileUsecase {
       path: ApiRoutes.user + '${body['id']}',
       body: body,
       method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
+  Future follow({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: 'api/users/${body['id']}/follow',
+      body: body,
+      method: HttpMethodCustom.POST,
     );
     return json;
   }

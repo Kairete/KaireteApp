@@ -106,7 +106,7 @@ class KaireteActionButton extends StatelessWidget {
       },
       child: Container(
         height: height ?? 48,
-        width: width ?? 1.sw,
+        width: width,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: backgroundColor ?? kSurfacePrimaryColor),

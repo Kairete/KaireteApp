@@ -48,6 +48,6 @@ class NewsfeedDetailController extends GetxController {
   }
 
   void toReplies() {
-    Get.to(() => ReplyScreen(), arguments: {'item': item});
+    Get.to(() => ReplyScreen(), arguments: {'item': item.value});
   }
 }

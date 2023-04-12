@@ -68,9 +68,44 @@ class UserProfileScreen extends StatelessWidget {
                           const SizedBox(
                             height: 24,
                           ),
-                          InfoProfileItem(
-                            title: 'Username:',
-                            content: controller.user.value.username,
+                          Text(
+                            controller.user.value.username ?? '',
+                            style: kTextMediumtStyle.copyWith(
+                              fontSize: 24,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Obx(() => KaireteActionButton(
+                                      onTap: () {
+                                        controller.onFollow();
+                                      },
+                                      title:
+                                          (controller.user.value.isFollowed ??
+                                                  false)
+                                              ? 'Unfollow'
+                                              : 'Follow',
+                                    )),
+                              ),
+                              const SizedBox(
+                                width: 16,
+                              ),
+                              Expanded(
+                                child: Obx(() => KaireteActionButton(
+                                      onTap: () {},
+                                      title: (controller.user.value.isWatched ??
+                                              false)
+                                          ? 'Unwatch'
+                                          : 'Watch',
+                                    )),
+                              )
+                            ],
                           ),
                           const SizedBox(
                             height: 16,

@@ -46,6 +46,7 @@ class SubreplyController extends GetxController {
       'id': item!.commentId ?? 0,
       'content_type': type,
     };
+    print(body);
     final json = await usecase.postComments(body: body);
     if (json != null) {
       fetchItems();

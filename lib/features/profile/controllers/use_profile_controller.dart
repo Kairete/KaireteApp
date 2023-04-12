@@ -41,4 +41,16 @@ class UserProfileController extends GetxController {
     UserManager.instance.userId = null;
     Get.offAllNamed(Routes.login);
   }
+
+  void onFollow() async {
+    final body = {
+      'reaction_id': 1,
+      'id': user.value.userId,
+    };
+    final json = await usecase.follow(body: body);
+    if (json != null) {
+      user.value.isFollowed = json['action'] == 'follow' ? true : false;
+      user.refresh();
+    }
+  }
 }
