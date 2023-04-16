@@ -6,6 +6,7 @@ import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
+import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
@@ -380,5 +381,9 @@ class NewsFeedController extends GetxController {
         arguments: {'id': user.userId},
       );
     }
+  }
+
+  void toMyBlogs({BlogEntryItem? blog}) {
+    Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
   }
 }

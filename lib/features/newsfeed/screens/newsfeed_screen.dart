@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
@@ -204,7 +205,12 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                   onTapAvatar: () {
                     controller.toProfile(user: item.user);
                   },
-                  // titleCate: item.blogEntryItem?.title,
+                  onTapHeader: () {
+                    print(item.type);
+                    if (item.type == ContentTypeNewFeed.blogEntry) {
+                      controller.toMyBlogs(blog: item.blogEntryItem);
+                    }
+                  },
                   authorBlog: item.type == ContentTypeNewFeed.blogEntry
                       ? item.blogEntryItem?.user?.username
                       : null,
@@ -270,6 +276,8 @@ class NewfeedCell extends StatelessWidget {
     this.titleCate,
     this.authorBlog,
     this.onTapAvatar,
+    this.isDetail = true,
+    this.onTapHeader,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -293,6 +301,8 @@ class NewfeedCell extends StatelessWidget {
   final String? titleCate;
   final String? authorBlog;
   final Function? onTapAvatar;
+  final bool isDetail;
+  final Function? onTapHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -311,15 +321,17 @@ class NewfeedCell extends StatelessWidget {
               color: Colors.grey.shade200,
             ),
             child: HeaderInfoCellWithAvatar(
-                onTapAvatar: onTapAvatar,
-                avatar: avatar,
-                nameImage: nameImage,
-                userName: userName,
-                blogTitle: blogTitle,
-                groupTitle: groupTitle,
-                authorBlog: authorBlog,
-                date: date,
-                titleCate: titleCate),
+              onTapAvatar: onTapAvatar,
+              avatar: avatar,
+              nameImage: nameImage,
+              userName: userName,
+              blogTitle: blogTitle,
+              groupTitle: groupTitle,
+              authorBlog: authorBlog,
+              date: date,
+              titleCate: titleCate,
+              onTap: onTapHeader,
+            ),
           ),
           const SizedBox(
             height: 16,
@@ -349,26 +361,36 @@ class NewfeedCell extends StatelessWidget {
                   const SizedBox(
                     height: 16,
                   ),
-                Text(
-                  messagePlainText ?? '',
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  style: kTextMediumtStyle.copyWith(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400),
-                ),
+                isDetail
+                    ? Text(
+                        messagePlainText ?? '',
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                        style: kTextMediumtStyle.copyWith(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w400),
+                      )
+                    : HtmlWidget(
+                        (messagePlainText)
+                                ?.replaceAll("\\n", "")
+                                .replaceAll("=\\  ", "=")
+                                .replaceAll("g\\", "") ??
+                            '',
+                        textStyle: const TextStyle(fontSize: 17),
+                      ),
                 const SizedBox(
                   height: 8,
                 ),
-                KaireteTextButton(
-                  onTap: () {
-                    if (onTapDetail != null) {
-                      onTapDetail!();
-                    }
-                  },
-                  title: 'See detail',
-                ),
+                if (isDetail)
+                  KaireteTextButton(
+                    onTap: () {
+                      if (onTapDetail != null) {
+                        onTapDetail!();
+                      }
+                    },
+                    title: 'See detail',
+                  ),
                 if (reactions != null)
                   ReactionsItemView(reactions: reactions ?? [])
               ],
@@ -407,6 +429,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
     required this.authorBlog,
     required this.date,
     required this.titleCate,
+    this.onTap,
   }) : super(key: key);
 
   final Function? onTapAvatar;
@@ -418,40 +441,48 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
   final String? authorBlog;
   final int? date;
   final String? titleCate;
+  final Function? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: () {
-            if (onTapAvatar != null) {
-              onTapAvatar!();
-            }
-          },
-          child: KaireteCacheNetworkImage(
-            url: avatar ?? '',
-            width: 36,
-            height: 36,
-            isCircle: true,
-            nameImage: nameImage,
+    return InkWell(
+      onTap: () {
+        if (onTap != null) {
+          onTap!();
+        }
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () {
+              if (onTapAvatar != null) {
+                onTapAvatar!();
+              }
+            },
+            child: KaireteCacheNetworkImage(
+              url: avatar ?? '',
+              width: 36,
+              height: 36,
+              isCircle: true,
+              nameImage: nameImage,
+            ),
           ),
-        ),
-        const SizedBox(
-          width: 8,
-        ),
-        Expanded(
-          child: HeaderInfoCellItem(
-              userName: userName,
-              onTapAvatar: onTapAvatar,
-              blogTitle: blogTitle,
-              groupTitle: groupTitle,
-              authorBlog: authorBlog,
-              date: date,
-              titleCate: titleCate),
-        ),
-      ],
+          const SizedBox(
+            width: 8,
+          ),
+          Expanded(
+            child: HeaderInfoCellItem(
+                userName: userName,
+                onTapAvatar: onTapAvatar,
+                blogTitle: blogTitle,
+                groupTitle: groupTitle,
+                authorBlog: authorBlog,
+                date: date,
+                titleCate: titleCate),
+          ),
+        ],
+      ),
     );
   }
 }

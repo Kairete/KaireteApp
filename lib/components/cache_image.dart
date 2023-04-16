@@ -56,7 +56,6 @@ class KaireteCacheNetworkImage extends StatelessWidget {
                   image: DecorationImage(
                     image: imageProvider,
                     fit: BoxFit.fill,
-                    filterQuality: FilterQuality.high,
                   ),
                   shape: isCircle ? BoxShape.circle : BoxShape.rectangle),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/blogs/controllers/blog_controller.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
+import '../../profile/screens/user_profile_screen.dart';
 
 class BlogScreen extends StatelessWidget {
   const BlogScreen({Key? key}) : super(key: key);
@@ -18,6 +19,12 @@ class BlogScreen extends StatelessWidget {
             return NewfeedCell(
               onTapDetail: () {
                 controller.toDetail(item: item);
+              },
+              onTapAvatar: () {
+                Get.to(
+                  () => UserProfileScreen(),
+                  arguments: {'id': item.user?.userId},
+                );
               },
               titleCate: item.category?.title,
               userName: item.user?.customFields?.fullName ??

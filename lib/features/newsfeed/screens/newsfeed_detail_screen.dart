@@ -6,8 +6,8 @@ import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_detail_controller.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
-import '../../../components/reactions_view.dart';
 import '../../../helper/user.dart';
+import '../../profile/screens/user_profile_screen.dart';
 
 // ignore: must_be_immutable
 class NewsfeedDetailScreen extends StatelessWidget {
@@ -27,82 +27,53 @@ class NewsfeedDetailScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(
-            16,
-          ),
-          child: Obx(() => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  HeaderInfoCellWithAvatar(
-                    userName:
-                        controller.item.value.user?.username ?? 'Empty name',
-                    onTapAvatar: () {},
-                    blogTitle: controller.item.value.blogEntryItem?.blog?.title,
-                    groupTitle:
-                        controller.item.value.groupPostItem?.group?.name,
-                    authorBlog: controller.item.value.type ==
-                            ContentTypeNewFeed.blogEntry
+          child: Obx(() => NewfeedCell(
+                onTapDetail: () {},
+                onTapAvatar: () {
+                  Get.to(
+                    () => UserProfileScreen(),
+                    arguments: {'id': controller.item.value.user?.userId},
+                  );
+                },
+                authorBlog:
+                    controller.item.value.type == ContentTypeNewFeed.blogEntry
                         ? controller.item.value.blogEntryItem?.user?.username
                         : null,
-                    date: controller.item.value.itemDate,
-                    titleCate: '',
-                    avatar: controller.item.value.user?.avatarUrls?.h,
-                    nameImage:
-                        (controller.item.value.user?.customFields?.fullName ??
-                            controller.item.value.user?.username ??
-                            ''),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  if (controller.item.value.title != '' &&
-                      controller.item.value.groupPostItem == null &&
-                      controller.item.value.type !=
-                          ContentTypeNewFeed.tlGroupPost)
-                    Text(
-                      (controller.item.value.title != '' &&
-                              controller.item.value.groupPostItem == null &&
-                              controller.item.value.type !=
-                                  ContentTypeNewFeed.tlGroupPost)
-                          ? (controller.item.value.title ?? '')
-                          : '',
-                      style: kTextMediumtStyle.copyWith(
-                          color: Colors.black,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  HtmlWidget(
-                    (controller.item.value.blogEntryItem?.messageParsed ??
-                                controller.item.value.messageParsed)
-                            ?.replaceAll("\\n", "")
-                            .replaceAll("=\\  ", "=")
-                            .replaceAll("g\\", "") ??
-                        '',
-                    textStyle: const TextStyle(fontSize: 17),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  if (controller.item.value.reactions != null)
-                    ReactionsItemView(
-                        reactions: controller.item.value.reactions ?? []),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  ReationsItemView(
-                      commentCount: controller.item.value.commentCount,
-                      onTapReply: () {
-                        controller.toReplies();
-                      },
-                      isShowLike: controller.item.value.user?.userId !=
-                          UserManager.instance.userId,
-                      onTapReactions: () {
-                        controller.showReactionPopup();
-                      },
-                      reactionIconUrl: controller.item.value.reactionIconUrl,
-                      isShowShare: true,
-                      shareCount: controller.item.value.shareCount)
-                ],
+                onTapReply: () {
+                  controller.toReplies();
+                },
+                onTapReactions: () {
+                  controller.showReactionPopup();
+                },
+                avatar: controller.item.value.user?.avatarUrls?.l,
+                nameImage:
+                    (controller.item.value.user?.customFields?.fullName ??
+                        controller.item.value.user?.username ??
+                        ''),
+                userName: controller.item.value.user?.customFields?.fullName ??
+                    controller.item.value.user?.username ??
+                    '',
+                blogTitle: controller.item.value.blogEntryItem?.blog?.title,
+                groupTitle: controller.item.value.groupPostItem?.group?.name,
+                date: controller.item.value.itemDate,
+                commentCount: controller.item.value.commentCount,
+                shareCount: controller.item.value.shareCount,
+                reactionIconUrl: controller.item.value.reactionIconUrl,
+                isShowLike: controller.item.value.user?.userId !=
+                    UserManager.instance.userId,
+                reactions: controller.item.value.reactions,
+                messagePlainText: controller.item.value.messagePlainText,
+                title: (controller.item.value.title != '' &&
+                        controller.item.value.groupPostItem == null &&
+                        controller.item.value.type !=
+                            ContentTypeNewFeed.tlGroupPost)
+                    ? controller.item.value.title
+                    : null,
+                thumbnailUrl: controller.item.value.blogEntryItem
+                        ?.attachments?[0].thumbnailUrl ??
+                    controller.item.value.groupPostItem?.firstComment
+                        ?.attachments?[0].thumbnailUrl,
+                isDetail: false,
               )),
         ),
       ),
