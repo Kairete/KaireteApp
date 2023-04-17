@@ -17,7 +17,7 @@ class MyBlogController extends BlogController {
   @override
   void fetchItems() async {
     final body = {
-      'blog_ids': blog?.blog?.blogId,
+      'blog_ids[]': blog?.blog?.blogId,
     };
     final json = await usecase.fetItems(body: body);
     final item = BlogModel.fromJson(json);
