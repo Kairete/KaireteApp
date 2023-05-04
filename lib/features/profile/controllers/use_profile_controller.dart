@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/constants/key_constant.dart';
 import 'package:kairete/features/login/models/user_model.dart';
+import 'package:kairete/features/profile/screens/user_profile_free_screen.dart';
+import 'package:kairete/features/profile/usecase/new_feed_profile_usecase.dart';
 import 'package:kairete/features/profile/usecase/user_profile_usecase.dart';
 import 'package:kairete/helper/user.dart';
 import 'package:kairete/local/data_local.dart';
@@ -20,7 +22,6 @@ class UserProfileController extends GetxController {
       id = Get.arguments['id'];
     }
     fetchItems();
-
     super.onInit();
   }
 
@@ -33,6 +34,12 @@ class UserProfileController extends GetxController {
       final json = await usecase.fetchData();
       user.value = User.fromJson(json['me']);
     }
+  }
+
+  void toProfilePost() {
+    Get.to(() => UserProfileFeedScreen(), arguments: {
+      'id': id ?? UserManager.instance.userId,
+    });
   }
 
   void onLogout() async {

@@ -95,6 +95,7 @@ class NewsfeedModel {
   bool isReation = false;
   String? reactionIconUrl;
   ContentTypeNewFeed? type;
+  BlogEntryItem? profilePost;
 
   NewsfeedModel(
       {this.blogEntryItem,
@@ -118,6 +119,10 @@ class NewsfeedModel {
       this.viewUrl});
 
   NewsfeedModel.fromJson(Map<String, dynamic> json) {
+    profilePost = json['ProfilePost'] != null
+        ? BlogEntryItem.fromJson(json['ProfilePost'])
+        : null;
+
     blogEntryItem = json['Content'] != null
         ? BlogEntryItem.fromJson(json['Content'])
         : null;

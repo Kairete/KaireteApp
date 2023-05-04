@@ -158,6 +158,15 @@ class UserProfileScreen extends StatelessWidget {
                           const SizedBox(
                             height: 16,
                           ),
+                          InfoProfileItem(
+                            title: 'Profile post',
+                            onTap: () {
+                              controller.toProfilePost();
+                            },
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
                           // Expanded(child: Container()),
                         ],
                       ),
@@ -176,31 +185,46 @@ class InfoProfileItem extends StatelessWidget {
     Key? key,
     this.title,
     this.content,
+    this.onTap,
   }) : super(key: key);
 
   final String? title;
   final String? content;
+  final Function? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title ?? 'Username:',
-          style: kTextRegularStyle,
-        ),
-        const SizedBox(
-          width: 8,
-        ),
-        Flexible(
-          child: Text(
-            content ?? '',
-            textAlign: TextAlign.right,
-            style: kTextMediumtStyle,
+    return InkWell(
+      onTap: () {
+        if (onTap != null) {
+          onTap!();
+        }
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title ?? 'Username:',
+            style: kTextRegularStyle,
           ),
-        )
-      ],
+          const SizedBox(
+            width: 8,
+          ),
+          Flexible(
+            child: (content == '' || content == null)
+                ? const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 20,
+                    color: kPrimaryColor,
+                  )
+                : Text(
+                    content ?? '',
+                    textAlign: TextAlign.right,
+                    style: kTextMediumtStyle,
+                  ),
+          )
+        ],
+      ),
     );
   }
 }

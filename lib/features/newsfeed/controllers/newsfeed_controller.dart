@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
@@ -12,7 +11,6 @@ import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
-import 'package:kairete/local/master_data.dart';
 import '../../../components/kairete_popup.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';

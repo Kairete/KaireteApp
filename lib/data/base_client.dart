@@ -10,6 +10,6 @@ abstract class BaseClient {
   }
 
   void onCreate({dynamic userId}) {
-    appApiService.create(isShowErrorPopup: isShowPopupError);
+    appApiService.create(isShowErrorPopup: isShowPopupError, userId: userId);
   }
 }

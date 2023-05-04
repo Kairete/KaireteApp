@@ -42,7 +42,7 @@ class CreateNewsfeedController extends GetxController {
         onTapDone: () {
           final newFeedController = Get.find<NewsFeedController>();
           newFeedController.fechItems();
-          Get.back();
+          Get.back(result: true);
         },
         content: 'Create successfuly',
       );
