@@ -30,32 +30,33 @@ class UserProfileFeedScreen extends StatelessWidget {
               final item = controller.items[index];
               return Column(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      controller.toCreate();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(
-                          left: 16, right: 16, bottom: 16, top: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          width: 1,
-                          color: Colors.grey,
+                  if (index == 0)
+                    GestureDetector(
+                      onTap: () {
+                        controller.toCreate();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(
+                            left: 16, right: 16, bottom: 16, top: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            width: 1,
+                            color: Colors.grey,
+                          ),
+                          color: kF7FBFE,
                         ),
-                        color: kF7FBFE,
-                      ),
-                      child: Text(
-                        'Write something…',
-                        style: kTextRegularStyle.copyWith(
-                          color: Colors.black.withAlpha(60),
-                          fontSize: 16,
+                        child: Text(
+                          'Write something…',
+                          style: kTextRegularStyle.copyWith(
+                            color: Colors.black.withAlpha(60),
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   NewfeedCell(
                     onTapDetail: () {
                       controller.toDetail(item: item);
@@ -84,7 +85,7 @@ class UserProfileFeedScreen extends StatelessWidget {
                     userName: item.user?.customFields?.fullName ??
                         item.user?.username ??
                         '',
-                    blogTitle: item.blogEntryItem?.user?.username,
+                    blogTitle: item.blogEntryItem?.blog?.title,
                     groupTitle: item.groupPostItem?.group?.name,
                     date: item.itemDate,
                     commentCount: item.commentCount,
