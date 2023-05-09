@@ -1,3 +1,4 @@
+import '../../login/models/user_model.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 
 class ArticlesModel {

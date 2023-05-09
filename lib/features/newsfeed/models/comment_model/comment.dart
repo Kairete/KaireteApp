@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../../helper/user.dart';
 import '../../../../local/master_data.dart';
+import '../../../login/models/user_model.dart';
 import '../newsfeed_model.dart';
 
 class Comment {

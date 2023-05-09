@@ -12,6 +12,7 @@ import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 import '../../../components/kairete_popup.dart';
+import '../../login/models/user_model.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
 import '../screens/reply_screen.dart';

@@ -82,6 +82,8 @@ class User {
   int? warningPoints;
   String? website;
   AvatarUrls? profileBannerUrls;
+  CustomFields? customFields;
+  List<dynamic>? secondaryGroupIds;
 
   User(
       {this.about,
@@ -213,6 +215,15 @@ class User {
     voteScore = json['vote_score'];
     warningPoints = json['warning_points'];
     website = json['website'];
+    customFields = json['custom_fields'] != null
+        ? CustomFields.fromJson(json['custom_fields'])
+        : null;
+    if (json['secondary_group_ids'] != null) {
+      secondaryGroupIds = <dynamic>[];
+      json['secondary_group_ids'].forEach((v) {
+        secondaryGroupIds!.add(v);
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -332,6 +343,50 @@ class Dob {
     data['year'] = year;
     data['month'] = month;
     data['day'] = day;
+    return data;
+  }
+}
+
+class CustomFields {
+  String? lastName;
+  String? firstName;
+  String? skype;
+  String? facebook;
+  String? twitter;
+  String? residence;
+  String? hometown;
+  String? fullName;
+
+  CustomFields(
+      {this.lastName,
+      this.firstName,
+      this.skype,
+      this.facebook,
+      this.twitter,
+      this.residence,
+      this.hometown});
+
+  CustomFields.fromJson(Map<String, dynamic> json) {
+    lastName = json['lastName'] ?? '';
+    firstName = json['firstName'] ?? '';
+    skype = json['skype'];
+    facebook = json['facebook'];
+    twitter = json['twitter'];
+    residence = json['residence'];
+    hometown = json['hometown'];
+    fullName =
+        firstName != '' && lastName != '' ? '$firstName $lastName' : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['lastName'] = lastName;
+    data['firstName'] = firstName;
+    data['skype'] = skype;
+    data['facebook'] = facebook;
+    data['twitter'] = twitter;
+    data['residence'] = residence;
+    data['hometown'] = hometown;
     return data;
   }
 }

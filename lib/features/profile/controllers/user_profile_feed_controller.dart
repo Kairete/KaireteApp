@@ -4,6 +4,7 @@ import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import '../../../components/kairete_popup.dart';
 import '../../../helper/user.dart';
 import '../../blogs/screens/my_blog_screen.dart';
+import '../../login/models/user_model.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../../newsfeed/screens/create_newsfeed_screen.dart';
 import '../../newsfeed/screens/newsfeed_detail_screen.dart';
