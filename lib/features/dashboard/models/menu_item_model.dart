@@ -23,7 +23,8 @@ enum GroupItemType {
   articles,
   blogs,
   login,
-  register
+  register,
+  groups
 }
 
 class ReactionIconModel {

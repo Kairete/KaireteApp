@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/features/dashboard/usecase/master_data_usecase.dart';
 import 'package:kairete/features/forum/screens/forum_screen.dart';
+import 'package:kairete/features/groups/screens/group_screen.dart';
 import 'package:kairete/helper/user.dart';
 import 'package:kairete/local/master_data.dart';
 
@@ -64,6 +65,11 @@ class DashboardController extends GetxController {
           MenuItemModel(name: 'New comments'),
           MenuItemModel(name: 'Search Media'),
         ],
+      ),
+      GroupMenuModel(
+        name: 'Groups',
+        type: GroupItemType.groups,
+        items: [],
       ),
       GroupMenuModel(
         name: 'Members',
@@ -140,6 +146,10 @@ class DashboardController extends GetxController {
       case GroupItemType.forums:
         Navigator.pop(Get.context!);
         Get.to(() => ForumScreen());
+        break;
+      case GroupItemType.groups:
+        Navigator.pop(Get.context!);
+        Get.to(() => GroupScreen());
         break;
       default:
     }

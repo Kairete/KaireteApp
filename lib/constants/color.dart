@@ -31,3 +31,4 @@ const kTagStatusInProgressColor = Color(0xFFF19426);
 const kTagStatusProcessedColor = Color(0xFF1d934c);
 
 const kPrimaryColor = Color(0xFF176249);
+const kEEF6FDColor = Color(0xFFEEF6FD);
