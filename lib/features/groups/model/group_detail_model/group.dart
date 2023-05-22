@@ -1,5 +1,7 @@
-import '../../../login/models/user_model.dart';
 import 'category.dart';
+import 'custom_fields.dart';
+import 'dynamic_color.dart';
+import 'latest_member.dart';
 
 class Group {
   int? albumCount;
@@ -22,6 +24,7 @@ class Group {
   CustomFields? customFields;
   String? description;
   int? discussionCount;
+  DynamicColor? dynamicColor;
   int? eventCount;
   int? groupId;
   String? groupState;
@@ -31,6 +34,7 @@ class Group {
   bool? isOwner;
   String? languageCode;
   int? lastActivity;
+  List<LatestMember>? latestMembers;
   int? memberCount;
   int? memberModeratedCount;
   String? name;
@@ -63,6 +67,7 @@ class Group {
     this.customFields,
     this.description,
     this.discussionCount,
+    this.dynamicColor,
     this.eventCount,
     this.groupId,
     this.groupState,
@@ -72,6 +77,7 @@ class Group {
     this.isOwner,
     this.languageCode,
     this.lastActivity,
+    this.latestMembers,
     this.memberCount,
     this.memberModeratedCount,
     this.name,
@@ -110,6 +116,10 @@ class Group {
                 json['custom_fields'] as Map<String, dynamic>),
         description: json['description'] as String?,
         discussionCount: json['discussion_count'] as int?,
+        dynamicColor: json['dynamic_color'] == null
+            ? null
+            : DynamicColor.fromJson(
+                json['dynamic_color'] as Map<String, dynamic>),
         eventCount: json['event_count'] as int?,
         groupId: json['group_id'] as int?,
         groupState: json['group_state'] as String?,
@@ -119,6 +129,9 @@ class Group {
         isOwner: json['is_owner'] as bool?,
         languageCode: json['language_code'] as String?,
         lastActivity: json['last_activity'] as int?,
+        latestMembers: (json['LatestMembers'] as List<dynamic>?)
+            ?.map((e) => LatestMember.fromJson(e as Map<String, dynamic>))
+            .toList(),
         memberCount: json['member_count'] as int?,
         memberModeratedCount: json['member_moderated_count'] as int?,
         name: json['name'] as String?,
@@ -152,6 +165,7 @@ class Group {
         'custom_fields': customFields?.toJson(),
         'description': description,
         'discussion_count': discussionCount,
+        'dynamic_color': dynamicColor?.toJson(),
         'event_count': eventCount,
         'group_id': groupId,
         'group_state': groupState,
@@ -161,6 +175,7 @@ class Group {
         'is_owner': isOwner,
         'language_code': languageCode,
         'last_activity': lastActivity,
+        'LatestMembers': latestMembers?.map((e) => e.toJson()).toList(),
         'member_count': memberCount,
         'member_moderated_count': memberModeratedCount,
         'name': name,

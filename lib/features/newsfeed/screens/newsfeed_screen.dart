@@ -540,7 +540,7 @@ class ReationsItemView extends StatelessWidget {
               },
               url: reactionIconUrl,
             ),
-          if (isShowShare)
+          if (isShowShare && shareCount != null)
             KaireteIconButton(
               title: '$shareCount Share',
               icon: 'ic_share',

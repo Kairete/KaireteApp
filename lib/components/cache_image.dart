@@ -29,8 +29,9 @@ class KaireteCacheNetworkImage extends StatelessWidget {
             ? Container(
                 width: width,
                 height: height,
-                decoration: const BoxDecoration(
-                    shape: BoxShape.circle, color: kPrimaryColor),
+                decoration: BoxDecoration(
+                    shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+                    color: kPrimaryColor),
                 child: Center(
                   child: Text(
                     nameImage
