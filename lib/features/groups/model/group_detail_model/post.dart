@@ -1,3 +1,7 @@
+import 'package:get/get.dart';
+
+import '../../../../helper/user.dart';
+import '../../../../local/master_data.dart';
 import '../../../newsfeed/models/newsfeed_model.dart';
 import 'user.dart';
 
@@ -104,4 +108,20 @@ class Post {
         'username': username,
         'view_url': viewUrl,
       };
+
+  String? getReacitonsUrl() {
+    if (reactions != null) {
+      final userId = UserManager.instance.userId;
+      final item =
+          reactions!.firstWhereOrNull((element) => element.userId == userId);
+      print('111');
+      if (item != null) {
+        final path = MasterDataManager.instance.reactionIcons
+            .firstWhere((element) => element.reactionId == item.reactionId)
+            .imageUrl;
+        print(path);
+        return path;
+      }
+    }
+  }
 }

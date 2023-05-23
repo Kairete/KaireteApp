@@ -62,7 +62,7 @@ class IGroupUsecase extends BaseClient implements GroupUsecase {
   @override
   Future reactions({body}) async {
     final json = await appApiService.client?.requestApi(
-      path: 'api/group-comments/${body['id']}/react',
+      path: 'api/group-posts/${body['id']}/react',
       method: HttpMethodCustom.POST,
       body: body,
     );

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kairete/features/groups/usecase/create_group_usecase.dart';
 import 'package:kairete/features/groups/usecase/group_usecase.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 
@@ -36,8 +37,12 @@ class NewFeedGroupController extends GetxController {
   }
 
   void toCreate() async {
-    final data =
-        await Get.to(() => CreateNewsfeedScreen(), fullscreenDialog: true);
+    final grUsecase = ICreateGroupUsecaseImpl(groupId);
+    final data = await Get.to(() => CreateNewsfeedScreen(),
+        fullscreenDialog: true,
+        arguments: {
+          'usecase': grUsecase,
+        });
     if (data != null) {
       fechItems();
     }
@@ -62,8 +67,12 @@ class NewFeedGroupController extends GetxController {
     );
   }
 
-  void toReplies({required NewsfeedModel item}) {
-    Get.to(() => ReplyScreen(), arguments: {'item': item});
+  void toReplies({required NewsfeedModel item}) async {
+    final isUpdate =
+        await Get.to(() => ReplyScreen(), arguments: {'item': item});
+    if (isUpdate) {
+      fechItems();
+    }
   }
 
   void toProfile({User? user}) {

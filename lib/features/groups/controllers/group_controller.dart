@@ -10,6 +10,7 @@ class GroupController extends GetxController {
   GroupUsecase usecase = IGroupUsecase();
 
   var items = <Group>[].obs;
+  Group? currentGroup;
 
   @override
   void onInit() {
@@ -43,5 +44,6 @@ class GroupController extends GetxController {
     } else {
       Get.to(() => GroupFeedScreen(), arguments: {'groupId': item.groupId});
     }
+    currentGroup = item;
   }
 }

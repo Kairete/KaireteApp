@@ -12,6 +12,7 @@ import '../../newsfeed/screens/reply_screen.dart';
 import '../../newsfeed/usecase/newsfeed_usecase.dart';
 import '../../profile/screens/user_profile_screen.dart';
 import '../model/group_detail_model/user.dart';
+import '../usecase/create_group_usecase.dart';
 
 class GroupFeedController extends GetxController {
   var items = <Post>[].obs;
@@ -37,8 +38,12 @@ class GroupFeedController extends GetxController {
   }
 
   void toCreate() async {
-    final data =
-        await Get.to(() => CreateNewsfeedScreen(), fullscreenDialog: true);
+    final grUsecase = ICreateGroupNormalUsecaseImpl(groupId);
+    final data = await Get.to(() => CreateNewsfeedScreen(),
+        fullscreenDialog: true,
+        arguments: {
+          'usecase': grUsecase,
+        });
     if (data != null) {
       fechItems();
     }
@@ -63,8 +68,12 @@ class GroupFeedController extends GetxController {
     );
   }
 
-  void toReplies({required NewsfeedModel item}) {
-    Get.to(() => ReplyScreen(), arguments: {'item': item});
+  void toReplies({required NewsfeedModel item}) async {
+    final isUpdate =
+        await Get.to(() => ReplyScreen(), arguments: {'item': item});
+    if (isUpdate) {
+      fechItems();
+    }
   }
 
   void toProfile({User? user}) {

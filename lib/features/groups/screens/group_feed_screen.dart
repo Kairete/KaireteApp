@@ -6,9 +6,11 @@ import 'package:kairete/helper/time.dart';
 
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
+import '../../../helper/color.dart';
 import '../../../helper/user.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
+import '../controllers/group_controller.dart';
 
 class GroupFeedScreen extends StatelessWidget {
   GroupFeedScreen({Key? key}) : super(key: key);
@@ -23,37 +25,58 @@ class GroupFeedScreen extends StatelessWidget {
         child: Obx(() => controller.items.isEmpty
             ? const SizedBox()
             : ListView.builder(
-                padding: const EdgeInsets.only(top: 16),
                 itemCount: controller.items.length + 1,
                 itemBuilder: (context, index) {
                   final originIndex = index == 0 ? 0 : index - 1;
                   final item = controller.items[originIndex];
+                  final gr = Get.find<GroupController>().currentGroup;
                   return index == 0
                       ? InkWell(
                           onTap: () {
                             controller.toCreate();
                           },
-                          child: Container(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                              width: double.infinity,
-                              margin: const EdgeInsets.only(
-                                  left: 16, right: 16, bottom: 16),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  width: 1,
-                                  color: Colors.grey,
+                          child: Column(
+                            children: [
+                              Container(
+                                color:
+                                    HexColor(gr?.dynamicColor?.bgColor ?? ''),
+                                height: 120,
+                                child: Center(
+                                  child: Text(
+                                    gr?.name ?? '',
+                                    style: kTextTitle.copyWith(
+                                      color: HexColor(
+                                          gr?.dynamicColor?.color ?? ''),
+                                    ),
+                                  ),
                                 ),
-                                color: kF7FBFE,
                               ),
-                              child: Text(
-                                'Write something…',
-                                style: kTextRegularStyle.copyWith(
-                                  color: Colors.black.withAlpha(60),
-                                  fontSize: 16,
-                                ),
-                              )),
+                              const SizedBox(
+                                height: 16,
+                              ),
+                              Container(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(
+                                      left: 16, right: 16, bottom: 16),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      width: 1,
+                                      color: Colors.grey,
+                                    ),
+                                    color: kF7FBFE,
+                                  ),
+                                  child: Text(
+                                    'Write something…',
+                                    style: kTextRegularStyle.copyWith(
+                                      color: Colors.black.withAlpha(60),
+                                      fontSize: 16,
+                                    ),
+                                  )),
+                            ],
+                          ),
                         )
                       : NewfeedCell(
                           onTapDetail: () {
@@ -85,7 +108,7 @@ class GroupFeedScreen extends StatelessWidget {
                           date: item.lastCommentDate,
                           commentCount: item.commentCount,
                           // shareCount: item.shareCount,
-                          // reactionIconUrl: item.reactionIconUrl,
+                          reactionIconUrl: item.getReacitonsUrl(),
                           isShowLike:
                               item.user?.userId != UserManager.instance.userId,
                           reactions: item.reactions,

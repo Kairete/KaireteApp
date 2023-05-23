@@ -26,6 +26,12 @@ class ReplyScreen extends StatelessWidget {
           'Replies',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Get.back(result: controller.isUpdate);
+          },
+        ),
         actions: [
           Obx(() => KairetePrimaryButton(
                 onTap: () {

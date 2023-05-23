@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment_model.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
@@ -17,6 +18,7 @@ class ReplyController extends GetxController {
   CommentModel? comment;
   var items = <Comment>[].obs;
   var isEnable = false.obs;
+  var isUpdate = false;
 
   @override
   void onInit() {
@@ -59,6 +61,8 @@ class ReplyController extends GetxController {
     };
     final json = await usecase.postCommentsLv1(body: body);
     if (json != null) {
+      isUpdate = true;
+      Get.find<NewsFeedController>().fechItems();
       fetchItems();
     }
   }

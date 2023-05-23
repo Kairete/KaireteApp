@@ -22,6 +22,9 @@ class CreateNewsfeedController extends GetxController {
 
   @override
   void onInit() {
+    if (Get.arguments != null) {
+      usecase = Get.arguments['usecase'];
+    }
     super.onInit();
   }
 
