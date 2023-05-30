@@ -135,9 +135,11 @@ class NotificationManager {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
+      print("====== ${message.data}");
       if (notification != null) {
         print(notification.body);
         print(notification.title);
+
         flutterLocalNotificationsPlugin.show(
             notification.hashCode,
             notification.title,
@@ -159,6 +161,8 @@ class NotificationManager {
       handleFCMMessage(message);
     });
 
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     final RemoteMessage? initialMessage =
         await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
@@ -168,6 +172,11 @@ class NotificationManager {
 
   handleFCMMessage(RemoteMessage remoteMessage) {
     navigator.nextStep(data: remoteMessage.data);
+  }
+
+  Future<void> _firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    print("onBackgroundMessage: $message");
   }
 
   Future<void> creteNoticeLocal() async {

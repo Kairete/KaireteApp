@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
+import 'package:kairete/features/groups/controllers/group_feed_controller.dart';
+import 'package:kairete/features/groups/model/group_detail_model/post.dart';
+import 'package:kairete/features/groups/usecase/create_group_usecase.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment.dart';
 import 'package:kairete/features/newsfeed/models/comment_model/comment_model.dart';
-import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 
 import '../../../components/kairete_popup.dart';
-import '../screens/sub_reply_screen.dart';
 
 class ReplyController extends GetxController {
-  NewsFeedUsecase usecase = INewsFeedUsecase();
-  NewsfeedModel? item;
+  NewsFeedUsecase usecase = IGroupNormalUsecaseImpl();
+  Post? item;
 
   TextEditingController textEditingController = TextEditingController();
 
@@ -22,11 +22,8 @@ class ReplyController extends GetxController {
 
   @override
   void onInit() {
-    if (Get.arguments['usecase'] != null) {
-      usecase = Get.arguments['usecase'];
-    } else {
-      item = Get.arguments['item'];
-    }
+    item = Get.arguments['item'];
+
     fetchItems();
     super.onInit();
   }
@@ -35,20 +32,13 @@ class ReplyController extends GetxController {
     if (item == null) {
       return;
     }
-    final json = await usecase.comments(
-      body: null,
-      id: item!.itemId ?? 0,
-    );
+    final body = {
+      'id': item?.postId,
+    };
+    final json = await usecase.fetchItems(body: body);
     comment = CommentModel.fromJson(json);
     final data = comment?.comments ?? [];
     items.value = data;
-  }
-
-  void toSubReply({required Comment item}) {
-    Get.to(() => SubReplyScreen(), arguments: {
-      'item': item,
-      'type': this.item?.contentType,
-    });
   }
 
   void textOnChanged({required text}) {
@@ -61,12 +51,12 @@ class ReplyController extends GetxController {
     }
     final body = {
       'message': textEditingController.text,
-      'id': item!.itemId,
+      'id': item!.postId,
     };
     final json = await usecase.postCommentsLv1(body: body);
     if (json != null) {
       isUpdate = true;
-      Get.find<NewsFeedController>().fechItems();
+      Get.find<GroupFeedController>().fechItems();
       fetchItems();
     }
   }
@@ -86,7 +76,6 @@ class ReplyController extends GetxController {
     final body = {
       'id': commentId,
       'reaction_id': reactionId,
-      'content_type': item!.contentType,
     };
     final json = await usecase.reactionsComment(body: body);
     if (json != null) {

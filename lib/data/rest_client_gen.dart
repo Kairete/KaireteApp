@@ -9,6 +9,7 @@ class RestClient {
 
   Future requestApi(
       {Map<String, dynamic>? body,
+      Map<String, dynamic>? parameters,
       int? offset,
       int? limit,
       required String path,
@@ -24,6 +25,11 @@ class RestClient {
           _data.addAll(body);
         }
       }
+      if (parameters != null) {
+        queryParameters.addAll(parameters);
+        queryParameters.removeWhere((k, v) => v == null);
+      }
+
       FormData formData = FormData.fromMap(_data);
       final _result = await dio.request(path,
           queryParameters: queryParameters,

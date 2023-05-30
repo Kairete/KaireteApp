@@ -7,6 +7,7 @@ abstract class ThreadUsecase {
   Future commentLv2({dynamic body});
   Future postCommentLv1({dynamic body});
   Future postCommentLv2({dynamic body});
+  Future fetchItem({dynamic body});
 }
 
 class IThreadUsecase extends BaseClient implements ThreadUsecase {
@@ -46,6 +47,16 @@ class IThreadUsecase extends BaseClient implements ThreadUsecase {
       path: 'api/posts/${body['id']}/replies',
       body: body,
       method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future fetchItem({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: 'api/posts/${body['id']}',
+      body: body,
+      method: HttpMethodCustom.GET,
     );
     return json;
   }

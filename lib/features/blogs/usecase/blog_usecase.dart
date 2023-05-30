@@ -7,6 +7,7 @@ abstract class BlogUsecase {
   Future fetchItemsFromCate({dynamic body});
   Future reactions({dynamic body});
   Future myBlogs({dynamic body});
+  Future blogDetail({dynamic body});
 }
 
 class IBlogUsecase extends BaseClient implements BlogUsecase {
@@ -40,6 +41,15 @@ class IBlogUsecase extends BaseClient implements BlogUsecase {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.myBlogs + body['id'].toString(),
       body: body,
+      method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
+  Future blogDetail({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.blogs + '/' + body['id'],
       method: HttpMethodCustom.GET,
     );
     return json;

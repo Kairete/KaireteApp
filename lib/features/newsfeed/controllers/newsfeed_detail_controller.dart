@@ -14,8 +14,21 @@ class NewsfeedDetailController extends GetxController {
 
   @override
   void onInit() {
-    item.value = Get.arguments['item'];
+    fetchItem();
     super.onInit();
+  }
+
+  void fetchItem() async {
+    NewsfeedModel? data = Get.arguments['item'];
+    if (data?.contentId != null) {
+      item.value = data!;
+      return;
+    }
+    final body = {
+      'id': data?.itemId.toString(),
+    };
+    final json = await usecase.feedDetail(body: body);
+    item.value = NewsfeedModel.fromJson(json['newsfeedItem']);
   }
 
   void toCate() {

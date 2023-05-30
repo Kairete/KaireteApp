@@ -42,7 +42,10 @@ class GroupController extends GetxController {
     if (item.isNewsfeedGroup ?? false) {
       Get.to(() => NewfeedGroupScreen(), arguments: {'groupId': item.groupId});
     } else {
-      Get.to(() => GroupFeedScreen(), arguments: {'groupId': item.groupId});
+      Get.to(() => GroupFeedScreen(), arguments: {
+        'groupId': item.groupId,
+        'postId': item.postId,
+      });
     }
     currentGroup = item;
   }

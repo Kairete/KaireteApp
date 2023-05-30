@@ -14,8 +14,15 @@ class BlogsDetailController extends GetxController {
 
   @override
   void onInit() {
-    item.value = Get.arguments['item'];
+    fetchItem();
     super.onInit();
+  }
+
+  void fetchItem() async {
+    final data = Get.arguments['item'];
+    final body = {'id': data.blogEntryId.toString()};
+    final json = await usecase.blogDetail(body: body);
+    item.value = BlogEntryItem.fromJson(json['blogEntry']);
   }
 
   void toCate() {

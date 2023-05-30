@@ -25,18 +25,20 @@ class ThreadDetailScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Obx(() => Container(
-            color: Colors.grey.shade200,
-            child: ThreadItemCell(
-              item: controller.item.value,
-              onTapComment: () {
-                controller.toComment();
-              },
-              onTapReactions: () {
-                controller.showReactionPopup();
-              },
-              isShowDetail: false,
-            ))),
+        child: Obx(() => controller.item.value.message == null
+            ? SizedBox()
+            : Container(
+                color: Colors.grey.shade200,
+                child: ThreadItemCell(
+                  item: controller.item.value,
+                  onTapComment: () {
+                    controller.toComment();
+                  },
+                  onTapReactions: () {
+                    controller.showReactionPopup();
+                  },
+                  isShowDetail: false,
+                ))),
       ),
     );
   }

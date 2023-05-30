@@ -45,11 +45,13 @@ class Group {
   List<dynamic>? tags;
   int? viewCount;
   String? viewUrl;
+  int? postId;
 
   Group({
     this.albumCount,
     this.allowGuestPosting,
     this.alwaysModerateJoin,
+    this.postId,
     this.avatarUrl,
     this.canDelete,
     this.canEdit,
@@ -92,6 +94,7 @@ class Group {
 
   factory Group.fromJson(Map<String, dynamic> json) => Group(
         albumCount: json['album_count'] as int?,
+        postId: json['post_id'] as int?,
         allowGuestPosting: json['allow_guest_posting'] as bool?,
         alwaysModerateJoin: json['always_moderate_join'] as bool?,
         avatarUrl: json['avatar_url'] as dynamic,

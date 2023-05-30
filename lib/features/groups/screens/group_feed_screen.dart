@@ -95,7 +95,7 @@ class GroupFeedScreen extends StatelessWidget {
                           //     ? item.blogEntryItem?.user?.username
                           //     : null,
                           onTapReply: () {
-                            // controller.toReplies(item: item);
+                            controller.toReplies(item: item);
                           },
                           onTapReactions: () {
                             controller.showReactionPopup(item: item);

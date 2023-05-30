@@ -19,17 +19,34 @@ class ICreateGroupUsecaseImpl extends INewsFeedUsecase {
   }
 }
 
-class ICreateGroupNormalUsecaseImpl extends INewsFeedUsecase {
-  final int? groupId;
-
-  ICreateGroupNormalUsecaseImpl(this.groupId);
+class IGroupNormalUsecaseImpl extends INewsFeedUsecase {
+  IGroupNormalUsecaseImpl();
 
   @override
-  Future create({body}) async {
+  Future fetchItems({body}) async {
     final json = await appApiService.client?.requestApi(
-      path: 'api/group-posts/$groupId/comments',
-      body: body,
+      path: 'api/group-comments/${body['id']}/replies',
+      method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
+  Future reactionsComment({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: 'api/group-comments/${body['id']}/react',
       method: HttpMethodCustom.POST,
+      parameters: body,
+    );
+    return json;
+  }
+
+  @override
+  Future postCommentsLv1({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: 'api/group-comments/${body['id']}/replies',
+      method: HttpMethodCustom.POST,
+      body: body,
     );
     return json;
   }

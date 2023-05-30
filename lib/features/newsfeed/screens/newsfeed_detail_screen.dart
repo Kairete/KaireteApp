@@ -27,54 +27,57 @@ class NewsfeedDetailScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Obx(() => NewfeedCell(
-                onTapDetail: () {},
-                onTapAvatar: () {
-                  Get.to(
-                    () => UserProfileScreen(),
-                    arguments: {'id': controller.item.value.user?.userId},
-                  );
-                },
-                authorBlog:
-                    controller.item.value.type == ContentTypeNewFeed.blogEntry
-                        ? controller.item.value.blogEntryItem?.user?.username
-                        : null,
-                onTapReply: () {
-                  controller.toReplies();
-                },
-                onTapReactions: () {
-                  controller.showReactionPopup();
-                },
-                avatar: controller.item.value.user?.avatarUrls?.l,
-                nameImage:
-                    (controller.item.value.user?.customFields?.fullName ??
-                        controller.item.value.user?.username ??
-                        ''),
-                userName: controller.item.value.user?.customFields?.fullName ??
-                    controller.item.value.user?.username ??
-                    '',
-                blogTitle: controller.item.value.blogEntryItem?.blog?.title,
-                groupTitle: controller.item.value.groupPostItem?.group?.name,
-                date: controller.item.value.itemDate,
-                commentCount: controller.item.value.commentCount,
-                shareCount: controller.item.value.shareCount,
-                reactionIconUrl: controller.item.value.reactionIconUrl,
-                isShowLike: controller.item.value.user?.userId !=
-                    UserManager.instance.userId,
-                reactions: controller.item.value.reactions,
-                messagePlainText: controller.item.value.messagePlainText,
-                title: (controller.item.value.title != '' &&
-                        controller.item.value.groupPostItem == null &&
-                        controller.item.value.type !=
-                            ContentTypeNewFeed.tlGroupPost)
-                    ? controller.item.value.title
-                    : null,
-                thumbnailUrl: controller.item.value.blogEntryItem
-                        ?.attachments?[0].thumbnailUrl ??
-                    controller.item.value.groupPostItem?.firstComment
-                        ?.attachments?[0].thumbnailUrl,
-                isDetail: false,
-              )),
+          child: Obx(() => controller.item.value.contentId == null
+              ? const SizedBox()
+              : NewfeedCell(
+                  onTapDetail: () {},
+                  onTapAvatar: () {
+                    Get.to(
+                      () => UserProfileScreen(),
+                      arguments: {'id': controller.item.value.user?.userId},
+                    );
+                  },
+                  authorBlog:
+                      controller.item.value.type == ContentTypeNewFeed.blogEntry
+                          ? controller.item.value.blogEntryItem?.user?.username
+                          : null,
+                  onTapReply: () {
+                    controller.toReplies();
+                  },
+                  onTapReactions: () {
+                    controller.showReactionPopup();
+                  },
+                  avatar: controller.item.value.user?.avatarUrls?.l,
+                  nameImage:
+                      (controller.item.value.user?.customFields?.fullName ??
+                          controller.item.value.user?.username ??
+                          ''),
+                  userName:
+                      controller.item.value.user?.customFields?.fullName ??
+                          controller.item.value.user?.username ??
+                          '',
+                  blogTitle: controller.item.value.blogEntryItem?.blog?.title,
+                  groupTitle: controller.item.value.groupPostItem?.group?.name,
+                  date: controller.item.value.itemDate,
+                  commentCount: controller.item.value.commentCount,
+                  shareCount: controller.item.value.shareCount,
+                  reactionIconUrl: controller.item.value.reactionIconUrl,
+                  isShowLike: controller.item.value.user?.userId !=
+                      UserManager.instance.userId,
+                  reactions: controller.item.value.reactions,
+                  messagePlainText: controller.item.value.messagePlainText,
+                  title: (controller.item.value.title != '' &&
+                          controller.item.value.groupPostItem == null &&
+                          controller.item.value.type !=
+                              ContentTypeNewFeed.tlGroupPost)
+                      ? controller.item.value.title
+                      : null,
+                  thumbnailUrl: controller.item.value.blogEntryItem
+                          ?.attachments?[0].thumbnailUrl ??
+                      controller.item.value.groupPostItem?.firstComment
+                          ?.attachments?[0].thumbnailUrl,
+                  isDetail: false,
+                )),
         ),
       ),
     );
