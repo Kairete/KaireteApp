@@ -25,7 +25,7 @@ class IGroupNormalUsecaseImpl extends INewsFeedUsecase {
   @override
   Future fetchItems({body}) async {
     final json = await appApiService.client?.requestApi(
-      path: 'api/group-comments/${body['id']}/replies',
+      path: 'api/group-posts/${body['id']}/comments',
       method: HttpMethodCustom.GET,
     );
     return json;
@@ -44,7 +44,7 @@ class IGroupNormalUsecaseImpl extends INewsFeedUsecase {
   @override
   Future postCommentsLv1({body}) async {
     final json = await appApiService.client?.requestApi(
-      path: 'api/group-comments/${body['id']}/replies',
+      path: 'api/group-posts/${body['id']}/comments',
       method: HttpMethodCustom.POST,
       body: body,
     );
