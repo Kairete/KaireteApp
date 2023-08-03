@@ -24,4 +24,14 @@ class ImagePickerManager {
       return null;
     }
   }
+
+  Future<List<XFile>> pickImages(
+      {double? maxWidth, double? maxHeight, int? quality}) async {
+    try {
+      final List<XFile> pickedFile = await _picker.pickMultiImage();
+      return pickedFile;
+    } catch (e) {
+      return [];
+    }
+  }
 }

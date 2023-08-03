@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:kairete/helper/extenstions.dart';
+import 'package:supercharged/supercharged.dart';
 
 import '../constants/color.dart';
 import '../constants/color_constant.dart';
+import '../features/dashboard/controllers/dashboard_controller.dart';
+import '../features/dashboard/models/style_model/css.dart';
 import '../features/newsfeed/models/newsfeed_model.dart';
 import 'kairete_icon.dart';
 
+// ignore: must_be_immutable
 class ReactionsItemView extends StatelessWidget {
-  const ReactionsItemView({
+  ReactionsItemView({
     Key? key,
     required this.reactions,
   }) : super(key: key);
 
   final List<Reactions> reactions;
+  Css? style = Get.find<DashboardController>().style;
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +31,11 @@ class ReactionsItemView extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 width: 1,
-                color: const Color(0xFFE7E7E7),
+                color: style?.newsfeedItemReactionsBar?.background.toColor() ??
+                    Color(0xFFE7E7E7),
               ),
-              color: kECECEC,
+              color: style?.newsfeedItemReactionsBar?.background.toColor() ??
+                  kECECEC,
             ),
             child: Text.rich(
               TextSpan(
@@ -42,10 +51,16 @@ class ReactionsItemView extends StatelessWidget {
                   )),
                   TextSpan(
                     text: getReactionsText(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor,
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontWeight: style?.newsfeedItemReactionsBar?.fontWeight
+                              ?.getWegiht() ??
+                          FontWeight.w600,
+                      color:
+                          style?.newsfeedItemReactionsBar?.color?.toColor() ??
+                              kPrimaryColor,
+                      fontSize: style?.newsfeedItemReactionsBar?.fontSize
+                              .parseDouble() ??
+                          16,
                     ),
                   ),
                 ],

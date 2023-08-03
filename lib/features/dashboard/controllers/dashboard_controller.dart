@@ -2,6 +2,7 @@ import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/constants/app_routes.dart';
+import 'package:kairete/features/dashboard/models/style_model/css.dart';
 import 'package:kairete/features/dashboard/usecase/master_data_usecase.dart';
 import 'package:kairete/features/forum/screens/forum_screen.dart';
 import 'package:kairete/features/groups/screens/group_screen.dart';
@@ -9,7 +10,10 @@ import 'package:kairete/helper/user.dart';
 import 'package:kairete/local/master_data.dart';
 
 import '../../../helper/notification_service.dart';
+import '../../blogs/models/blog_model.dart';
+import '../../blogs/screens/blog_detail_screen.dart';
 import '../../login/models/user_model.dart';
+import '../../newsfeed/models/newsfeed_model.dart';
 import '../../profile/usecase/user_profile_usecase.dart';
 import '../models/menu_item_model.dart';
 
@@ -19,14 +23,30 @@ class DashboardController extends GetxController {
   UserProfileUsecase usecase = IUserProfileUsecase();
   var user = User().obs;
   MasterDataUsecase masterDataUsecase = IMasterDataUsecase();
+  Css? style;
+  var blogs = <BlogEntryItem>[].obs;
 
   @override
   void onInit() {
     fetchFcmToken();
-    fetchItems();
     fetchIcons();
+    fetchWidget();
     items.value = addData();
     super.onInit();
+  }
+
+  void fetchWidget() async {
+    final params = {'widget_key': 'blognewsfeed'};
+    final json = await masterDataUsecase.fetchWidget(body: params);
+    final data = BlogModel.fromJson(json[0]);
+    blogs.value = data.blogEntryItems ?? [];
+    print('========= ${blogs.length}');
+    fetchItems();
+  }
+
+  void toDetail({required BlogEntryItem item}) {
+    Navigator.pop(Get.context!);
+    Get.to(() => BlogDetailScreen(), arguments: {'item': item});
   }
 
   void fetchItems() async {

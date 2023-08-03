@@ -19,7 +19,9 @@ class NewfeedGroupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppbarCustom('Newsfeed'),
+      appBar: AppbarCustom(
+        title: 'Newsfeed',
+      ),
       body: SafeArea(
         child: Obx(() => controller.items.isEmpty
             ? const SizedBox()

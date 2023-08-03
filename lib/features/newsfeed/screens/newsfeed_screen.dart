@@ -6,14 +6,17 @@ import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
+import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
+import 'package:kairete/helper/extenstions.dart';
 import 'package:kairete/helper/time.dart';
 import 'package:kairete/helper/user.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
 import '../../../constants/key_constant.dart';
 import '../../../local/data_local.dart';
+import '../../dashboard/models/style_model/css.dart';
 import '../models/newsfeed_model.dart';
 
 // ignore: must_be_immutable
@@ -252,8 +255,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
   }
 }
 
+// ignore: must_be_immutable
 class NewfeedCell extends StatelessWidget {
-  const NewfeedCell({
+  NewfeedCell({
     Key? key,
     required this.onTapDetail,
     this.avatar,
@@ -304,6 +308,8 @@ class NewfeedCell extends StatelessWidget {
   final bool isDetail;
   final Function? onTapHeader;
 
+  Css? style = Get.find<DashboardController>().style;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -345,9 +351,16 @@ class NewfeedCell extends StatelessWidget {
                   Text(
                     title ?? '',
                     style: kTextMediumtStyle.copyWith(
-                        color: Colors.black,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
+                      color: style?.newsfeedItemHeaderInsideBody?.color
+                              .toColor() ??
+                          Colors.red,
+                      fontSize: style?.newsfeedItemHeaderInsideBody?.fontSize
+                              .parseDouble() ??
+                          22,
+                      fontWeight: style
+                          ?.newsfeedItemHeaderInsideBody?.fontWeight
+                          .getWegiht(),
+                    ),
                   ),
                 if (title != null)
                   const SizedBox(
@@ -487,8 +500,9 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
   }
 }
 
+// ignore: must_be_immutable
 class ReationsItemView extends StatelessWidget {
-  const ReationsItemView({
+  ReationsItemView({
     Key? key,
     required this.commentCount,
     required this.onTapReply,
@@ -506,6 +520,8 @@ class ReationsItemView extends StatelessWidget {
   final String? reactionIconUrl;
   final bool isShowShare;
   final int? shareCount;
+
+  Css? style = Get.find<DashboardController>().style;
 
   @override
   Widget build(BuildContext context) {
@@ -551,8 +567,9 @@ class ReationsItemView extends StatelessWidget {
   }
 }
 
+// ignore: must_be_immutable
 class HeaderInfoCellItem extends StatelessWidget {
-  const HeaderInfoCellItem({
+  HeaderInfoCellItem({
     Key? key,
     required this.userName,
     required this.onTapAvatar,
@@ -571,6 +588,8 @@ class HeaderInfoCellItem extends StatelessWidget {
   final int? date;
   final String? titleCate;
 
+  Css? style = Get.find<DashboardController>().style;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -580,8 +599,12 @@ class HeaderInfoCellItem extends StatelessWidget {
           text: TextSpan(
             text: userName,
             style: kTextRegularStyle.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontWeight:
+                  style?.newsfeedItemHeaderUsername?.fontWeight?.getWegiht() ??
+                      FontWeight.w600,
+              fontSize:
+                  style?.newsfeedItemHeaderUsername?.fontSize?.parseDouble() ??
+                      16,
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
@@ -598,12 +621,16 @@ class HeaderInfoCellItem extends StatelessWidget {
                   size: 16,
                 )),
               TextSpan(
-                  text: blogTitle ?? groupTitle ?? '',
-                  style: kTextRegularStyle.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryColor,
-                    fontSize: 16,
-                  )),
+                text: blogTitle ?? groupTitle ?? '',
+                style: kTextRegularStyle.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: style?.newsfeedItemHeaderTitle?.color?.toColor() ??
+                      kPrimaryColor,
+                  fontSize:
+                      style?.newsfeedItemHeaderTitle?.fontSize.parseDouble() ??
+                          16,
+                ),
+              ),
             ],
           ),
         ),
@@ -690,8 +717,9 @@ class FilterButton extends StatelessWidget {
   }
 }
 
+// ignore: must_be_immutable
 class KaireteIconButton extends StatelessWidget {
-  const KaireteIconButton({
+  KaireteIconButton({
     Key? key,
     this.title,
     this.icon,
@@ -712,6 +740,8 @@ class KaireteIconButton extends StatelessWidget {
   final Color? textColor;
   final String? url;
 
+  Css? style = Get.find<DashboardController>().style;
+
   @override
   Widget build(BuildContext context) {
     print(url);
@@ -725,7 +755,9 @@ class KaireteIconButton extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: color ?? kPrimaryColor,
+            color: style?.newsfeedItemFooterButton?.background.toColor() ??
+                color ??
+                kPrimaryColor,
             border: Border.all(color: color ?? kBorderDefaultColor, width: 1)),
         child: Row(
           children: [
@@ -739,7 +771,9 @@ class KaireteIconButton extends StatelessWidget {
                     name: icon ?? 'ic_reply',
                     width: width ?? 21,
                     height: height ?? 16,
-                    color: textColor ?? Colors.white,
+                    color: style?.newsfeedItemFooterButton?.color.toColor() ??
+                        textColor ??
+                        Colors.white,
                   ),
             const SizedBox(
               width: 4,
@@ -747,9 +781,14 @@ class KaireteIconButton extends StatelessWidget {
             Text(
               title ?? '0 replies',
               style: kTextRegularStyle.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: textColor ?? Colors.white,
+                fontSize:
+                    style?.newsfeedItemFooterButton?.fontSize.parseDouble(),
+                fontWeight:
+                    style?.newsfeedItemFooterButton?.fontWeight.getWegiht() ??
+                        FontWeight.w700,
+                color: style?.newsfeedItemFooterButton?.color.toColor() ??
+                    textColor ??
+                    Colors.white,
               ),
             ),
           ],

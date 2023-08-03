@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +21,7 @@ class CreateNewsfeedController extends GetxController {
   TextEditingController textController = TextEditingController();
   var isEnable = false.obs;
   var paths = [].obs;
+  List<String> tempFile = [];
 
   @override
   void onInit() {
@@ -37,6 +40,7 @@ class CreateNewsfeedController extends GetxController {
     final body = {
       'user_id': id,
       'message': textController.text,
+      'attachment_key': tempFile.first
     };
     print(body);
     final json = await usecase.create(body: body);
@@ -52,10 +56,11 @@ class CreateNewsfeedController extends GetxController {
     }
   }
 
-  void uploadFile({required String path}) async {
-    final image = await getMultipartFile(path: path);
-    final body = {'type': 'post', 'attachment': image};
+  void uploadFile({required XFile item}) async {
+    final body = await getMultipartFiles(files: [item]);
     final json = await usecase.uploadFile(body: body);
+    tempFile.clear();
+    tempFile.add(json['key']);
   }
 
   void onSelectedImage() async {
@@ -70,8 +75,9 @@ class CreateNewsfeedController extends GetxController {
                 final file = await ImagePickerManager.instance
                     .pickImage(source: ImageSource.gallery);
                 if (file != null) {
+                  uploadFile(item: file);
+                  paths.clear();
                   paths.add(file.path);
-                  // uploadFile(path: file.path);
                 }
               },
               title: 'Library',
@@ -85,6 +91,7 @@ class CreateNewsfeedController extends GetxController {
                 final file = await ImagePickerManager.instance
                     .pickImage(source: ImageSource.camera);
                 if (file != null) {
+                  paths.clear();
                   paths.add(file.path);
                 }
               },

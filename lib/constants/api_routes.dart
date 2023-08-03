@@ -23,5 +23,7 @@ class ApiRoutes {
   static const reactionIcons = 'api/reactions/';
   static const commentsLv2 = 'api/newsfeed-comments/';
   static const commentsLv1 = 'api/newsfeed-items/';
-  static const group = 'api/groups';
+  static const group = 'api/groups/';
+  static const style = 'api/style-properties/';
+  static const widget = 'api/widgets/';
 }

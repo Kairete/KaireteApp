@@ -37,70 +37,66 @@ class CreateNewsfeedScreen extends StatelessWidget {
               ))
         ],
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                KaireteTextField(
-                  onChanged: (value) {
-                    controller.textOnChanged(text: value);
-                  },
-                  hint: 'Write something…',
-                  maxLine: 10,
-                  borderColor: kPrimaryColor,
-                  controller: controller.textController,
+      body: Container(
+        padding: const EdgeInsets.all(16),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              KaireteTextField(
+                onChanged: (value) {
+                  controller.textOnChanged(text: value);
+                },
+                hint: 'Write something…',
+                maxLine: 10,
+                borderColor: kPrimaryColor,
+                controller: controller.textController,
+              ),
+              InkWell(
+                onTap: () {
+                  controller.onSelectedImage();
+                },
+                child: Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      width: 1,
+                      color: kPrimaryColor,
+                    ),
+                    color: Colors.white,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: kPrimaryColor,
+                      size: 50,
+                    ),
+                  ),
                 ),
-                // InkWell(
-                //   onTap: () {
-                //     controller.onSelectedImage();
-                //   },
-                //   child: Container(
-                //     height: 120,
-                //     width: 120,
-                //     decoration: BoxDecoration(
-                //       borderRadius: BorderRadius.circular(8),
-                //       border: Border.all(
-                //         width: 1,
-                //         color: kPrimaryColor,
-                //       ),
-                //       color: Colors.white,
-                //     ),
-                //     child: Center(
-                //       child: Icon(
-                //         Icons.camera_alt,
-                //         color: kPrimaryColor,
-                //         size: 50,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // SizedBox(
-                //   height: 16,
-                // ),
-                // Expanded(
-                //   child: SingleChildScrollView(
-                //     child: Obx(() => Wrap(
-                //           spacing: 8,
-                //           runSpacing: 8,
-                //           children: controller.paths
-                //               .map((element) => ClipRRect(
-                //                     borderRadius: BorderRadius.circular(8.0),
-                //                     child: Image.file(
-                //                       File(element),
-                //                       width: (1.sw - 48) / 3,
-                //                       height: (1.sw - 48) / 3,
-                //                       fit: BoxFit.fill,
-                //                     ),
-                //                   ))
-                //               .toList(),
-                //         )),
-                //   ),
-                // )
-              ],
-            ),
+              ),
+              SizedBox(
+                height: 16,
+              ),
+              Expanded(
+                child: Obx(() => Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: controller.paths
+                          .map((element) => ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Image.file(
+                                  File(element),
+                                  width: (1.sw - 48) / 3,
+                                  height: (1.sw - 48) / 3,
+                                  fit: BoxFit.fill,
+                                ),
+                              ))
+                          .toList(),
+                    )),
+              )
+            ],
           ),
         ),
       ),

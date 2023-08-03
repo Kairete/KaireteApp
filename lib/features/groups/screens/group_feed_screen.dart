@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:kairete/features/groups/controllers/group_feed_controller.dart';
 import 'package:kairete/features/groups/screens/group_screen.dart';
 import 'package:get/get.dart';
-import 'package:kairete/helper/time.dart';
-
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 import '../../../helper/color.dart';
 import '../../../helper/user.dart';
-import '../../newsfeed/models/newsfeed_model.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 import '../controllers/group_controller.dart';
 
@@ -20,7 +17,7 @@ class GroupFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppbarCustom('Newsfeed'),
+      appBar: AppbarCustom(title: 'Newsfeed'),
       body: SafeArea(
         child: Obx(() => controller.items.isEmpty
             ? const SizedBox()

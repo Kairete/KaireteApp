@@ -12,6 +12,7 @@ import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 import '../../../components/kairete_popup.dart';
+import '../../../routes/app_pages.dart';
 import '../../login/models/user_model.dart';
 import '../models/newsfeed_filter_model.dart';
 import '../screens/create_newsfeed_screen.dart';
@@ -50,10 +51,8 @@ class NewsFeedController extends GetxController {
   }
 
   void fechItems() async {
-    final body = {
-      // 'user_id': LocalManager.instance.read(key: PreferencesKey.token) ?? 0,
-      // 'page': 1,
-    };
+    await AuthMiddleware.instance.fetchStyle();
+    final body = {};
     final json = await usecase.fetchItems(body: body);
     final item = BaseNewsfeedModel.fromJson(json);
     setFilterItem(items: item.filters ?? []);

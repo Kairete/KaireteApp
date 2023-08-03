@@ -1,22 +1,29 @@
 import 'package:dio/dio.dart';
 import 'dart:async';
 
+import 'package:kairete/helper/user.dart';
+
 class RestClient {
   Dio dio;
   CancelToken cancelToken;
 
   RestClient({required this.dio, required this.cancelToken});
 
-  Future requestApi(
-      {Map<String, dynamic>? body,
-      Map<String, dynamic>? parameters,
-      int? offset,
-      int? limit,
-      required String path,
-      HttpMethodCustom? method = HttpMethodCustom.POST}) async {
+  Future requestApi({
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? parameters,
+    int? offset,
+    int? limit,
+    required String path,
+    HttpMethodCustom? method = HttpMethodCustom.POST,
+    String? userId,
+  }) async {
     {
       final queryParameters = <String, dynamic>{};
       final _data = <String, dynamic>{};
+      if (userId != null) {
+        dio.options.headers['XF-Api-User'] = userId;
+      }
       if (body != null) {
         if (method == HttpMethodCustom.GET) {
           queryParameters.addAll(body);
@@ -43,17 +50,25 @@ class RestClient {
     }
   }
 
-  Future<dynamic> uploadFile(
-      {dynamic body,
-      required String path,
-      HttpMethodCustom? method = HttpMethodCustom.POST}) async {
-    FormData formData = FormData.fromMap(body);
-    final _result = await dio.request(path,
-        options: Options(
-          method: method.toString().split('.').last,
-        ),
-        data: formData,
-        cancelToken: cancelToken);
+  Future<dynamic> uploadFile({
+    dynamic body,
+    required String path,
+    HttpMethodCustom? method = HttpMethodCustom.POST,
+    FormData? formData,
+  }) async {
+    // dio.options.headers['XF-Api-User'] = '1';
+    final _result = await dio.request(
+      path,
+      options: Options(
+        method: method.toString().split('.').last,
+      ),
+      data: body,
+      queryParameters: {
+        'type': 'profile_post',
+        'context[profile_user_id]': UserManager.instance.userId
+      },
+      cancelToken: cancelToken,
+    );
     final data = _result.data;
     return data;
   }

@@ -21,7 +21,10 @@ class AppApiService {
 
   CancelToken cancelToken = CancelToken();
 
-  void create({bool isShowErrorPopup = true, String? userId}) {
+  void create(
+      {bool isShowErrorPopup = true,
+      String? userId,
+      bool isShowloading = true}) {
     EasyLoading.instance
       ..indicatorType = EasyLoadingIndicatorType.circle
       ..backgroundColor = kTextPrimaryColor
@@ -31,7 +34,9 @@ class AppApiService {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          EasyLoading.show(status: 'loading...', dismissOnTap: false);
+          if (isShowloading) {
+            EasyLoading.show(status: 'loading...', dismissOnTap: false);
+          }
           print(
               '''[api-${DateFormat('mm:ss').format(DateTime.now())}]-> Request  \t${options.method}}''');
           print('''[api-Request]-> Url  \t${options.baseUrl}''');
@@ -41,13 +46,16 @@ class AppApiService {
           return handler.next(options);
         },
         onResponse: (response, handler) async {
+          print(response.realUri);
           print(
               '''[api-${DateFormat('mm:ss').format(DateTime.now())}]-> Response \t${response.requestOptions.baseUrl} [${response.requestOptions.path}] ${response.statusCode} ''');
           final jsonData = response.data;
           final prettyString =
               const JsonEncoder.withIndent('  ').convert(jsonData);
           log(prettyString);
-          EasyLoading.dismiss();
+          if (isShowloading) {
+            EasyLoading.dismiss();
+          }
 
           return handler.next(response);
         },
@@ -55,7 +63,9 @@ class AppApiService {
           print(
               '''[api-${DateFormat('mm:ss').format(DateTime.now())}]-> Error    \turl:[${error.requestOptions.baseUrl}${error.requestOptions.path}] type:${error.type} message: ${error.message}''');
           print('''[api-error]-> response  \t${error.response}''');
-          EasyLoading.dismiss();
+          if (isShowloading) {
+            EasyLoading.dismiss();
+          }
           return hanlderError(error, handler, isShowErrorPopup);
         },
       ),
@@ -69,8 +79,8 @@ class AppApiService {
     dio.options.headers['XF-Api-Key'] = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
     dio.options.headers['XF-Api-User'] =
         userId ?? UserManager.instance.userId ?? '1';
-    dio.options.connectTimeout = 50000;
-    dio.options.receiveTimeout = 50000;
+    // dio.options.connectTimeout = 50000;
+    // dio.options.receiveTimeout = 50000;
     dio.options.baseUrl = apiDomain;
   }
 

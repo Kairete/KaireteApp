@@ -14,7 +14,7 @@ class INewFeedProfileUsecase extends BaseClient
   INewFeedProfileUsecase(this.id);
 
   @override
-  void onCreate({userId}) {
+  void onCreate({userId, bool isShowloading = true}) {
     super.onCreate(userId: id.toString());
   }
 

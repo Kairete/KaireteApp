@@ -7,6 +7,9 @@ import 'package:kairete/helper/user.dart';
 
 import '../constants/app_routes.dart';
 import '../constants/key_constant.dart';
+import '../features/dashboard/controllers/dashboard_controller.dart';
+import '../features/dashboard/models/style_model/css.dart';
+import '../features/dashboard/usecase/master_data_usecase.dart';
 import '../local/data_local.dart';
 
 class AppPages {
@@ -35,11 +38,18 @@ class AuthMiddleware {
   static AuthMiddleware get instance => _instance ??= AuthMiddleware._();
 
   var currentState = '';
+  MasterDataUsecase masterDataUsecase = IMasterDataUsecase();
 
   Future getCurrenState() async {
     final token = await LocalManager.instance.read(key: PreferencesKey.token);
     UserManager.instance.userId = token;
     var state = (token == null ? Routes.login : Routes.home);
     currentState = state;
+  }
+
+  Future fetchStyle() async {
+    final json = await masterDataUsecase.fetchStyle();
+    Get.find<DashboardController>().style = Css.fromJson(json['css']);
+    return true;
   }
 }

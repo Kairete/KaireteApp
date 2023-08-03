@@ -37,14 +37,17 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
       path: ApiRoutes.createNews,
       body: body,
       method: HttpMethodCustom.POST,
+      userId: body['user_id'].toString(),
     );
     return json;
   }
 
   @override
   Future uploadFile({body}) async {
-    final json = await appApiService.client
-        ?.uploadFile(path: ApiRoutes.newAttachKey, body: body);
+    final json = await appApiService.client?.uploadFile(
+      path: ApiRoutes.newAttachKey,
+      body: body,
+    );
     return json;
   }
 

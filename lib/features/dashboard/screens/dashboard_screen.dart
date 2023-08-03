@@ -8,17 +8,16 @@ import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart
 import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
-
 import '../../../components/cache_image.dart';
-import '../../../helper/user.dart';
+import '../../../helper/time.dart';
 import '../../articles/screens/articles_screen.dart';
 import '../../newsfeed/screens/newsfeed_search_screen.dart';
 
-class DashboardScreen extends GetView {
+class DashboardScreen extends GetView<DashboardController> {
   DashboardScreen({Key? key}) : super(key: key);
 
-  @override
-  DashboardController controller = Get.put(DashboardController());
+  // @override
+  // DashboardController controller = Get.put(DashboardController());
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +72,9 @@ class DashboardScreen extends GetView {
           color: kPrimaryColor,
           child: Column(
             children: [
+              SizedBox(
+                height: 16,
+              ),
               Text(
                 'Menu',
                 style: kTextHeadingStyle.copyWith(
@@ -80,52 +82,124 @@ class DashboardScreen extends GetView {
               ),
               Expanded(
                 child: Obx(() => ListView.builder(
-                      itemCount: controller.items.length,
+                      itemCount: controller.items.length +
+                          controller.blogs.value.length,
                       itemBuilder: (context, index) {
-                        final item = controller.items[index];
-                        return ExpansionTile(
-                          title: InkWell(
-                            onTap: () {
-                              controller.nextStepFromMenu(item: item);
-                            },
-                            child: Text(
-                              item.name ?? '',
-                              style: kTextHeadingStyle.copyWith(
-                                  color: Colors.white, fontSize: 20),
+                        if (index < controller.items.length) {
+                          final item = controller.items[index];
+                          return ExpansionTile(
+                            title: InkWell(
+                              onTap: () {
+                                controller.nextStepFromMenu(item: item);
+                              },
+                              child: Text(
+                                item.name ?? '',
+                                style: kTextHeadingStyle.copyWith(
+                                    color: Colors.white, fontSize: 20),
+                              ),
                             ),
-                          ),
-                          onExpansionChanged: (value) {},
-                          childrenPadding: const EdgeInsets.only(left: 16),
-                          collapsedIconColor: item.items!.isEmpty
-                              ? Colors.transparent
-                              : Colors.white,
-                          iconColor: item.items!.isEmpty
-                              ? Colors.transparent
-                              : Colors.white,
-                          expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                          expandedAlignment: Alignment.centerLeft,
-                          children: item.items == null
-                              ? []
-                              : item.items!
-                                  .map((e) => InkWell(
-                                        onTap: () {
-                                          controller.nextStepSubMenu(
-                                              item: e.name ?? '');
-                                        },
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 16),
-                                          child: Text(
-                                            e.name ?? '',
-                                            style: kTextMediumtStyle.copyWith(
-                                              fontSize: 16,
-                                              color: Colors.white,
+                            onExpansionChanged: (value) {},
+                            childrenPadding: const EdgeInsets.only(left: 16),
+                            collapsedIconColor: item.items!.isEmpty
+                                ? Colors.transparent
+                                : Colors.white,
+                            iconColor: item.items!.isEmpty
+                                ? Colors.transparent
+                                : Colors.white,
+                            expandedCrossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            expandedAlignment: Alignment.centerLeft,
+                            children: item.items == null
+                                ? []
+                                : item.items!
+                                    .map((e) => InkWell(
+                                          onTap: () {
+                                            controller.nextStepSubMenu(
+                                                item: e.name ?? '');
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 16),
+                                            child: Text(
+                                              e.name ?? '',
+                                              style: kTextMediumtStyle.copyWith(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
+                                        ))
+                                    .toList(),
+                          );
+                        } else {
+                          final item =
+                              controller.blogs[index - controller.items.length];
+
+                          return InkWell(
+                            onTap: () {
+                              controller.toDetail(item: item);
+                            },
+                            child: Container(
+                              color: Colors.white,
+                              padding: EdgeInsets.all(8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  KaireteCacheNetworkImage(
+                                    url: item.user?.avatarUrls?.l ?? '',
+                                    width: 36,
+                                    height: 36,
+                                    isCircle: true,
+                                    nameImage: controller.user.value.username,
+                                  ),
+                                  SizedBox(
+                                    width: 8,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.title ?? '',
+                                          style: kTextRegularStyle.copyWith(
+                                            color: kPrimaryColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                          ),
                                         ),
-                                      ))
-                                  .toList(),
-                        );
+                                        SizedBox(
+                                          height: 4,
+                                        ),
+                                        Text(
+                                          item.messagePlainText ?? '',
+                                          style: kTextRegularStyle.copyWith(
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 4,
+                                        ),
+                                        SizedBox(
+                                          height: 4,
+                                        ),
+                                        Text(
+                                            TimeManager.instance
+                                                .convertFromTimeStamp(
+                                                    timestamp: item
+                                                            .attachments?[0]
+                                                            .attachDate ??
+                                                        0),
+                                            style: kTextMediumtStyle.copyWith(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                            )),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        }
                       },
                     )),
               )

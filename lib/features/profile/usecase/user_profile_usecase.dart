@@ -69,7 +69,7 @@ class IFCMUsecase extends BaseClient implements FCMUsecase {
   }
 
   @override
-  void onCreate({userId}) {
+  void onCreate({userId, bool isShowloading = true}) {
     appApiService.create(isShowErrorPopup: isShowPopupError, userId: '1');
   }
 }
