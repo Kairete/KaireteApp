@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kairete/constants/color.dart';
-import 'package:kairete/constants/font_constant.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/blogs/controllers/blog_detail_controller.dart';
+import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 import '../../profile/screens/user_profile_screen.dart';
 
@@ -11,17 +10,13 @@ class BlogDetailScreen extends StatelessWidget {
   BlogDetailScreen({Key? key}) : super(key: key);
 
   BlogsDetailController controller = Get.put(BlogsDetailController());
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(
-          'Blogs Detail',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
-        ),
-      ),
+      key: _key,
+      appBar: baseAppBar(key: _key, isShowBack: true),
       body: SingleChildScrollView(
         child: SafeArea(
           child: Obx(() => NewfeedCell(

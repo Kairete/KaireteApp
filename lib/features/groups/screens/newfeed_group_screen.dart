@@ -92,9 +92,9 @@ class NewfeedGroupScreen extends StatelessWidget {
                               controller.toMyBlogs(blog: item.blogEntryItem);
                             }
                           },
-                          authorBlog: item.type == ContentTypeNewFeed.blogEntry
-                              ? item.blogEntryItem?.user?.username
-                              : null,
+                          // authorBlog: item.type == ContentTypeNewFeed.blogEntry
+                          //     ? item.blogEntryItem?.user?.username
+                          //     : null,
                           onTapReply: () {
                             controller.toReplies(item: item);
                           },
@@ -109,7 +109,7 @@ class NewfeedGroupScreen extends StatelessWidget {
                               item.user?.username ??
                               '',
                           blogTitle: item.blogEntryItem?.blog?.title,
-                          groupTitle: item.groupPostItem?.group?.name,
+                          // groupTitle: item.groupPostItem?.group?.name,
                           date: item.itemDate,
                           commentCount: item.commentCount,
                           shareCount: item.shareCount,

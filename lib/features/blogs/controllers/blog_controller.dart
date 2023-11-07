@@ -6,6 +6,7 @@ import '../../../components/kairete_popup.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../models/blog_model.dart';
 import '../screens/blog_filter_screen.dart';
+import '../screens/my_blog_screen.dart';
 
 class BlogController extends GetxController {
   BlogUsecase usecase = IBlogUsecase();
@@ -63,5 +64,9 @@ class BlogController extends GetxController {
     Get.to(() => BlogCommentScreen(), arguments: {
       'item': item,
     });
+  }
+
+  void toMyBlogs({BlogEntryItem? blog}) {
+    Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
   }
 }

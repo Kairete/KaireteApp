@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
 import 'package:kairete/features/forum/models/forum_detail_model.dart';
 
 import '../../../components/cache_image.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
-import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 import '../../../helper/time.dart';
-import '../../../helper/user.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
 
 // ignore: must_be_immutable
@@ -19,16 +18,15 @@ class ForumDetailScreen extends StatelessWidget {
   ForumDetailScreen({Key? key}) : super(key: key);
 
   ForumDetailController controller = Get.put(ForumDetailController());
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(
-          controller.item?.title ?? '',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
-        ),
+      key: _key,
+      appBar: baseAppBar(
+        key: _key,
+        isShowBack: true,
       ),
       body: SafeArea(
         child: Container(

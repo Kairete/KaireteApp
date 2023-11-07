@@ -35,7 +35,6 @@ class UserProfileController extends GetxController {
     }
     newFeedProfileUsecase = INewFeedProfileUsecase(id);
     fetchItems();
-    fechFeed();
     super.onInit();
   }
 
@@ -48,6 +47,8 @@ class UserProfileController extends GetxController {
       final json = await usecase.fetchData();
       user.value = User.fromJson(json['me']);
     }
+    items.refresh();
+    fechFeed();
   }
 
   void fechFeed() async {

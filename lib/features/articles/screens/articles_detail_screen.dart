@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/features/articles/controllers/articles_detail_controller.dart';
+import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 
 import '../../../components/cache_image.dart';
 import '../../../components/reactions_view.dart';
@@ -16,17 +17,13 @@ class ArticlesDetailScreen extends StatelessWidget {
   ArticlesDetailScreen({Key? key}) : super(key: key);
 
   ArticlesDetailController controller = Get.put(ArticlesDetailController());
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(
-          'Articles detail',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
-        ),
-      ),
+      key: _key,
+      appBar: baseAppBar(key: _key, isShowBack: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: SafeArea(

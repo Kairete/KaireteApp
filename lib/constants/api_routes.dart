@@ -12,7 +12,7 @@ class ApiRoutes {
   static const filter = "api/newsfeed/filters";
   static const me = "api/me";
   static const user = "api/users/";
-  static const blogsCate = 'api/blog-entries';
+  static const blogsCate = 'api/blog-categories';
   static const pushFCM = 'api/users/';
   static const nodeList = 'api/nodes';
   static const nodeDetail = 'api/forums/';

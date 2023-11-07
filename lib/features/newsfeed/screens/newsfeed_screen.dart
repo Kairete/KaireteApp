@@ -214,9 +214,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       controller.toMyBlogs(blog: item.blogEntryItem);
                     }
                   },
-                  authorBlog: item.type == ContentTypeNewFeed.blogEntry
-                      ? item.blogEntryItem?.user?.username
-                      : null,
+                  // authorBlog: item.type == ContentTypeNewFeed.blogEntry
+                  //     ? item.blogEntryItem?.user?.username
+                  //     : null,
                   onTapReply: () {
                     controller.toReplies(item: item);
                   },

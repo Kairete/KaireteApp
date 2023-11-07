@@ -246,6 +246,7 @@ class BlogEntryItem {
   bool isReation = false;
   String? reactionIconUrl;
   int? commentCount;
+  int? blogId;
 
   BlogEntryItem(
       {this.attachments,
@@ -264,6 +265,7 @@ class BlogEntryItem {
       this.reactions,
       this.title,
       this.user,
+      this.blogId,
       this.viewUrl});
 
   BlogEntryItem.fromJson(Map<String, dynamic> json) {
@@ -273,6 +275,7 @@ class BlogEntryItem {
         attachments!.add(Attachments.fromJson(v));
       });
     }
+    blogId = json['blog_id'];
     commentCount = json['comment_count'];
     blog = json['Blog'] != null ? Blog.fromJson(json['Blog']) : null;
     blogEntryId = json['blog_entry_id'];

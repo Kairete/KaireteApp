@@ -15,6 +15,7 @@ import 'package:kairete/local/data_local.dart';
 import '../../../components/kairete_icon.dart';
 import '../../../constants/size.dart';
 import '../../../helper/multipart.dart';
+import '../../blogs/screens/blog_create_screen.dart';
 
 class CreateNewsfeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
@@ -40,7 +41,7 @@ class CreateNewsfeedController extends GetxController {
     final body = {
       'user_id': id,
       'message': textController.text,
-      'attachment_key': tempFile.first
+      // 'attachment_key': tempFile.first
     };
     print(body);
     final json = await usecase.create(body: body);
@@ -103,5 +104,9 @@ class CreateNewsfeedController extends GetxController {
           ]),
         ),
         onComplete: () {});
+  }
+
+  void toPostBlog() {
+    Get.to(() => BlogCreateScreen(), fullscreenDialog: true);
   }
 }

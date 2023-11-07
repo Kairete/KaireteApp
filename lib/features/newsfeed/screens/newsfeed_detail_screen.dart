@@ -3,10 +3,12 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_detail_controller.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import '../../../helper/user.dart';
+import '../../dashboard/screens/dashboard_screen.dart';
 import '../../profile/screens/user_profile_screen.dart';
 
 // ignore: must_be_immutable
@@ -14,17 +16,14 @@ class NewsfeedDetailScreen extends StatelessWidget {
   NewsfeedDetailScreen({Key? key}) : super(key: key);
 
   NewsfeedDetailController controller = Get.put(NewsfeedDetailController());
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(
-          'Newsfeed detail',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
-        ),
-      ),
+      key: _key,
+      appBar: baseAppBar(key: _key, isShowBack: true),
+      drawer: AppDrawer(controller: Get.find<DashboardController>()),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Obx(() => controller.item.value.contentId == null

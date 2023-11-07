@@ -25,6 +25,7 @@ class DashboardController extends GetxController {
   MasterDataUsecase masterDataUsecase = IMasterDataUsecase();
   Css? style;
   var blogs = <BlogEntryItem>[].obs;
+  var scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void onInit() {

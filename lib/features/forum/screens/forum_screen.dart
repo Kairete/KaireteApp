@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_controller.dart';
 import 'package:get/get.dart';
 import '../../../constants/color.dart';
@@ -10,17 +11,13 @@ import 'package:cupertino_listview/cupertino_listview.dart';
 class ForumScreen extends StatelessWidget {
   ForumScreen({Key? key}) : super(key: key);
   ForumController controller = Get.put(ForumController());
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        title: Text(
-          'Forum',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
-        ),
-      ),
+      key: _key,
+      appBar: baseAppBar(key: _key, isShowBack: true),
       body: SafeArea(
         child: Container(
           color: Colors.grey.shade200,
