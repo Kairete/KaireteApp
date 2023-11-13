@@ -32,6 +32,8 @@ class UserProfileController extends GetxController {
   void onInit() {
     if (Get.arguments != null) {
       id = Get.arguments['id'];
+    } else {
+      id = UserManager.instance.userId;
     }
     newFeedProfileUsecase = INewFeedProfileUsecase(id);
     fetchItems();
