@@ -50,6 +50,10 @@ class ThreadReplyScreen extends StatelessWidget {
                 maxLine: 3,
                 borderColor: kPrimaryColor,
                 controller: controller.textEditingController,
+                textStyle: kTextRegularStyle.copyWith(
+                  fontWeight: FontWeight.w300,
+                  fontSize: 18,
+                ),
               ),
             ),
             Container(

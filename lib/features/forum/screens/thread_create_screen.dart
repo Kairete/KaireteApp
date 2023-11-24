@@ -60,6 +60,10 @@ class ThredCreateScreen extends StatelessWidget {
                   maxLine: 10,
                   borderColor: kPrimaryColor,
                   controller: controller.textController,
+                  textStyle: kTextRegularStyle.copyWith(
+                    fontWeight: FontWeight.w300,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),

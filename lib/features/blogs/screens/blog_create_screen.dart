@@ -77,6 +77,10 @@ class BlogCreateScreen extends StatelessWidget {
                 maxLine: 10,
                 borderColor: kPrimaryColor,
                 controller: controller.messageController,
+                textStyle: kTextRegularStyle.copyWith(
+                  fontWeight: FontWeight.w300,
+                  fontSize: 18,
+                ),
               ),
               Spacer(),
               InkWell(
