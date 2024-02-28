@@ -108,7 +108,12 @@ class NewfeedGroupScreen extends StatelessWidget {
                           userName: item.user?.customFields?.fullName ??
                               item.user?.username ??
                               '',
-                          blogTitle: item.blogEntryItem?.blog?.title,
+                          blogTitle:
+                              (item.type == ContentTypeNewFeed.tlGroupPost &&
+                                      item.groupPostItem?.group?.groupId ==
+                                          controller.groupId)
+                                  ? ""
+                                  : item.blogEntryItem?.blog?.title,
                           // groupTitle: item.groupPostItem?.group?.name,
                           date: item.itemDate,
                           commentCount: item.commentCount,

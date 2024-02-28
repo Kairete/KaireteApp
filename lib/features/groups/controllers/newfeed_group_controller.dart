@@ -22,6 +22,7 @@ class NewFeedGroupController extends GetxController {
   void onInit() {
     groupId = Get.arguments['groupId'];
     fechItems();
+    print(groupId);
     super.onInit();
   }
 
