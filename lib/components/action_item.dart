@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/color_constant.dart';
 import '../constants/font_constant.dart';
+import 'kairete_button.dart';
 
 class KaireteActionItem extends StatelessWidget {
   const KaireteActionItem(
@@ -113,6 +114,64 @@ class KaireteActionItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class ActionsView extends StatelessWidget {
+  const ActionsView({
+    super.key,
+    this.onTapWatch,
+    this.isIgnored,
+    this.isFollowed,
+    this.isWatched,
+  });
+
+  final Function? onTapWatch;
+  final bool? isIgnored;
+  final bool? isFollowed;
+  final bool? isWatched;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SizedBox(
+          width: 8,
+        ),
+        ActionButton(
+          title: isIgnored ?? false ? 'Unignore' : 'Ignore',
+          onTap: () {},
+          padding: EdgeInsets.only(bottom: 8),
+          icon: 'ic_follow',
+        ),
+        SizedBox(
+          width: 8,
+        ),
+        ActionButton(
+          title: isFollowed ?? false ? 'Unfollow' : 'Follow',
+          onTap: () {},
+          padding: EdgeInsets.only(bottom: 8),
+          icon: 'ic_ignore',
+        ),
+        SizedBox(
+          width: 8,
+        ),
+        WatchButton(
+          onTap: () {
+            if (onTapWatch != null) {
+              onTapWatch!();
+            }
+          },
+          isWatched: isWatched ?? false,
+          padding: EdgeInsets.only(
+            top: 8,
+            bottom: 16,
+          ),
+          icon: 'ic_watch',
+        )
+      ],
     );
   }
 }

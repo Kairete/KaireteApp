@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
+import 'package:hashtagable/widgets/hashtag_text.dart';
+import 'package:kairete/constants/color.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
 import 'package:kairete/features/forum/models/forum_detail_model.dart';
 
+import '../../../components/action_item.dart';
 import '../../../components/cache_image.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
@@ -84,6 +87,9 @@ class ForumDetailScreen extends StatelessWidget {
                               controller.toDetail(item: item);
                             },
                             maxLine: 5,
+                            onTapWatch: () {
+                              controller.updateWatch(item: item);
+                            },
                           );
                   },
                 )),
@@ -102,6 +108,7 @@ class ThreadItemCell extends StatelessWidget {
     this.maxLine,
     this.onTapDetail,
     this.isShowDetail = true,
+    this.onTapWatch,
   }) : super(key: key);
 
   final Threads item;
@@ -110,9 +117,11 @@ class ThreadItemCell extends StatelessWidget {
   final Function? onTapDetail;
   final int? maxLine;
   final bool isShowDetail;
+  final Function? onTapWatch;
 
   @override
   Widget build(BuildContext context) {
+    print(item.tags);
     return Container(
       color: Colors.white,
       child: Column(
@@ -128,7 +137,7 @@ class ThreadItemCell extends StatelessWidget {
               color: Colors.grey.shade200,
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 KaireteCacheNetworkImage(
                     url: item.user?.avatarUrls?.l ?? '',
@@ -145,9 +154,28 @@ class ThreadItemCell extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.title ?? '',
-                        style: kTextTitle.copyWith(fontSize: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.title ?? '',
+                              style: kTextTitle.copyWith(fontSize: 16),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 4,
+                          ),
+                          ActionsView(
+                            onTapWatch: () {
+                              if (onTapWatch != null) {
+                                onTapWatch!();
+                              }
+                            },
+                            isFollowed: item.user?.isFollowed,
+                            isIgnored: item.user?.isIgnored,
+                            isWatched: item.isWatched,
+                          ),
+                        ],
                       ),
                       RichText(
                         text: TextSpan(
@@ -174,6 +202,21 @@ class ThreadItemCell extends StatelessWidget {
           const SizedBox(
             height: 16,
           ),
+          if (item.tags != '')
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 16,
+                bottom: 8,
+              ),
+              child: HashTagText(
+                text: item.tags,
+                decoratedStyle: TextStyle(fontSize: 16, color: kPrimaryColor),
+                basicStyle: TextStyle(fontSize: 16, color: Colors.black),
+                onTap: (text) {
+                  print(text);
+                },
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16),
             child: Column(

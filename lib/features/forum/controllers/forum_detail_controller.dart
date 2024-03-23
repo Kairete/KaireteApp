@@ -64,4 +64,15 @@ class ForumDetailController extends GetxController {
       'item': item,
     });
   }
+
+  Future updateWatch({required Threads item}) async {
+    final body = {'id': item.nodeId};
+    final json = await usecase.updateWatch(body: body);
+    if (json != null) {
+      items
+          .firstWhere((element) => element.threadId == item.threadId)
+          .isWatched = !(item.isWatched ?? false);
+      items.refresh();
+    }
+  }
 }

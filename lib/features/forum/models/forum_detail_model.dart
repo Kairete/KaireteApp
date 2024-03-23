@@ -62,7 +62,7 @@ class Threads {
   List<Reactions>? reactions;
   int? replyCount;
   bool? sticky;
-  List<String>? tags;
+  String tags = '';
   int? threadId;
   String? title;
   User? user;
@@ -74,43 +74,46 @@ class Threads {
   String? message;
   bool isReation = false;
   String? reactionIconUrl;
+  bool? isWatched;
 
-  Threads(
-      {this.canEdit,
-      this.canEditTags,
-      this.canHardDelete,
-      this.canReply,
-      this.canSoftDelete,
-      this.canViewAttachments,
-      this.customFields,
-      this.discussionOpen,
-      this.discussionState,
-      this.discussionType,
-      this.firstPostId,
-      this.firstPostReactionScore,
-      this.highlightedPostIds,
-      this.isFirstPostPinned,
-      this.isUnread,
-      this.isWatching,
-      this.lastPostDate,
-      this.lastPostId,
-      this.lastPostUserId,
-      this.lastPostUsername,
-      this.nodeId,
-      this.postDate,
-      this.prefixId,
-      this.reactions,
-      this.replyCount,
-      this.sticky,
-      this.tags,
-      this.threadId,
-      this.title,
-      this.user,
-      this.userId,
-      this.username,
-      this.viewCount,
-      this.viewUrl,
-      this.visitorPostCount});
+  Threads({
+    this.canEdit,
+    this.canEditTags,
+    this.canHardDelete,
+    this.canReply,
+    this.canSoftDelete,
+    this.canViewAttachments,
+    this.customFields,
+    this.discussionOpen,
+    this.discussionState,
+    this.discussionType,
+    this.firstPostId,
+    this.firstPostReactionScore,
+    this.highlightedPostIds,
+    this.isFirstPostPinned,
+    this.isUnread,
+    this.isWatching,
+    this.lastPostDate,
+    this.lastPostId,
+    this.lastPostUserId,
+    this.lastPostUsername,
+    this.nodeId,
+    this.postDate,
+    this.prefixId,
+    this.reactions,
+    this.replyCount,
+    this.sticky,
+    this.tags = '',
+    this.threadId,
+    this.title,
+    this.user,
+    this.userId,
+    this.username,
+    this.viewCount,
+    this.viewUrl,
+    this.visitorPostCount,
+    this.isWatched,
+  });
 
   Threads.fromJson(Map<String, dynamic> json) {
     canEdit = json['can_edit'];
@@ -150,7 +153,15 @@ class Threads {
     }
     replyCount = json['reply_count'];
     sticky = json['sticky'];
-    tags = json['tags'].cast<String>();
+    if (json['tags'] != null) {
+      json['tags'].forEach((e) {
+        final tag = e['tag'].replaceAll(' ', '');
+        final string = '#' + tag + ' ';
+        tags += string;
+        print(tags);
+      });
+    }
+    // tags = json['tags'].cast<String>();
     threadId = json['thread_id'];
     title = json['title'];
     user = json['User'] != null ? User.fromJson(json['User']) : null;
@@ -170,6 +181,7 @@ class Threads {
         reactionIconUrl = path;
       }
       isReation = item != null;
+      isWatched = json['is_watched'];
     }
   }
 

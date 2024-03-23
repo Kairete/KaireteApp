@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/kairete_icon.dart';
+import 'package:kairete/constants/color.dart';
 
 import '../constants/color_constant.dart';
 import '../constants/font_constant.dart';
@@ -88,6 +90,7 @@ class KaireteActionButton extends StatelessWidget {
     this.backgroundColor,
     this.titleColor,
     this.prefixIcon,
+    this.padding,
   }) : super(key: key);
 
   final double? height;
@@ -97,6 +100,7 @@ class KaireteActionButton extends StatelessWidget {
   final Color? titleColor;
   final Function onTap;
   final Widget? prefixIcon;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -105,8 +109,9 @@ class KaireteActionButton extends StatelessWidget {
         onTap();
       },
       child: Container(
-        height: height ?? 48,
+        height: padding != null ? null : height ?? 48,
         width: width,
+        padding: padding,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: backgroundColor ?? kSurfacePrimaryColor),
@@ -285,6 +290,93 @@ class SocicalButton extends StatelessWidget {
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12), color: Colors.white),
         child: Center(child: icon),
+      ),
+    );
+  }
+}
+
+class WatchButton extends StatelessWidget {
+  final Function onTap;
+
+  const WatchButton({
+    super.key,
+    required this.isWatched,
+    required this.onTap,
+    this.padding,
+    this.icon,
+  });
+
+  final bool isWatched;
+  final EdgeInsets? padding;
+  final String? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        onTap();
+      },
+      child: Padding(
+        padding: padding ??
+            EdgeInsets.only(
+              top: 8,
+              bottom: 8,
+            ),
+        // child: KaireteActionButton(
+        //   onTap: onTap,
+        //   title: isWatched ? 'Unwatch' : 'Watch',
+        //   padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+        // ),
+        child: Container(
+          child: SvgIcon(
+            name: icon ?? 'ic_follow',
+            color: isWatched ? kPrimaryColor : Colors.black,
+          ),
+          width: 20,
+          height: 20,
+        ),
+      ),
+    );
+  }
+}
+
+class ActionButton extends StatelessWidget {
+  const ActionButton({
+    super.key,
+    required this.title,
+    required this.onTap,
+    this.padding,
+    this.icon,
+    this.isActive,
+  });
+
+  final String title;
+  final Function onTap;
+  final EdgeInsets? padding;
+  final String? icon;
+  final bool? isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        onTap();
+      },
+      child: Padding(
+        padding: padding ?? EdgeInsets.only(top: 8, bottom: 8),
+        // child: KaireteActionButton(
+        //   onTap: onTap,
+        //   title: title,
+        //   padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+        // ),
+        child: Container(
+          child: SvgIcon(
+            name: icon ?? 'ic_follow',
+            color: isActive ?? false ? kPrimaryColor : Colors.black,
+          ),
+          width: 20,
+          height: 20,
+        ),
       ),
     );
   }

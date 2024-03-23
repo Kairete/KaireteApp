@@ -48,24 +48,28 @@ class ArticleItems {
   User? user;
   String? viewUrl;
   List<Attachments>? attachments;
+  bool? isWatched;
+  String tags = '';
 
-  ArticleItems(
-      {this.articleId,
-      this.canComment,
-      this.canDelete,
-      this.canEdit,
-      this.canReact,
-      this.category,
-      this.coverImage,
-      this.isIgnored,
-      this.messageParsed,
-      this.messagePlainText,
-      this.reactionScore,
-      this.reactions,
-      this.title,
-      this.user,
-      this.viewUrl,
-      this.attachments});
+  ArticleItems({
+    this.articleId,
+    this.canComment,
+    this.canDelete,
+    this.canEdit,
+    this.canReact,
+    this.category,
+    this.coverImage,
+    this.isIgnored,
+    this.messageParsed,
+    this.messagePlainText,
+    this.reactionScore,
+    this.reactions,
+    this.title,
+    this.user,
+    this.viewUrl,
+    this.attachments,
+    this.isWatched,
+  });
 
   ArticleItems.fromJson(Map<String, dynamic> json) {
     articleId = json['article_id'];
@@ -96,6 +100,15 @@ class ArticleItems {
       attachments = <Attachments>[];
       json['Attachments'].forEach((v) {
         attachments!.add(new Attachments.fromJson(v));
+      });
+    }
+    isWatched = json['is_watched'];
+    if (json['tags'] != null) {
+      json['tags'].forEach((e) {
+        final tag = e['tag'].replaceAll(' ', '');
+        final string = '#' + tag + ' ';
+        tags += string;
+        print(tags);
       });
     }
   }

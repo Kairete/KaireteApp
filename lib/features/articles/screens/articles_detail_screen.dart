@@ -5,7 +5,6 @@ import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 
 import '../../../components/cache_image.dart';
 import '../../../components/reactions_view.dart';
-import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 import 'package:get/get.dart';

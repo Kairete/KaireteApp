@@ -6,7 +6,6 @@ import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
-import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
@@ -20,7 +19,6 @@ import '../screens/reply_screen.dart';
 
 class NewsFeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
-  BlogUsecase blogUsecase = IBlogUsecase();
   var items = <NewsfeedModel>[].obs;
   final filterItems = [
     NewsfeedFilterModel(title: 'Your content'),
@@ -383,5 +381,11 @@ class NewsFeedController extends GetxController {
 
   void toMyBlogs({BlogEntryItem? blog}) {
     Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
+  }
+
+  Future onWatch({required NewsfeedModel item}) async {
+    final blogId = item.blogEntryItem?.blogId;
+    final json = await usecase.updateWatch(body: {'id': blogId});
+    if (json != null) {}
   }
 }

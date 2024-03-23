@@ -7,6 +7,7 @@ abstract class ForumUsecase {
   Future nodeDetail({dynamic body});
   Future createThread({dynamic body});
   Future reactions({dynamic body});
+  Future updateWatch({dynamic body});
 }
 
 class IForumUsecase extends BaseClient implements ForumUsecase {
@@ -44,6 +45,16 @@ class IForumUsecase extends BaseClient implements ForumUsecase {
   Future reactions({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.reactionThread + body['id'].toString() + '/react',
+      body: body,
+      method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future updateWatch({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: 'api/forums/${body['id']}/watch',
       body: body,
       method: HttpMethodCustom.POST,
     );

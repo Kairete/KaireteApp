@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:hashtagable/widgets/hashtag_text.dart';
+import 'package:kairete/components/action_item.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
@@ -14,8 +16,6 @@ import 'package:kairete/helper/time.dart';
 import 'package:kairete/helper/user.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
-import '../../../constants/key_constant.dart';
-import '../../../local/data_local.dart';
 import '../../dashboard/models/style_model/css.dart';
 import '../models/newsfeed_model.dart';
 
@@ -248,6 +248,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       item.blogEntryItem?.attachments?[0].thumbnailUrl ??
                           item.groupPostItem?.firstComment?.attachments?[0]
                               .thumbnailUrl,
+                  tags: item.blogEntryItem?.tags,
                 );
         },
       ),
@@ -282,6 +283,13 @@ class NewfeedCell extends StatelessWidget {
     this.onTapAvatar,
     this.isDetail = true,
     this.onTapHeader,
+    this.isWatched,
+    this.onTapWatch,
+    this.isFollow,
+    this.onTapFolow,
+    this.isIgnore,
+    this.onTapIgnore,
+    this.tags,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -307,6 +315,13 @@ class NewfeedCell extends StatelessWidget {
   final Function? onTapAvatar;
   final bool isDetail;
   final Function? onTapHeader;
+  final bool? isWatched;
+  final Function? onTapWatch;
+  final bool? isFollow;
+  final Function? onTapFolow;
+  final bool? isIgnore;
+  final Function? onTapIgnore;
+  final String? tags;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -337,6 +352,12 @@ class NewfeedCell extends StatelessWidget {
               date: date,
               titleCate: titleCate,
               onTap: onTapHeader,
+              customAction: ActionsView(
+                isFollowed: isFollow,
+                isIgnored: isIgnore,
+                isWatched: isWatched,
+                onTapWatch: onTapWatch,
+              ),
             ),
           ),
           const SizedBox(
@@ -347,6 +368,22 @@ class NewfeedCell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (tags != null)
+                  HashTagText(
+                    text: tags ?? '',
+                    decoratedStyle: TextStyle(
+                      fontSize: 16,
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    basicStyle: TextStyle(fontSize: 14, color: Colors.black),
+                    onTap: (text) {
+                      print(text);
+                    },
+                  ),
+                SizedBox(
+                  height: 8,
+                ),
                 if (title != null)
                   Text(
                     title ?? '',
@@ -443,6 +480,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
     required this.date,
     required this.titleCate,
     this.onTap,
+    this.customAction,
   }) : super(key: key);
 
   final Function? onTapAvatar;
@@ -455,6 +493,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
   final int? date;
   final String? titleCate;
   final Function? onTap;
+  final Widget? customAction;
 
   @override
   Widget build(BuildContext context) {
@@ -465,7 +504,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
         }
       },
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           InkWell(
             onTap: () {
@@ -486,13 +525,15 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
           ),
           Expanded(
             child: HeaderInfoCellItem(
-                userName: userName,
-                onTapAvatar: onTapAvatar,
-                blogTitle: blogTitle,
-                groupTitle: groupTitle,
-                authorBlog: authorBlog,
-                date: date,
-                titleCate: titleCate),
+              userName: userName,
+              onTapAvatar: onTapAvatar,
+              blogTitle: blogTitle,
+              groupTitle: groupTitle,
+              authorBlog: authorBlog,
+              date: date,
+              titleCate: titleCate,
+              customAction: customAction,
+            ),
           ),
         ],
       ),
@@ -578,6 +619,7 @@ class HeaderInfoCellItem extends StatelessWidget {
     required this.authorBlog,
     required this.date,
     required this.titleCate,
+    this.customAction,
   }) : super(key: key);
 
   final String? userName;
@@ -587,6 +629,7 @@ class HeaderInfoCellItem extends StatelessWidget {
   final String? authorBlog;
   final int? date;
   final String? titleCate;
+  final Widget? customAction;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -595,44 +638,55 @@ class HeaderInfoCellItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            text: userName,
-            style: kTextRegularStyle.copyWith(
-              fontWeight:
-                  style?.newsfeedItemHeaderUsername?.fontWeight?.getWegiht() ??
-                      FontWeight.w600,
-              fontSize:
-                  style?.newsfeedItemHeaderUsername?.fontSize?.parseDouble() ??
-                      16,
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                if (onTapAvatar != null) {
-                  onTapAvatar!();
-                }
-              },
-            children: [
-              if (blogTitle != null || groupTitle != null)
-                const WidgetSpan(
-                    child: Icon(
-                  Icons.play_arrow,
-                  color: kPrimaryColor,
-                  size: 16,
-                )),
-              TextSpan(
-                text: blogTitle ?? groupTitle ?? '',
-                style: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: style?.newsfeedItemHeaderTitle?.color?.toColor() ??
-                      kPrimaryColor,
-                  fontSize:
-                      style?.newsfeedItemHeaderTitle?.fontSize.parseDouble() ??
-                          16,
+        Row(
+          children: [
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  text: userName,
+                  style: kTextRegularStyle.copyWith(
+                    fontWeight: style?.newsfeedItemHeaderUsername?.fontWeight
+                            ?.getWegiht() ??
+                        FontWeight.w600,
+                    fontSize: style?.newsfeedItemHeaderUsername?.fontSize
+                            ?.parseDouble() ??
+                        16,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      if (onTapAvatar != null) {
+                        onTapAvatar!();
+                      }
+                    },
+                  children: [
+                    if (blogTitle != null || groupTitle != null)
+                      const WidgetSpan(
+                          child: Icon(
+                        Icons.play_arrow,
+                        color: kPrimaryColor,
+                        size: 16,
+                      )),
+                    TextSpan(
+                      text: blogTitle ?? groupTitle ?? '',
+                      style: kTextRegularStyle.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color:
+                            style?.newsfeedItemHeaderTitle?.color?.toColor() ??
+                                kPrimaryColor,
+                        fontSize: style?.newsfeedItemHeaderTitle?.fontSize
+                                .parseDouble() ??
+                            16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            SizedBox(
+              width: 4,
+            ),
+            if (customAction != null) customAction!
+          ],
         ),
         const SizedBox(
           height: 4,

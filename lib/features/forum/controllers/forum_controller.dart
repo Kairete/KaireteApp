@@ -4,10 +4,8 @@ import 'package:kairete/features/forum/models/forum_static_model/latest_user.dar
 import 'package:kairete/features/forum/screens/forum_detail_screen.dart';
 import 'package:kairete/features/forum/usecase/forum_usecase.dart';
 
-import '../../../components/kairete_popup.dart';
 import '../../dashboard/usecase/master_data_usecase.dart';
 import '../../profile/screens/user_profile_screen.dart';
-import '../models/forum_detail_model.dart';
 import '../models/forum_static_model/forum_static_model.dart';
 
 class ForumController extends GetxController {

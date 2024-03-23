@@ -69,4 +69,16 @@ class BlogController extends GetxController {
   void toMyBlogs({BlogEntryItem? blog}) {
     Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
   }
+
+  Future toUpdateWatch({required BlogEntryItem item}) async {
+    final json = await usecase.updateWatch(body: {
+      'id': item.blogEntryId,
+    });
+    if (json != null) {
+      items
+          .firstWhere((element) => element.blogEntryId == item.blogEntryId)
+          .isWatched = !(item.isWatched ?? false);
+      items.refresh();
+    }
+  }
 }

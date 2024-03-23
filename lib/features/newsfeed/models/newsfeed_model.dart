@@ -98,27 +98,30 @@ class NewsfeedModel {
   String? reactionIconUrl;
   ContentTypeNewFeed? type;
   BlogEntryItem? profilePost;
+  bool? isWatched;
 
-  NewsfeedModel(
-      {this.blogEntryItem,
-      this.commentCount,
-      this.contentId,
-      this.contentType,
-      this.contentTitle,
-      this.contentUrl,
-      this.itemCategory,
-      this.itemDate,
-      this.itemId,
-      this.itemLastCommentDate,
-      this.messageParsed,
-      this.messagePlainText,
-      this.reactionScore,
-      this.reactions,
-      this.shareCount,
-      this.title,
-      this.user,
-      this.userId,
-      this.viewUrl});
+  NewsfeedModel({
+    this.blogEntryItem,
+    this.commentCount,
+    this.contentId,
+    this.contentType,
+    this.contentTitle,
+    this.contentUrl,
+    this.itemCategory,
+    this.itemDate,
+    this.itemId,
+    this.itemLastCommentDate,
+    this.messageParsed,
+    this.messagePlainText,
+    this.reactionScore,
+    this.reactions,
+    this.shareCount,
+    this.title,
+    this.user,
+    this.userId,
+    this.viewUrl,
+    this.isWatched,
+  });
 
   NewsfeedModel.fromJson(Map<String, dynamic> json) {
     profilePost = json['ProfilePost'] != null
@@ -192,6 +195,7 @@ class NewsfeedModel {
         default:
       }
     }
+    isWatched = json['is_watched'];
   }
 
   Map<String, dynamic> toJson() {
@@ -247,26 +251,30 @@ class BlogEntryItem {
   String? reactionIconUrl;
   int? commentCount;
   int? blogId;
+  bool? isWatched;
+  String tags = '';
 
-  BlogEntryItem(
-      {this.attachments,
-      this.blog,
-      this.blogEntryId,
-      this.canComment,
-      this.canDelete,
-      this.canEdit,
-      this.canReact,
-      this.category,
-      this.coverImage,
-      this.isIgnored,
-      this.messageParsed,
-      this.messagePlainText,
-      this.reactionScore,
-      this.reactions,
-      this.title,
-      this.user,
-      this.blogId,
-      this.viewUrl});
+  BlogEntryItem({
+    this.attachments,
+    this.blog,
+    this.blogEntryId,
+    this.canComment,
+    this.canDelete,
+    this.canEdit,
+    this.canReact,
+    this.category,
+    this.coverImage,
+    this.isIgnored,
+    this.messageParsed,
+    this.messagePlainText,
+    this.reactionScore,
+    this.reactions,
+    this.title,
+    this.user,
+    this.blogId,
+    this.viewUrl,
+    this.isWatched,
+  });
 
   BlogEntryItem.fromJson(Map<String, dynamic> json) {
     if (json['Attachments'] != null) {
@@ -312,6 +320,15 @@ class BlogEntryItem {
         reactionIconUrl = path;
       }
       isReation = item != null;
+    }
+    isWatched = json['is_watched'];
+    if (json['tags'] != null) {
+      json['tags'].forEach((e) {
+        final tag = e['tag'].replaceAll(' ', '');
+        final string = '#' + tag + ' ';
+        tags += string;
+        print(tags);
+      });
     }
   }
 

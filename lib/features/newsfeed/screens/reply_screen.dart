@@ -140,42 +140,46 @@ class CommentItem extends StatelessWidget {
       color: backgroundColor ?? Colors.white,
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
             children: [
-              KaireteCacheNetworkImage(
-                url: avatar ?? '',
-                width: 36,
-                height: 36,
-                isCircle: true,
-                nameImage: name,
-              ),
-              const SizedBox(
-                width: 16,
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: kTextRegularStyle.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  KaireteCacheNetworkImage(
+                    url: avatar ?? '',
+                    width: 36,
+                    height: 36,
+                    isCircle: true,
+                    nameImage: name,
+                  ),
+                  const SizedBox(
+                    width: 16,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: kTextRegularStyle.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        HtmlWidget(
+                          content
+                              .replaceAll("\n", "")
+                              .replaceAll("=\\  ", "=")
+                              .replaceAll("g\\", ""),
+                          textStyle: const TextStyle(fontSize: 17),
+                        )
+                      ],
                     ),
-                    const SizedBox(
-                      height: 4,
-                    ),
-                    HtmlWidget(
-                      content
-                          .replaceAll("\n", "")
-                          .replaceAll("=\\  ", "=")
-                          .replaceAll("g\\", ""),
-                      textStyle: const TextStyle(fontSize: 17),
-                    )
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

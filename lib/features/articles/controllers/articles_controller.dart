@@ -29,4 +29,15 @@ class ArticlesController extends GetxController {
   void toDetail({required ArticleItems item}) {
     Get.to(() => ArticlesDetailScreen(), arguments: {'item': item});
   }
+
+  Future updateWatch({required ArticleItems item}) async {
+    final json =
+        await usecase.updateWatch(body: {'id': item.articleId.toString()});
+    if (json != null) {
+      items
+          .firstWhere((element) => element.articleId == item.articleId)
+          .isWatched = !(item.isWatched ?? false);
+      items.refresh();
+    }
+  }
 }

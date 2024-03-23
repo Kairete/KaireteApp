@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/components/kairete_search_field.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_search_controller.dart';
@@ -6,7 +7,8 @@ import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import '../../../constants/color.dart';
 import 'package:get/get.dart';
 
-class NewsfeedSearchScreen extends StatelessWidget {
+// ignore: must_be_immutable
+class NewsfeedSearchScreen extends GetView {
   NewsfeedSearchScreen({Key? key}) : super(key: key);
 
   NewsfeedSearchController controller = Get.put(NewsfeedSearchController());
@@ -26,15 +28,55 @@ class NewsfeedSearchScreen extends StatelessWidget {
           height: 36,
         ),
       ),
-      body: Obx(() => controller.items.isEmpty
-          ? const SizedBox()
-          : NewsfeedListItem(
-              items: controller.items,
-              isShowCreate: false,
-              onTapDetail: (item) {
-                controller.toDetail(item: item);
-              },
-            )),
+      body: Column(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 16,
+              ),
+              Obx(() => DropdownButton2(
+                    hint: Text(
+                      'Select Type',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).hintColor,
+                      ),
+                    ),
+                    items: controller.types
+                        .map((element) => DropdownMenuItem(
+                              child: Text(element.toUpperCase()),
+                              value: element,
+                            ))
+                        .toList(),
+                    value: controller.selectedType.value,
+                    onChanged: (value) {
+                      controller.onChangeType(type: value ?? 'all');
+                    },
+                    buttonStyleData: ButtonStyleData(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      height: 60,
+                      width: 150,
+                    ),
+                    menuItemStyleData: const MenuItemStyleData(
+                      height: 40,
+                    ),
+                  ))
+            ],
+          ),
+          Expanded(
+            child: Obx(() => controller.items.isEmpty
+                ? const SizedBox()
+                : NewsfeedListItem(
+                    items: controller.items,
+                    isShowCreate: false,
+                    onTapDetail: (item) {
+                      controller.toDetail(item: item);
+                    },
+                  )),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -46,47 +46,59 @@ class BlogScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: controller.items.length,
-                itemBuilder: (context, index) {
-                  final item = controller.items[index];
-                  return NewfeedCell(
-                    onTapDetail: () {
-                      controller.toDetail(item: item);
-                    },
-                    onTapAvatar: () {
-                      Get.to(
-                        () => UserProfileScreen(),
-                        arguments: {'id': item.user?.userId},
-                      );
-                    },
-                    titleCate: item.category?.title,
-                    userName: item.user?.customFields?.fullName ??
-                        item.user?.username ??
-                        '',
-                    title: item.title,
-                    avatar: item.user?.avatarUrls?.l,
-                    date: item.attachments?[0].attachDate,
-                    blogTitle: item.blog?.title,
-                    thumbnailUrl: item.coverImage?.thumbnailUrl,
-                    messagePlainText: item.messagePlainText,
-                    reactionIconUrl: item.reactionIconUrl,
-                    reactions: item.reactions,
-                    shareCount: 0,
-                    // isShowShare: false,
-                    commentCount: item.commentCount,
-                    isShowLike: item.canReact ?? true,
-                    onTapReactions: () {
-                      controller.showReactions(blogId: item.blogEntryId ?? 0);
-                    },
-                    onTapReply: () {
-                      controller.toComment(item: item);
-                    },
-                    onTapHeader: () {
-                      controller.toMyBlogs(blog: item);
-                    },
-                  );
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  controller.fetchItems();
                 },
+                child: ListView.builder(
+                  itemCount: controller.items.length,
+                  itemBuilder: (context, index) {
+                    final item = controller.items[index];
+                    return NewfeedCell(
+                      onTapDetail: () {
+                        controller.toDetail(item: item);
+                      },
+                      onTapAvatar: () {
+                        Get.to(
+                          () => UserProfileScreen(),
+                          arguments: {'id': item.user?.userId},
+                        );
+                      },
+                      onTapWatch: () {
+                        controller.toUpdateWatch(item: item);
+                      },
+                      titleCate: item.category?.title,
+                      userName: item.user?.customFields?.fullName ??
+                          item.user?.username ??
+                          '',
+                      title: item.title,
+                      avatar: item.user?.avatarUrls?.l,
+                      date: item.attachments?[0].attachDate,
+                      blogTitle: item.blog?.title,
+                      thumbnailUrl: item.coverImage?.thumbnailUrl,
+                      messagePlainText: item.messagePlainText,
+                      reactionIconUrl: item.reactionIconUrl,
+                      reactions: item.reactions,
+                      shareCount: 0,
+                      isWatched: item.isWatched,
+                      // isShowShare: false,
+                      commentCount: item.commentCount,
+                      isShowLike: item.canReact ?? true,
+                      onTapReactions: () {
+                        controller.showReactions(blogId: item.blogEntryId ?? 0);
+                      },
+                      onTapReply: () {
+                        controller.toComment(item: item);
+                      },
+                      onTapHeader: () {
+                        controller.toMyBlogs(blog: item);
+                      },
+                      isFollow: item.user?.isFollowed,
+                      isIgnore: item.user?.isIgnored,
+                      tags: item.tags,
+                    );
+                  },
+                ),
               ),
             ),
           ],

@@ -18,6 +18,7 @@ abstract class NewsFeedUsecase {
   Future postComments({dynamic body});
   Future reactionsComment({dynamic body});
   Future feedDetail({dynamic body});
+  Future updateWatch({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -143,6 +144,17 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
     final json = await appApiService.client?.requestApi(
       path: path,
       method: HttpMethodCustom.GET,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future updateWatch({body}) async {
+    final path = ApiRoutes.myBlogs + '${body['id']}/watch';
+    final json = await appApiService.client?.requestApi(
+      path: path,
+      method: HttpMethodCustom.POST,
       body: body,
     );
     return json;
