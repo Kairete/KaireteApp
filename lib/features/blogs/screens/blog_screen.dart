@@ -48,7 +48,7 @@ class BlogScreen extends StatelessWidget {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  controller.fetchItems();
+                  controller.fetchItems(isRefresh: true);
                 },
                 child: ListView.builder(
                   itemCount: controller.items.length,
@@ -96,6 +96,12 @@ class BlogScreen extends StatelessWidget {
                       isFollow: item.user?.isFollowed,
                       isIgnore: item.user?.isIgnored,
                       tags: item.tags,
+                      onTapTag: (p0) {
+                        final tag = p0?.replaceAll('#', '');
+                        final key = item.tagsKey.firstWhereOrNull(
+                            (element) => element.contains(tag ?? ''));
+                        controller.toTagDetail(id: key ?? '');
+                      },
                     );
                   },
                 ),

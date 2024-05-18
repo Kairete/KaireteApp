@@ -317,11 +317,7 @@ class WatchButton extends StatelessWidget {
         onTap();
       },
       child: Padding(
-        padding: padding ??
-            EdgeInsets.only(
-              top: 8,
-              bottom: 8,
-            ),
+        padding: padding ?? EdgeInsets.zero,
         // child: KaireteActionButton(
         //   onTap: onTap,
         //   title: isWatched ? 'Unwatch' : 'Watch',

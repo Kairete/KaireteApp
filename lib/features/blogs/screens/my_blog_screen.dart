@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../constants/color.dart';
-import '../../../constants/font_constant.dart';
+import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:get/get.dart';
 
 import '../../newsfeed/screens/newsfeed_screen.dart';
 import '../controllers/my_blog_controller.dart';
 
 class MyBlogScreen extends StatelessWidget {
-  const MyBlogScreen({Key? key}) : super(key: key);
+  MyBlogScreen({Key? key}) : super(key: key);
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: kPrimaryColor,
-          title: Text(
-            'Blogs Detail',
-            style: kTextHeadingStyle.copyWith(color: Colors.white),
-          ),
+        appBar: baseAppBar(
+          key: _key,
+          isShowBack: true,
+          isShowMenu: false,
+          isShowSearch: false,
+          title: 'Blogs Detail',
         ),
         body: SafeArea(
           child: GetX<MyBlogController>(

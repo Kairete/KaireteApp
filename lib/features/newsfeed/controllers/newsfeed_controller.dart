@@ -380,7 +380,7 @@ class NewsFeedController extends GetxController {
   }
 
   void toMyBlogs({BlogEntryItem? blog}) {
-    Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
+    Get.to(() => MyBlogScreen(), arguments: {'blog': blog});
   }
 
   Future onWatch({required NewsfeedModel item}) async {

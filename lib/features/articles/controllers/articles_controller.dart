@@ -3,6 +3,10 @@ import 'package:kairete/features/articles/models/articles_model.dart';
 import 'package:kairete/features/articles/screens/articles_detail_screen.dart';
 import 'package:kairete/features/articles/usecase/articles_usecase.dart';
 
+import '../../../constants/app_routes.dart';
+
+List<ArticleItems> cacheArticle = [];
+
 class ArticlesController extends GetxController {
   ArticlesUsecase usecase = IArticlesUsecase();
   var items = <ArticleItems>[].obs;
@@ -18,10 +22,18 @@ class ArticlesController extends GetxController {
     super.onReady();
   }
 
-  void fetchItems() async {
+  void fetchItems({bool isRefresh = false}) async {
+    if (cacheArticle.isNotEmpty && !isRefresh) {
+      items.value = cacheArticle;
+      items.removeWhere((element) => element.coverImage == null);
+      items.refresh();
+      return;
+    }
     final json = await usecase.fetItems();
     final item = ArticlesModel.fromJson(json);
+    cacheArticle = item.articleItems ?? [];
     items.value = item.articleItems ?? [];
+
     items.removeWhere((element) => element.coverImage == null);
     items.refresh();
   }
@@ -39,5 +51,9 @@ class ArticlesController extends GetxController {
           .isWatched = !(item.isWatched ?? false);
       items.refresh();
     }
+  }
+
+  void toTagDetail({required String id}) {
+    Get.toNamed(Routes.tagsDetail, arguments: {'id': id});
   }
 }

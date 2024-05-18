@@ -134,8 +134,8 @@ class ActionsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         SizedBox(
           width: 8,
@@ -143,21 +143,21 @@ class ActionsView extends StatelessWidget {
         ActionButton(
           title: isIgnored ?? false ? 'Unignore' : 'Ignore',
           onTap: () {},
-          padding: EdgeInsets.only(bottom: 8),
+          // padding: EdgeInsets.only(bottom: 8),
           icon: 'ic_follow',
         ),
         SizedBox(
-          width: 8,
+          width: 16,
         ),
-        ActionButton(
-          title: isFollowed ?? false ? 'Unfollow' : 'Follow',
-          onTap: () {},
-          padding: EdgeInsets.only(bottom: 8),
-          icon: 'ic_ignore',
-        ),
-        SizedBox(
-          width: 8,
-        ),
+        // ActionButton(
+        //   title: isFollowed ?? false ? 'Unfollow' : 'Follow',
+        //   onTap: () {},
+        //   // padding: EdgeInsets.only(bottom: 8),
+        //   icon: 'ic_ignore',
+        // ),
+        // SizedBox(
+        //   width: 16,
+        // ),
         WatchButton(
           onTap: () {
             if (onTapWatch != null) {
@@ -166,9 +166,9 @@ class ActionsView extends StatelessWidget {
           },
           isWatched: isWatched ?? false,
           padding: EdgeInsets.only(
-            top: 8,
-            bottom: 16,
-          ),
+              // top: 8,
+              // bottom: 16,
+              ),
           icon: 'ic_watch',
         )
       ],

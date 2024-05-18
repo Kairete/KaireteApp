@@ -1,12 +1,16 @@
 import 'package:get/get.dart';
+import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/features/blogs/screens/blog_comment_screen.dart';
 import 'package:kairete/features/blogs/screens/blog_detail_screen.dart';
 import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
+import 'package:kairete/features/tags/screens/tags_screen.dart';
 import '../../../components/kairete_popup.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../models/blog_model.dart';
 import '../screens/blog_filter_screen.dart';
 import '../screens/my_blog_screen.dart';
+
+List<BlogEntryItem> cacheBlogsItems = [];
 
 class BlogController extends GetxController {
   BlogUsecase usecase = IBlogUsecase();
@@ -18,9 +22,14 @@ class BlogController extends GetxController {
     super.onInit();
   }
 
-  void fetchItems() async {
+  void fetchItems({bool isRefresh = false}) async {
+    if (cacheBlogsItems.isNotEmpty && !isRefresh) {
+      items.value = cacheBlogsItems;
+      return;
+    }
     final json = await usecase.fetItems();
     final item = BlogModel.fromJson(json);
+    cacheBlogsItems = item.blogEntryItems ?? [];
     items.value = item.blogEntryItems ?? [];
   }
 
@@ -67,7 +76,7 @@ class BlogController extends GetxController {
   }
 
   void toMyBlogs({BlogEntryItem? blog}) {
-    Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
+    Get.to(() => MyBlogScreen(), arguments: {'blog': blog});
   }
 
   Future toUpdateWatch({required BlogEntryItem item}) async {
@@ -80,5 +89,9 @@ class BlogController extends GetxController {
           .isWatched = !(item.isWatched ?? false);
       items.refresh();
     }
+  }
+
+  void toTagDetail({required String id}) {
+    Get.toNamed(Routes.tagsDetail, arguments: {'id': id});
   }
 }

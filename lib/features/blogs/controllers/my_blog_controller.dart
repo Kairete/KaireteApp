@@ -15,7 +15,7 @@ class MyBlogController extends BlogController {
   }
 
   @override
-  void fetchItems() async {
+  void fetchItems({bool isRefresh = false}) async {
     final body = {
       'blog_ids[]': blog?.blog?.blogId,
     };

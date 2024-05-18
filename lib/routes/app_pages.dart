@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/login/screens/login_screen.dart';
 import 'package:kairete/features/register/screens/register_screen.dart';
+import 'package:kairete/features/tags/screens/tags_screen.dart';
 import 'package:kairete/helper/user.dart';
 
 import '../constants/app_routes.dart';
@@ -26,6 +27,10 @@ class AppPages {
     GetPage(
       name: Routes.home,
       page: () => DashboardScreen(),
+    ),
+    GetPage(
+      name: Routes.tagsDetail,
+      page: () => TagsScreen(),
     ),
   ];
 }

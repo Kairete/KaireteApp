@@ -290,6 +290,7 @@ class NewfeedCell extends StatelessWidget {
     this.isIgnore,
     this.onTapIgnore,
     this.tags,
+    this.onTapTag,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -322,6 +323,7 @@ class NewfeedCell extends StatelessWidget {
   final bool? isIgnore;
   final Function? onTapIgnore;
   final String? tags;
+  final Function(String?)? onTapTag;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -341,48 +343,49 @@ class NewfeedCell extends StatelessWidget {
               ),
               color: Colors.grey.shade200,
             ),
-            child: HeaderInfoCellWithAvatar(
-              onTapAvatar: onTapAvatar,
-              avatar: avatar,
-              nameImage: nameImage,
-              userName: userName,
-              blogTitle: blogTitle,
-              groupTitle: groupTitle,
-              authorBlog: authorBlog,
-              date: date,
-              titleCate: titleCate,
-              onTap: onTapHeader,
-              customAction: ActionsView(
-                isFollowed: isFollow,
-                isIgnored: isIgnore,
-                isWatched: isWatched,
-                onTapWatch: onTapWatch,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: HeaderInfoCellWithAvatar(
+                    onTapAvatar: onTapAvatar,
+                    avatar: avatar,
+                    nameImage: nameImage,
+                    userName: userName,
+                    blogTitle: blogTitle,
+                    groupTitle: groupTitle,
+                    authorBlog: authorBlog,
+                    date: date,
+                    titleCate: titleCate,
+                    onTap: onTapHeader,
+                    // customAction: ActionsView(
+                    //   isFollowed: isFollow,
+                    //   isIgnored: isIgnore,
+                    //   isWatched: isWatched,
+                    //   onTapWatch: onTapWatch,
+                    // ),
+                  ),
+                ),
+                // ActionsView(
+                //   isFollowed: isFollow,
+                //   isIgnored: isIgnore,
+                //   isWatched: isWatched,
+                //   onTapWatch: onTapWatch,
+                // ),
+                ActionButton(
+                  title: isFollow ?? false ? 'Unfollow' : 'Follow',
+                  onTap: () {},
+                  icon: 'ic_ignore',
+                ),
+              ],
             ),
-          ),
-          const SizedBox(
-            height: 16,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (tags != null)
-                  HashTagText(
-                    text: tags ?? '',
-                    decoratedStyle: TextStyle(
-                      fontSize: 16,
-                      color: kPrimaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    basicStyle: TextStyle(fontSize: 14, color: Colors.black),
-                    onTap: (text) {
-                      print(text);
-                    },
-                  ),
                 SizedBox(
-                  height: 8,
+                  height: 16,
                 ),
                 if (title != null)
                   Text(
@@ -401,7 +404,7 @@ class NewfeedCell extends StatelessWidget {
                   ),
                 if (title != null)
                   const SizedBox(
-                    height: 16,
+                    height: 8,
                   ),
                 if (thumbnailUrl != null)
                   KaireteCacheNetworkImage(
@@ -409,7 +412,7 @@ class NewfeedCell extends StatelessWidget {
                   ),
                 if (thumbnailUrl != null)
                   const SizedBox(
-                    height: 16,
+                    height: 8,
                   ),
                 isDetail
                     ? Text(
@@ -432,6 +435,25 @@ class NewfeedCell extends StatelessWidget {
                 const SizedBox(
                   height: 8,
                 ),
+                if (tags != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: HashTagText(
+                      text: tags ?? '',
+                      decoratedStyle: TextStyle(
+                        fontSize: 16,
+                        color: kPrimaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      basicStyle: TextStyle(fontSize: 14, color: Colors.black),
+                      onTap: (text) {
+                        print(text);
+                        if (onTapTag != null) {
+                          onTapTag!(text);
+                        }
+                      },
+                    ),
+                  ),
                 if (isDetail)
                   KaireteTextButton(
                     onTap: () {
@@ -504,7 +526,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
         }
       },
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
             onTap: () {
@@ -659,7 +681,8 @@ class HeaderInfoCellItem extends StatelessWidget {
                       }
                     },
                   children: [
-                    if (blogTitle != null || groupTitle != null)
+                    if ((blogTitle != null && blogTitle != "") ||
+                        (groupTitle != null && groupTitle != ""))
                       const WidgetSpan(
                           child: Icon(
                         Icons.play_arrow,

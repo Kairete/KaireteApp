@@ -253,6 +253,7 @@ class BlogEntryItem {
   int? blogId;
   bool? isWatched;
   String tags = '';
+  List<String> tagsKey = [];
 
   BlogEntryItem({
     this.attachments,
@@ -325,9 +326,10 @@ class BlogEntryItem {
     if (json['tags'] != null) {
       json['tags'].forEach((e) {
         final tag = e['tag'].replaceAll(' ', '');
+        final tagKey = e['tag_url'].replaceAll(' ', '');
         final string = '#' + tag + ' ';
         tags += string;
-        print(tags);
+        tagsKey.add(tagKey);
       });
     }
   }

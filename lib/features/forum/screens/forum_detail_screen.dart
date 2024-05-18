@@ -154,32 +154,20 @@ class ThreadItemCell extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.title ?? '',
-                              style: kTextTitle.copyWith(fontSize: 16),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 4,
-                          ),
-                          ActionsView(
-                            onTapWatch: () {
-                              if (onTapWatch != null) {
-                                onTapWatch!();
-                              }
-                            },
-                            isFollowed: item.user?.isFollowed,
-                            isIgnored: item.user?.isIgnored,
-                            isWatched: item.isWatched,
-                          ),
-                        ],
+                      Text(
+                        item.username ?? '',
+                        style: kTextMediumtStyle.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 4,
                       ),
                       RichText(
                         text: TextSpan(
-                          text: '${item.username} - ',
+                          text: '',
                           style: kTextMediumtStyle.copyWith(
                               fontSize: 15, fontWeight: FontWeight.w600),
                           children: <TextSpan>[
@@ -192,36 +180,56 @@ class ThreadItemCell extends StatelessWidget {
                                 )),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
+                ),
+                // ActionsView(
+                //   onTapWatch: () {
+                //     if (onTapWatch != null) {
+                //       onTapWatch!();
+                //     }
+                //   },
+                //   isFollowed: item.user?.isFollowed,
+                //   isIgnored: item.user?.isIgnored,
+                //   isWatched: item.isWatched,
+                // ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ActionButton(
+                      title: item.user?.isFollowed ?? false
+                          ? 'Unfollow'
+                          : 'Follow',
+                      onTap: () {},
+                      // padding: EdgeInsets.only(bottom: 8),
+                      icon: 'ic_ignore',
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(
-            height: 16,
+          SizedBox(
+            width: 4,
           ),
-          if (item.tags != '')
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 16,
-                bottom: 8,
-              ),
-              child: HashTagText(
-                text: item.tags,
-                decoratedStyle: TextStyle(fontSize: 16, color: kPrimaryColor),
-                basicStyle: TextStyle(fontSize: 16, color: Colors.black),
-                onTap: (text) {
-                  print(text);
-                },
-              ),
-            ),
           Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16),
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  item.title ?? '',
+                  style: kTextTitle.copyWith(fontSize: 20),
+                ),
+                SizedBox(
+                  height: 16,
+                ),
                 !isShowDetail
                     ? HtmlWidget(
                         (item.message)
@@ -243,6 +251,22 @@ class ThreadItemCell extends StatelessWidget {
                 if (isShowDetail)
                   const SizedBox(
                     height: 8,
+                  ),
+                if (item.tags != '')
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      // left: 16,
+                      bottom: 8,
+                    ),
+                    child: HashTagText(
+                      text: item.tags,
+                      decoratedStyle:
+                          TextStyle(fontSize: 16, color: kPrimaryColor),
+                      basicStyle: TextStyle(fontSize: 16, color: Colors.black),
+                      onTap: (text) {
+                        print(text);
+                      },
+                    ),
                   ),
                 if (isShowDetail)
                   KaireteTextButton(

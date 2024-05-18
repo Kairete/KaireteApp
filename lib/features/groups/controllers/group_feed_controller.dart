@@ -87,6 +87,6 @@ class GroupFeedController extends GetxController {
   }
 
   void toMyBlogs({BlogEntryItem? blog}) {
-    Get.to(() => const MyBlogScreen(), arguments: {'blog': blog});
+    Get.to(() => MyBlogScreen(), arguments: {'blog': blog});
   }
 }

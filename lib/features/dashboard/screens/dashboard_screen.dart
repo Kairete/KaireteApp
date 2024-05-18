@@ -52,9 +52,15 @@ class DashboardScreen extends GetView<DashboardController> {
   }
 }
 
-AppBar baseAppBar(
-    {required GlobalKey<ScaffoldState> key, bool isShowBack = false}) {
+AppBar baseAppBar({
+  required GlobalKey<ScaffoldState> key,
+  bool isShowBack = false,
+  bool isShowSearch = true,
+  bool isShowMenu = true,
+  String? title,
+}) {
   return AppBar(
+    titleTextStyle: TextStyle(),
     actions: [
       Obx(
         () => InkWell(
@@ -94,7 +100,7 @@ AppBar baseAppBar(
     leading: Row(
       children: [
         SizedBox(
-          width: isShowBack ? 8 : 16,
+          width: 16,
         ),
         if (isShowBack)
           GestureDetector(
@@ -103,33 +109,43 @@ AppBar baseAppBar(
               Get.back();
             },
           ),
-        GestureDetector(
-          child: Icon(
-            Icons.menu,
-          ),
-          onTap: () {
-            key.currentState!.openDrawer();
-          },
-        ),
-      ],
-    ),
-    backgroundColor: kPrimaryColor,
-    title: SizedBox(
-      child: Row(
-        children: [
+        if (isShowMenu)
           Expanded(
-            child: KaireteSearchField(
-              onChanged: (value) {},
-              readOnly: true,
+            child: GestureDetector(
+              child: Icon(
+                Icons.menu,
+              ),
               onTap: () {
-                Get.to(() => NewsfeedSearchScreen(), fullscreenDialog: true);
+                key.currentState!.openDrawer();
               },
             ),
           ),
-        ],
-      ),
-      height: 36,
+      ],
     ),
+    backgroundColor: kPrimaryColor,
+    title: title != null
+        ? Text(
+            title,
+            style: kTextHeadingStyle.copyWith(color: Colors.white),
+          )
+        : SizedBox(
+            child: Row(
+              children: [
+                if (isShowSearch)
+                  Expanded(
+                    child: KaireteSearchField(
+                      onChanged: (value) {},
+                      readOnly: true,
+                      onTap: () {
+                        Get.to(() => NewsfeedSearchScreen(),
+                            fullscreenDialog: true);
+                      },
+                    ),
+                  ),
+              ],
+            ),
+            height: 36,
+          ),
   );
 }
 
