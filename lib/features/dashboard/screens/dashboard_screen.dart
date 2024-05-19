@@ -7,6 +7,7 @@ import 'package:kairete/features/blogs/screens/blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
+import 'package:kairete/features/notice/screens/notice_screen.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 import '../../../components/cache_image.dart';
 import '../../../helper/time.dart';
@@ -63,22 +64,27 @@ AppBar baseAppBar({
     titleTextStyle: TextStyle(),
     actions: [
       Obx(
-        () => InkWell(
-          onTap: () {
-            Get.to(() => UserProfileScreen());
-          },
-          child: Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(
-              children: [
-                const Icon(
+        () => Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () {
+                  Get.to(() => NoticeScreen());
+                },
+                child: Icon(
                   Icons.notifications,
                   size: 30,
                 ),
-                const SizedBox(
-                  width: 4,
-                ),
-                KaireteCacheNetworkImage(
+              ),
+              const SizedBox(
+                width: 4,
+              ),
+              InkWell(
+                onTap: () {
+                  Get.to(() => UserProfileScreen());
+                },
+                child: KaireteCacheNetworkImage(
                   url: Get.find<DashboardController>()
                           .user
                           .value
@@ -91,8 +97,8 @@ AppBar baseAppBar({
                   height: 30,
                   isCircle: true,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       )

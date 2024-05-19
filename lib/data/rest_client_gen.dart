@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'dart:async';
 
 import 'package:kairete/helper/user.dart';
@@ -6,8 +7,13 @@ import 'package:kairete/helper/user.dart';
 class RestClient {
   Dio dio;
   CancelToken cancelToken;
+  CacheOptions cacheInterceptor;
 
-  RestClient({required this.dio, required this.cancelToken});
+  RestClient({
+    required this.dio,
+    required this.cancelToken,
+    required this.cacheInterceptor,
+  });
 
   Future requestApi({
     Map<String, dynamic>? body,
@@ -42,6 +48,9 @@ class RestClient {
           queryParameters: queryParameters,
           options: Options(
             method: method.toString().split('.').last,
+            extra: cacheInterceptor
+                .copyWith(policy: CachePolicy.forceCache)
+                .toExtra(),
           ),
           data: formData,
           cancelToken: cancelToken);

@@ -7,7 +7,6 @@ import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
 import 'package:kairete/features/forum/models/forum_detail_model.dart';
 
-import '../../../components/action_item.dart';
 import '../../../components/cache_image.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/reactions_view.dart';
@@ -144,9 +143,7 @@ class ThreadItemCell extends StatelessWidget {
                     width: 36,
                     height: 36,
                     isCircle: true,
-                    nameImage: (item.user?.customFields?.fullName ??
-                        item.user?.username ??
-                        '')),
+                    nameImage: (item.username ?? '1')),
                 const SizedBox(
                   width: 8,
                 ),
@@ -202,9 +199,14 @@ class ThreadItemCell extends StatelessWidget {
                       title: item.user?.isFollowed ?? false
                           ? 'Unfollow'
                           : 'Follow',
-                      onTap: () {},
+                      onTap: () {
+                        if (onTapWatch != null) {
+                          onTapWatch!();
+                        }
+                      },
                       // padding: EdgeInsets.only(bottom: 8),
                       icon: 'ic_ignore',
+                      isActive: item.isWatched,
                     ),
                   ],
                 ),

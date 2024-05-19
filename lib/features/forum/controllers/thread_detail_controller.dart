@@ -61,4 +61,10 @@ class ThreadDetailController extends GetxController {
       'item': item.value,
     });
   }
+
+  void onWatch({required String forumId}) async {
+    final json = await usecase.updateWatch(body: {
+      'id': forumId,
+    });
+  }
 }

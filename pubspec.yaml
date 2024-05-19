@@ -59,7 +59,7 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   hashtagable: ^2.3.0+1
   dropdown_button2: ^2.3.9
-  
+  dio_cache_interceptor: ^3.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
