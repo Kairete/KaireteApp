@@ -23,6 +23,7 @@ class Comment {
   String? viewUrl;
   List<Reactions>? reactions;
   String? reactionIconUrl;
+  List<Comment>? reply;
 
   Comment(
       {this.canDelete,
@@ -75,6 +76,11 @@ class Comment {
             .imageUrl;
         reactionIconUrl = path;
       }
+    }
+    if (json['latest_replies'] != null) {
+      reply = json['latest_replies']
+          .map<Comment>((e) => Comment.fromJson(e))
+          .toList();
     }
   }
 

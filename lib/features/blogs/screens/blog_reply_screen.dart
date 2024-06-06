@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/blogs/controllers/blog_reply_controller.dart';
+import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 
-import '../../../components/kairete_button.dart';
-import '../../../components/kairete_form.dart';
 import '../../../constants/color.dart';
 import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
@@ -23,94 +22,75 @@ class BlogReplyScreen extends StatelessWidget {
           'Replies',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
-        actions: [
-          Obx(() => KairetePrimaryButton(
-                onTap: () {
-                  controller.postComent();
-                },
-                title: 'POST',
-                width: 100,
-                state: controller.isEnable.value
-                    ? StateButton.active
-                    : StateButton.disable,
-              ))
-        ],
+      ),
+      bottomSheet: KaireteWriteTextField(
+        onChanged: (p0) {
+          controller.textOnChanged(text: p0);
+        },
+        onSend: () {
+          controller.postComent();
+        },
+        controller: controller.textEditingController,
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: KaireteTextField(
-                onChanged: (value) {
-                  controller.textOnChanged(text: value);
-                },
-                hint: 'Write something…',
-                maxLine: 3,
-                borderColor: kPrimaryColor,
-                controller: controller.textEditingController,
-                textStyle: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w300,
-                  fontSize: 18,
-                ),
+        child: Container(
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 12,
+                color: kBorderDefaultColor,
               ),
-            ),
-            Container(
-              height: 12,
-              color: kBorderDefaultColor,
-            ),
-            Expanded(
-                child: Obx(() => Column(
-                      children: [
-                        CommentItem(
-                          content: controller.item?.messageParsed ?? '',
-                          name: controller.item?.user?.username ?? '',
-                          avatar: controller.item?.user?.avatarUrls?.h,
-                          isReplyAction: false,
-                          reactions: controller.item?.reactions,
-                          urlReaction: controller.item?.reactionIconUrl,
-                          isLikeAction: controller.item?.canReact ?? true,
-                          onTapLike: () {
-                            controller.showReactions(
-                                commentId: controller.item?.commentId ?? 0);
-                          },
-                        ),
-                        Expanded(
-                            child: ListView.builder(
-                          itemCount: controller.items.length,
-                          itemBuilder: (context, index) {
-                            final item = controller.items[index];
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                              child: Column(
-                                children: [
-                                  CommentItem(
-                                    content: item.messageParsed ?? '',
-                                    name: item.user?.username ?? '',
-                                    avatar: item.user?.avatarUrls?.h,
-                                    isLikeAction: item.canReact ?? true,
-                                    isReplyAction: false,
-                                    backgroundColor: const Color(0xFFF5F5F5),
-                                    reactions: item.reactions,
-                                    urlReaction: item.reactionIconUrl,
-                                    onTapLike: () {
-                                      controller.showReactions(
-                                          commentId: item.commentId ?? 0);
-                                    },
-                                  ),
-                                  Container(
-                                    height: 0.5,
-                                    color: kBorderDefaultColor,
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        )),
-                      ],
-                    )))
-          ],
+              Expanded(
+                  child: Obx(() => Column(
+                        children: [
+                          CommentItem(
+                            content: controller.item?.messageParsed ?? '',
+                            name: controller.item?.user?.username ?? '',
+                            avatar: controller.item?.user?.avatarUrls?.h,
+                            isReplyAction: false,
+                            reactions: controller.item?.reactions,
+                            urlReaction: controller.item?.reactionIconUrl,
+                            isLikeAction: controller.item?.canReact ?? true,
+                            onTapLike: () {
+                              controller.showReactions(
+                                  commentId: controller.item?.commentId ?? 0);
+                            },
+                          ),
+                          Expanded(
+                              child: ListView.builder(
+                            itemCount: controller.items.length,
+                            itemBuilder: (context, index) {
+                              final item = controller.items[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(60, 0, 12, 0),
+                                child: Column(
+                                  children: [
+                                    CommentItem(
+                                      content: item.messageParsed ?? '',
+                                      name: item.user?.username ?? '',
+                                      avatar: item.user?.avatarUrls?.h,
+                                      isLikeAction: item.canReact ?? true,
+                                      isReplyAction: false,
+                                      backgroundColor: Colors.white,
+                                      reactions: item.reactions,
+                                      urlReaction: item.reactionIconUrl,
+                                      onTapLike: () {
+                                        controller.showReactions(
+                                            commentId: item.commentId ?? 0);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )),
+                        ],
+                      )))
+            ],
+          ),
         ),
       ),
     );

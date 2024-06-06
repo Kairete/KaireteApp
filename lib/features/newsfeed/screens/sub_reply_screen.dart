@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/constants/color_constant.dart';
+import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/newsfeed/screens/reply_screen.dart';
 
 import '../../../components/kairete_button.dart';
@@ -24,39 +25,48 @@ class SubReplyScreen extends StatelessWidget {
           'Replies',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
-        actions: [
-          Obx(() => KairetePrimaryButton(
-                onTap: () {
-                  controller.postComent();
-                },
-                title: 'POST',
-                width: 100,
-                state: controller.isEnable.value
-                    ? StateButton.active
-                    : StateButton.disable,
-              ))
-        ],
+        // actions: [
+        //   Obx(() => KairetePrimaryButton(
+        //         onTap: () {
+        //           controller.postComent();
+        //         },
+        //         title: 'POST',
+        //         width: 100,
+        //         state: controller.isEnable.value
+        //             ? StateButton.active
+        //             : StateButton.disable,
+        //       ))
+        // ],
+      ),
+      bottomSheet: KaireteWriteTextField(
+        onChanged: (p0) {
+          controller.textOnChanged(text: p0);
+        },
+        onSend: () {
+          controller.postComent();
+        },
+        controller: controller.textEditingController,
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: KaireteTextField(
-                onChanged: (value) {
-                  controller.textOnChanged(text: value);
-                },
-                hint: 'Write something…',
-                maxLine: 3,
-                borderColor: kPrimaryColor,
-                controller: controller.textEditingController,
-                textStyle: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w300,
-                  fontSize: 18,
-                ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            //   child: KaireteTextField(
+            //     onChanged: (value) {
+            //       controller.textOnChanged(text: value);
+            //     },
+            //     hint: 'Write something…',
+            //     maxLine: 3,
+            //     borderColor: kPrimaryColor,
+            //     controller: controller.textEditingController,
+            //     textStyle: kTextRegularStyle.copyWith(
+            //       fontWeight: FontWeight.w300,
+            //       fontSize: 18,
+            //     ),
+            //   ),
+            // ),
             Container(
               height: 12,
               color: kBorderDefaultColor,

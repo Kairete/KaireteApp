@@ -59,6 +59,7 @@ class BlogCommentController extends GetxController {
     final json = await usecase.postCommentLv1(body: body);
     if (json != null) {
       fetchItems();
+      textEditingController.clear();
     }
   }
 

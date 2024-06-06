@@ -32,72 +32,85 @@ class ReplyScreen extends StatelessWidget {
             Get.back(result: controller.isUpdate);
           },
         ),
-        actions: [
-          Obx(() => KairetePrimaryButton(
-                onTap: () {
-                  controller.postComent();
-                },
-                title: 'POST',
-                width: 100,
-                state: controller.isEnable.value
-                    ? StateButton.active
-                    : StateButton.disable,
-              ))
-        ],
+        // actions: [
+        //   Obx(() => KairetePrimaryButton(
+        //         onTap: () {
+        //           controller.postComent();
+        //         },
+        //         title: 'POST',
+        //         width: 100,
+        //         state: controller.isEnable.value
+        //             ? StateButton.active
+        //             : StateButton.disable,
+        //       ))
+        // ],
       ),
       // backgroundColor: Colors.white,
+      bottomSheet: KaireteWriteTextField(
+        onChanged: (p0) {
+          controller.textOnChanged(text: p0);
+        },
+        onSend: () {
+          controller.postComent();
+        },
+        controller: controller.textEditingController,
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: KaireteTextField(
-                onChanged: (value) {
-                  controller.textOnChanged(text: value);
+        child: Obx(() => Container(
+              color: Colors.white,
+              child: ListView.builder(
+                itemCount: controller.items.length,
+                itemBuilder: (context, index) {
+                  final item = controller.items[index];
+                  return Column(
+                    children: [
+                      CommentItem(
+                        content: item.messageParsed ?? '',
+                        name: item.user?.username ?? 'Unknown',
+                        avatar: item.user?.avatarUrls?.h,
+                        onTapReply: () {
+                          controller.toSubReply(item: item);
+                        },
+                        urlReaction: item.reactionIconUrl,
+                        reactions: item.reactions,
+                        isLikeAction: item.canReact ?? true,
+                        onTapLike: () {
+                          controller.showReactions(
+                              commentId: item.commentId ?? 0);
+                        },
+                      ),
+                      if (item.reply != null)
+                        Column(
+                          children: item.reply!
+                              .map<Padding>((data) => Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(60, 0, 12, 0),
+                                    child: Column(
+                                      children: [
+                                        CommentItem(
+                                          content: data.messageParsed ?? '',
+                                          name: data.user?.username ?? '',
+                                          avatar: data.user?.avatarUrls?.h,
+                                          isLikeAction: data.canReact ?? true,
+                                          isReplyAction: false,
+                                          backgroundColor: Colors.white,
+                                          reactions: data.reactions,
+                                          urlReaction: data.reactionIconUrl,
+                                          onTapLike: () {
+                                            controller.showReactions(
+                                                commentId: data.commentId ?? 0);
+                                          },
+                                        )
+                                      ],
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                    ],
+                  );
                 },
-                hint: 'Write something…',
-                maxLine: 3,
-                borderColor: kPrimaryColor,
-                controller: controller.textEditingController,
-                textStyle: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w300,
-                  fontSize: 18,
-                ),
               ),
-            ),
-            Obx(() => Expanded(
-                  child: ListView.builder(
-                    itemCount: controller.items.length,
-                    itemBuilder: (context, index) {
-                      final item = controller.items[index];
-                      return Column(
-                        children: [
-                          CommentItem(
-                            content: item.messageParsed ?? '',
-                            name: item.user?.username ?? 'Unknown',
-                            avatar: item.user?.avatarUrls?.h,
-                            onTapReply: () {
-                              controller.toSubReply(item: item);
-                            },
-                            urlReaction: item.reactionIconUrl,
-                            reactions: item.reactions,
-                            isLikeAction: item.canReact ?? true,
-                            onTapLike: () {
-                              controller.showReactions(
-                                  commentId: item.commentId ?? 0);
-                            },
-                          ),
-                          Container(
-                            height: 0.5,
-                            color: Colors.grey,
-                          )
-                        ],
-                      );
-                    },
-                  ),
-                )),
-          ],
-        ),
+            )),
       ),
     );
   }
