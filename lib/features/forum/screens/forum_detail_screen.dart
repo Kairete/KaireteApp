@@ -30,10 +30,15 @@ class ForumDetailScreen extends StatelessWidget {
         key: _key,
         isShowBack: true,
       ),
+      bottomSheet: KaireteWriteTextField(
+        onTap: () {
+          controller.toCreate();
+        },
+      ),
       body: SafeArea(
         child: Container(
           color: Colors.grey.shade200,
-          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.only(top: 16),
           child: Obx(() => controller.items.isEmpty
               ? Container()
               : ListView.builder(
@@ -42,37 +47,30 @@ class ForumDetailScreen extends StatelessWidget {
                     final originIndex = index == 0 ? 0 : index - 1;
                     final item = controller.items[originIndex];
                     return index == 0
-                        ? GestureDetector(
-                            onTap: () {
-                              controller.toCreate();
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Container(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                                  width: double.infinity,
-                                  margin: const EdgeInsets.only(
-                                      left: 16, right: 16, bottom: 16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      width: 1,
-                                      color: Colors.grey,
-                                    ),
-                                    color: kF7FBFE,
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Obx(
+                                () => ActionButton(
+                                  padding: EdgeInsets.only(
+                                    right: 16,
+                                    bottom: 8,
                                   ),
-                                  child: Text(
-                                    'Write something…',
-                                    style: kTextRegularStyle.copyWith(
-                                      color: Colors.black.withAlpha(60),
-                                      fontSize: 16,
-                                    ),
-                                  ),
+                                  title: item.user?.isFollowed ?? false
+                                      ? 'Unfollow'
+                                      : 'Follow',
+                                  onTap: () {
+                                    controller.updateWatch();
+                                    // if (onTapWatch != null) {
+                                    //   onTapWatch!();
+                                    // }
+                                  },
+                                  // padding: EdgeInsets.only(bottom: 8),
+                                  icon: 'ic_ignore',
+                                  isActive: controller.isWatchedForum.value,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           )
                         : ThreadItemCell(
                             item: item,
@@ -86,8 +84,12 @@ class ForumDetailScreen extends StatelessWidget {
                               controller.toDetail(item: item);
                             },
                             maxLine: 5,
-                            onTapWatch: () {
-                              controller.updateWatch(item: item);
+                            onTapWatch: () {},
+                            onTapTag: (p0) {
+                              final tag = p0.replaceAll('#', '');
+                              final key = item.tagsKey.firstWhereOrNull(
+                                  (element) => element.contains(tag));
+                              controller.toTagDetail(id: key ?? '');
                             },
                           );
                   },
@@ -99,7 +101,7 @@ class ForumDetailScreen extends StatelessWidget {
 }
 
 class ThreadItemCell extends StatelessWidget {
-  const ThreadItemCell({
+  ThreadItemCell({
     Key? key,
     required this.item,
     this.onTapComment,
@@ -108,6 +110,7 @@ class ThreadItemCell extends StatelessWidget {
     this.onTapDetail,
     this.isShowDetail = true,
     this.onTapWatch,
+    this.onTapTag,
   }) : super(key: key);
 
   final Threads item;
@@ -117,6 +120,7 @@ class ThreadItemCell extends StatelessWidget {
   final int? maxLine;
   final bool isShowDetail;
   final Function? onTapWatch;
+  final Function(String)? onTapTag;
 
   @override
   Widget build(BuildContext context) {
@@ -191,25 +195,25 @@ class ThreadItemCell extends StatelessWidget {
                 //   isIgnored: item.user?.isIgnored,
                 //   isWatched: item.isWatched,
                 // ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ActionButton(
-                      title: item.user?.isFollowed ?? false
-                          ? 'Unfollow'
-                          : 'Follow',
-                      onTap: () {
-                        if (onTapWatch != null) {
-                          onTapWatch!();
-                        }
-                      },
-                      // padding: EdgeInsets.only(bottom: 8),
-                      icon: 'ic_ignore',
-                      isActive: item.isWatched,
-                    ),
-                  ],
-                ),
+                // Row(
+                //   crossAxisAlignment: CrossAxisAlignment.end,
+                //   mainAxisAlignment: MainAxisAlignment.end,
+                //   children: [
+                //     ActionButton(
+                //       title: item.user?.isFollowed ?? false
+                //           ? 'Unfollow'
+                //           : 'Follow',
+                //       onTap: () {
+                //         if (onTapWatch != null) {
+                //           onTapWatch!();
+                //         }
+                //       },
+                //       // padding: EdgeInsets.only(bottom: 8),
+                //       icon: 'ic_ignore',
+                //       isActive: item.isWatched,
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -266,7 +270,9 @@ class ThreadItemCell extends StatelessWidget {
                           TextStyle(fontSize: 16, color: kPrimaryColor),
                       basicStyle: TextStyle(fontSize: 16, color: Colors.black),
                       onTap: (text) {
-                        print(text);
+                        if (onTapTag != null) {
+                          onTapTag!(text);
+                        }
                       },
                     ),
                   ),

@@ -18,7 +18,7 @@ class NoticeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Notices',
+          'Notices(${controller.count})',
           style: kTextTitle.copyWith(
             color: Colors.white,
           ),

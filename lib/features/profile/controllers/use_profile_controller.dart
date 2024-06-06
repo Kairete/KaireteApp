@@ -10,7 +10,6 @@ import 'package:kairete/local/data_local.dart';
 import '../../../helper/notification_service.dart';
 import '../../newsfeed/usecase/newsfeed_usecase.dart';
 import '../../../components/kairete_popup.dart';
-import '../../../helper/user.dart';
 import '../../blogs/screens/my_blog_screen.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../../newsfeed/screens/create_newsfeed_screen.dart';
@@ -27,10 +26,12 @@ class UserProfileController extends GetxController {
 
   int? id;
   var items = <NewsfeedModel>[].obs;
+  var isCurrentUser = true;
 
   @override
   void onInit() {
     if (Get.arguments != null) {
+      isCurrentUser = false;
       id = Get.arguments['id'];
     } else {
       id = UserManager.instance.userId;

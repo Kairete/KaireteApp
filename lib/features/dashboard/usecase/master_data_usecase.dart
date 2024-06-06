@@ -6,19 +6,10 @@ abstract class MasterDataUsecase {
   Future fetchReactionIcons({dynamic body});
   Future fetchStyle();
   Future fetchWidget({dynamic body});
+  Future fetchUser();
 }
 
 class IMasterDataUsecase extends BaseClient implements MasterDataUsecase {
-  @override
-  void onCreate({userId}) {
-    super.onCreate();
-    appApiService.create(
-      isShowErrorPopup: isShowPopupError,
-      userId: userId,
-      isShowloading: false,
-    );
-  }
-
   @override
   Future fetchReactionIcons({body}) async {
     final json = await appApiService.client?.requestApi(
@@ -43,6 +34,15 @@ class IMasterDataUsecase extends BaseClient implements MasterDataUsecase {
       path: ApiRoutes.widget,
       method: HttpMethodCustom.GET,
       parameters: body,
+    );
+    return json;
+  }
+
+  @override
+  Future fetchUser() async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.user + '500',
+      method: HttpMethodCustom.GET,
     );
     return json;
   }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hashtagable/widgets/hashtag_text_field.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/components/kairete_form.dart';
 import 'package:kairete/features/newsfeed/controllers/create_newsfeed_controller.dart';
@@ -64,6 +65,28 @@ class ThredCreateScreen extends StatelessWidget {
                     fontWeight: FontWeight.w300,
                     fontSize: 18,
                   ),
+                ),
+                HashTagTextField(
+                  decoratedStyle: TextStyle(fontSize: 14, color: kPrimaryColor),
+                  basicStyle: TextStyle(fontSize: 14, color: Colors.black),
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(color: kPrimaryColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(color: kPrimaryColor),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    focusColor: Colors.white,
+                    hintText: 'Input tag start with #',
+                  ),
+                  cursorColor: kPrimaryColor,
+                  onChanged: (value) {
+                    controller.tags = value;
+                  },
                 ),
               ],
             ),

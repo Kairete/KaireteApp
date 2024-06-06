@@ -1,3 +1,4 @@
+import 'package:kairete/features/reactions/reaction_model/reaction_model.dart';
 import 'package:kairete/helper/user.dart';
 import 'package:get/get.dart';
 import 'package:kairete/local/master_data.dart';
@@ -99,6 +100,7 @@ class NewsfeedModel {
   ContentTypeNewFeed? type;
   BlogEntryItem? profilePost;
   bool? isWatched;
+  List<ReactionModel>? reactionsList;
 
   NewsfeedModel({
     this.blogEntryItem,
@@ -196,6 +198,11 @@ class NewsfeedModel {
       }
     }
     isWatched = json['is_watched'];
+    if (json['reactions_full_list'] != null) {
+      reactionsList = json['reactions_full_list']
+          .map<ReactionModel>((e) => ReactionModel.fromJson(e))
+          .toList();
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -253,7 +260,9 @@ class BlogEntryItem {
   int? blogId;
   bool? isWatched;
   String tags = '';
-  List<String> tagsKey = [];
+  dynamic tagsKey = [];
+
+  Map<String, dynamic>? contenTags;
 
   BlogEntryItem({
     this.attachments,
@@ -326,12 +335,33 @@ class BlogEntryItem {
     if (json['tags'] != null) {
       json['tags'].forEach((e) {
         final tag = e['tag'].replaceAll(' ', '');
-        final tagKey = e['tag_url'].replaceAll(' ', '');
+        // final tagKey = e['tag_url'];
         final string = '#' + tag + ' ';
         tags += string;
-        tagsKey.add(tagKey);
+        // tagsKey.add(tagKey);
       });
     }
+    tagsKey = json['tags'];
+    // if (json['ContentTags'] != null) {
+    //   final result = json['ContentTags'];
+    //   final keys = result.keys;
+    //   keys.forEach((element) {
+    //     final json = result[element];
+    //     if (json != null) {
+    //       final tag = json['tag'].replaceAll(' ', '');
+    //       final tagKey = json['tag_url'].replaceAll(' ', '');
+    //       final string = '#' + tag + ' ';
+    //       tags += string;
+    //       tagsKey.add(tagKey);
+    //       final value = {
+    //         'tag': tag,
+    //         'tagKey': tagKey,
+    //       };
+    //       print(value);
+    //       tagsKeyDynamic.add(value);
+    //     }
+    //   });
+    // }
   }
 
   Map<String, dynamic> toJson() {

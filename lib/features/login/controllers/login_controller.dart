@@ -23,7 +23,7 @@ class LoginController extends GetxController {
     if (Get.arguments != null) {
       nameController.text = Get.arguments['email'];
     }
-    test();
+    // test();
     super.onInit();
   }
 

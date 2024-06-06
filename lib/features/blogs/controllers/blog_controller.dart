@@ -3,7 +3,6 @@ import 'package:kairete/constants/app_routes.dart';
 import 'package:kairete/features/blogs/screens/blog_comment_screen.dart';
 import 'package:kairete/features/blogs/screens/blog_detail_screen.dart';
 import 'package:kairete/features/blogs/usecase/blog_usecase.dart';
-import 'package:kairete/features/tags/screens/tags_screen.dart';
 import '../../../components/kairete_popup.dart';
 import '../../newsfeed/models/newsfeed_model.dart';
 import '../models/blog_model.dart';
@@ -92,6 +91,7 @@ class BlogController extends GetxController {
   }
 
   void toTagDetail({required String id}) {
+    print(id);
     Get.toNamed(Routes.tagsDetail, arguments: {'id': id});
   }
 }

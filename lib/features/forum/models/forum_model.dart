@@ -128,6 +128,7 @@ class TypeData {
   int? messageCount;
   int? minTags;
   bool? requirePrefix;
+  bool? isWatched;
 
   TypeData(
       {this.allowPosting,
@@ -167,6 +168,7 @@ class TypeData {
     messageCount = json['message_count'];
     minTags = json['min_tags'];
     requirePrefix = json['require_prefix'];
+    isWatched = json['is_watched'];
   }
 
   Map<String, dynamic> toJson() {

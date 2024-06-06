@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,7 +5,6 @@ import 'package:kairete/components/action_item.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_popup.dart';
 import 'package:kairete/constants/key_constant.dart';
-import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/helper/image_picker.dart';
 import 'package:kairete/local/data_local.dart';
@@ -16,6 +13,7 @@ import '../../../components/kairete_icon.dart';
 import '../../../constants/size.dart';
 import '../../../helper/multipart.dart';
 import '../../blogs/screens/blog_create_screen.dart';
+import 'newsfeed_controller.dart';
 
 class CreateNewsfeedController extends GetxController {
   NewsFeedUsecase usecase = INewsFeedUsecase();
@@ -41,8 +39,10 @@ class CreateNewsfeedController extends GetxController {
     final body = {
       'user_id': id,
       'message': textController.text,
-      // 'attachment_key': tempFile.first
     };
+    if (tempFile.isNotEmpty) {
+      body['attachment_key'] = tempFile.first;
+    }
     print(body);
     final json = await usecase.create(body: body);
     if (json != null) {
@@ -58,7 +58,7 @@ class CreateNewsfeedController extends GetxController {
   }
 
   void uploadFile({required XFile item}) async {
-    final body = await getMultipartFiles(files: [item]);
+    final body = await getMultipartFilesNew(files: [item]);
     final json = await usecase.uploadFile(body: body);
     tempFile.clear();
     tempFile.add(json['key']);

@@ -6,9 +6,13 @@ class NoticeController extends GetxController {
   NoticeUsecase usecase = INoticeUsecase();
 
   var notices = <NoticeModel>[].obs;
+  int? count;
 
   @override
   void onInit() {
+    if (Get.arguments['count'] != null) {
+      count = Get.arguments['count'];
+    }
     fetchItems();
     super.onInit();
   }

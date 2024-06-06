@@ -149,7 +149,8 @@ class KaireteTextField extends StatelessWidget {
       this.debounceTime,
       this.isDisable = false,
       this.onFieldSubmitted,
-      this.focusNode})
+      this.focusNode,
+      this.onEditingComplete})
       : super(key: key);
 
   final String? title;
@@ -181,6 +182,7 @@ class KaireteTextField extends StatelessWidget {
   final bool isDisable;
   final ValueChanged<String>? onFieldSubmitted;
   final FocusNode? focusNode;
+  final Function()? onEditingComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +246,7 @@ class KaireteTextField extends StatelessWidget {
               onTap!();
             }
           },
-          onEditingComplete: () {},
+          onEditingComplete: onEditingComplete,
           style: textStyle ??
               kTextMediumtStyle.copyWith(
                   fontSize: 14,

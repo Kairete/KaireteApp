@@ -2,12 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:hashtagable/widgets/hashtag_text.dart';
-import 'package:kairete/components/action_item.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
@@ -29,21 +29,114 @@ class NewsFeedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() => controller.items.isEmpty
         ? const SizedBox()
-        : NewsfeedListItem(
-            items: controller.items.value,
-            onCreate: () {
-              controller.toCreate();
-            },
-            onTapDetail: (item) {
-              controller.toDetail(item: item);
-            },
-            onFilter: () {
-              controller.onFilter();
-            },
-            onTabFilter: (value) {
-              controller.onSelectedTabFilter(index: value);
-            },
+        : Scaffold(
+            bottomSheet: KaireteWriteTextField(
+              onTap: () {
+                controller.toCreate();
+              },
+            ),
+            body: NewsfeedListItem(
+              items: controller.items.value,
+              onCreate: () {
+                controller.toCreate();
+              },
+              onTapDetail: (item) {
+                controller.toDetail(item: item);
+              },
+              onFilter: () {
+                controller.onFilter();
+              },
+              onTabFilter: (value) {
+                controller.onSelectedTabFilter(index: value);
+              },
+            ),
           ));
+  }
+}
+
+// ignore: must_be_immutable
+class KaireteWriteTextField extends StatelessWidget {
+  KaireteWriteTextField({
+    super.key,
+    this.onTap,
+    this.onChanged,
+    this.onSend,
+    this.controller,
+  });
+
+  final Function()? onTap;
+  final Function(String)? onChanged;
+  final Function()? onSend;
+  final TextEditingController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(0, 8, 0, kBottomSafea),
+        width: double.infinity,
+        height: 120,
+        child: Column(
+          children: [
+            Divider(),
+            SizedBox(
+              height: 8,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                right: 16,
+                left: 16,
+              ),
+              child: Row(
+                children: [
+                  KaireteCacheNetworkImage(
+                    url: Get.find<DashboardController>()
+                            .user
+                            .value
+                            .avatarUrls
+                            ?.o ??
+                        '',
+                    nameImage:
+                        Get.find<DashboardController>().user.value.username,
+                    width: 30,
+                    height: 30,
+                    isCircle: true,
+                  ),
+                  SizedBox(
+                    width: 16,
+                  ),
+                  Expanded(
+                    child: onTap != null
+                        ? Text(
+                            'Write something…',
+                            style: kTextRegularStyle.copyWith(
+                              color: Colors.black.withAlpha(100),
+                              fontSize: 16,
+                            ),
+                          )
+                        : TextField(
+                            decoration: InputDecoration.collapsed(
+                              hintText: 'Write something…',
+                            ),
+                            onChanged: onChanged,
+                            controller: controller,
+                          ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: kPrimaryColor,
+                    ),
+                    onPressed: onSend,
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -85,27 +178,6 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(
-                                left: 16, right: 16, bottom: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                width: 1,
-                                color: Colors.grey,
-                              ),
-                              color: kF7FBFE,
-                            ),
-                            child: Text(
-                              'Write something…',
-                              style: kTextRegularStyle.copyWith(
-                                color: Colors.black.withAlpha(60),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
                           Obx(() => Padding(
                                 padding: const EdgeInsets.only(
                                     left: 16, right: 16, bottom: 16),
@@ -249,6 +321,18 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                           item.groupPostItem?.firstComment?.attachments?[0]
                               .thumbnailUrl,
                   tags: item.blogEntryItem?.tags,
+                  onTapTag: (p0) {
+                    final tag = p0?.replaceAll('#', '');
+                    List<dynamic> list = item.blogEntryItem?.tagsKey.toList();
+                    final key = list.firstWhereOrNull((element) {
+                      Map<String, dynamic> data = element;
+                      return data['tag'].replaceAll(' ', '') == tag;
+                    });
+                    controller.toTagDetail(id: key?['tag_url']);
+                  },
+                  onTapReaction: () {
+                    controller.getReactionsList(item: item);
+                  },
                 );
         },
       ),
@@ -291,6 +375,7 @@ class NewfeedCell extends StatelessWidget {
     this.onTapIgnore,
     this.tags,
     this.onTapTag,
+    this.onTapReaction,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -324,6 +409,7 @@ class NewfeedCell extends StatelessWidget {
   final Function? onTapIgnore;
   final String? tags;
   final Function(String?)? onTapTag;
+  final Function()? onTapReaction;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -373,8 +459,13 @@ class NewfeedCell extends StatelessWidget {
                 // ),
                 ActionButton(
                   title: isFollow ?? false ? 'Unfollow' : 'Follow',
-                  onTap: () {},
+                  onTap: () {
+                    if (onTapWatch != null) {
+                      onTapWatch!();
+                    }
+                  },
                   icon: 'ic_ignore',
+                  isActive: isWatched,
                 ),
               ],
             ),
@@ -464,7 +555,10 @@ class NewfeedCell extends StatelessWidget {
                     title: 'See detail',
                   ),
                 if (reactions != null)
-                  ReactionsItemView(reactions: reactions ?? [])
+                  InkWell(
+                    onTap: onTapReaction,
+                    child: ReactionsItemView(reactions: reactions ?? []),
+                  )
               ],
             ),
           ),

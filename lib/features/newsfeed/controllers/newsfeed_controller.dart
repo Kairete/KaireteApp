@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/constants/color.dart';
+import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
@@ -11,6 +13,7 @@ import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
 import '../../../components/kairete_popup.dart';
+import '../../../constants/app_routes.dart';
 import '../../../routes/app_pages.dart';
 import '../../login/models/user_model.dart';
 import '../models/newsfeed_filter_model.dart';
@@ -387,5 +390,95 @@ class NewsFeedController extends GetxController {
     final blogId = item.blogEntryItem?.blogId;
     final json = await usecase.updateWatch(body: {'id': blogId});
     if (json != null) {}
+  }
+
+  void toTagDetail({required String id}) {
+    print(id);
+    Get.toNamed(Routes.tagsDetail, arguments: {'id': id});
+  }
+
+  void getReactionsList({required NewsfeedModel item}) async {
+    final body = {
+      'id': item.itemId,
+    };
+    final json = await usecase.getReactionsList(body: body);
+    final data = NewsfeedModel.fromJson(json['newsfeedItem']);
+    final items = data.reactionsList ?? [];
+    Get.bottomSheet(
+      Container(
+        height: 400,
+        child: ListView.separated(
+          padding: EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return Container(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  KaireteCacheNetworkImage(
+                    url: item.reactionUser?.avatarUrls?.h ?? '',
+                    nameImage: item.reactionUser?.username,
+                    width: 35,
+                    height: 35,
+                    isCircle: true,
+                  ),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              item.reactionUser?.username ?? '',
+                              style: kTextTitle.copyWith(
+                                fontSize: 16,
+                                color: kTextDefaultColor,
+                              ),
+                            ),
+                            SizedBox(
+                              width: 4,
+                            ),
+                            KaireteCacheNetworkImage(
+                              url: item.reaction?.imageUrl ?? '',
+                              width: 17,
+                              height: 17,
+                            )
+                          ],
+                        ),
+                        Text(
+                          item.reactionUser?.userTitle ?? '',
+                          style: kTextSubTitle.copyWith(
+                            fontSize: 12,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            text: item.reactionUser?.getSubText() ?? '',
+                            style: kTextRegularStyle.copyWith(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+          itemCount: items.length,
+          separatorBuilder: (BuildContext context, int index) {
+            return Divider();
+          },
+        ),
+      ),
+      backgroundColor: Colors.white,
+    );
   }
 }

@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hashtagable/hashtagable.dart';
+import 'package:hashtagable/widgets/hashtag_text_field.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/components/kairete_form.dart';
 import 'package:kairete/features/newsfeed/controllers/create_newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../constants/color.dart';
+import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 
 // ignore: must_be_immutable
@@ -56,30 +59,51 @@ class CreateNewsfeedScreen extends StatelessWidget {
                   fontSize: 18,
                 ),
               ),
-              // InkWell(
-              //   onTap: () {
-              //     controller.onSelectedImage();
-              //   },
-              //   child: Container(
-              //     height: 120,
-              //     width: 120,
-              //     decoration: BoxDecoration(
-              //       borderRadius: BorderRadius.circular(8),
-              //       border: Border.all(
-              //         width: 1,
-              //         color: kPrimaryColor,
-              //       ),
-              //       color: Colors.white,
-              //     ),
-              //     child: Center(
-              //       child: Icon(
-              //         Icons.camera_alt,
-              //         color: kPrimaryColor,
-              //         size: 50,
-              //       ),
-              //     ),
-              //   ),
-              // ),
+
+              SizedBox(
+                height: 16,
+              ),
+
+              InkWell(
+                onTap: () {
+                  controller.onSelectedImage();
+                },
+                child: Container(
+                  height: 120,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      width: 1,
+                      color: kPrimaryColor,
+                    ),
+                    color: Colors.white,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: kPrimaryColor,
+                      size: 50,
+                    ),
+                  ),
+                ),
+              ),
+              Obx(
+                () => controller.paths.value.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.file(
+                            File(controller.paths.value.first),
+                            width: (1.sw - 48) / 3,
+                            height: (1.sw - 48) / 3,
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                      )
+                    : SizedBox(),
+              ),
               // SizedBox(
               //   height: 16,
               // ),

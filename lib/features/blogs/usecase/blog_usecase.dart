@@ -7,9 +7,11 @@ abstract class BlogUsecase {
   Future fetchItemsFromCate({dynamic body});
   Future reactions({dynamic body});
   Future myBlogs({dynamic body});
+  Future myBlog({dynamic body});
   Future blogDetail({dynamic body});
   Future createBlog({dynamic body});
   Future updateWatch({dynamic body});
+  Future updateWatchBlogs({dynamic body});
 }
 
 class IBlogUsecase extends BaseClient implements BlogUsecase {
@@ -49,6 +51,16 @@ class IBlogUsecase extends BaseClient implements BlogUsecase {
   }
 
   @override
+  Future myBlog({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.myBlogs + body['id'],
+      body: body,
+      method: HttpMethodCustom.GET,
+    );
+    return json;
+  }
+
+  @override
   Future blogDetail({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.blogs + '/' + body['id'],
@@ -71,6 +83,16 @@ class IBlogUsecase extends BaseClient implements BlogUsecase {
   Future updateWatch({body}) async {
     final json = await appApiService.client?.requestApi(
       path: ApiRoutes.blogs + '/${body['id']}/watch',
+      method: HttpMethodCustom.POST,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future updateWatchBlogs({body}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.myBlogs + '/${body['id']}/watch',
       method: HttpMethodCustom.POST,
       body: body,
     );

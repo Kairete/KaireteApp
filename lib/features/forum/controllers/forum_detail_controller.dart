@@ -6,16 +6,19 @@ import 'package:kairete/features/forum/screens/thread_detail_screen.dart';
 import 'package:kairete/features/forum/usecase/forum_usecase.dart';
 
 import '../../../components/kairete_popup.dart';
+import '../../../constants/app_routes.dart';
 import '../models/forum_detail_model.dart';
 
 class ForumDetailController extends GetxController {
   ForumUsecase usecase = IForumUsecase();
   Nodes? item;
   var items = <Threads>[].obs;
+  var isWatchedForum = false.obs;
 
   @override
   void onInit() {
     item = Get.arguments['item'];
+    isWatchedForum.value = item?.typeData?.isWatched ?? false;
     super.onInit();
     fetchItems();
   }
@@ -65,14 +68,22 @@ class ForumDetailController extends GetxController {
     });
   }
 
-  Future updateWatch({required Threads item}) async {
-    final body = {'id': item.nodeId};
+  Future updateWatch() async {
+    final body = {
+      'id': item?.nodeId,
+    };
     final json = await usecase.updateWatch(body: body);
     if (json != null) {
-      items
-          .firstWhere((element) => element.threadId == item.threadId)
-          .isWatched = !(item.isWatched ?? false);
-      items.refresh();
+      isWatchedForum.value = !isWatchedForum.value;
+      item?.typeData?.isWatched = isWatchedForum.value;
+      // items
+      //     .firstWhere((element) => element.threadId == item.threadId)
+      //     .isWatched = !(item.isWatched ?? false);
+      // items.refresh();
     }
+  }
+
+  void toTagDetail({required String id}) {
+    Get.toNamed(Routes.tagsDetail, arguments: {'id': id});
   }
 }

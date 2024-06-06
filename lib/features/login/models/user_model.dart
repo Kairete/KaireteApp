@@ -1,3 +1,5 @@
+import 'navigation_counter.dart';
+
 class UserModel {
   bool? success;
   User? user;
@@ -84,6 +86,7 @@ class User {
   AvatarUrls? profileBannerUrls;
   CustomFields? customFields;
   List<dynamic>? secondaryGroupIds;
+  NavigationCounter? navigationCounters;
 
   User(
       {this.about,
@@ -224,6 +227,7 @@ class User {
         secondaryGroupIds!.add(v);
       });
     }
+    navigationCounters = NavigationCounter.fromJson(json['navigationCounters']);
   }
 
   Map<String, dynamic> toJson() {

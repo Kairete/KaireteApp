@@ -38,6 +38,7 @@ class RestClient {
           _data.addAll(body);
         }
       }
+      queryParameters['limit'] = 20;
       if (parameters != null) {
         queryParameters.addAll(parameters);
         queryParameters.removeWhere((k, v) => v == null);
@@ -48,9 +49,9 @@ class RestClient {
           queryParameters: queryParameters,
           options: Options(
             method: method.toString().split('.').last,
-            extra: cacheInterceptor
-                .copyWith(policy: CachePolicy.forceCache)
-                .toExtra(),
+            // extra: cacheInterceptor
+            //     .copyWith(policy: CachePolicy.forceCache)
+            //     .toExtra(),
           ),
           data: formData,
           cancelToken: cancelToken);

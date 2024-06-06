@@ -7,6 +7,7 @@ import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/profile/controllers/use_profile_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:kairete/features/settings/setting_screen.dart';
 import 'package:kairete/helper/time.dart';
 
 import '../../../constants/color_constant.dart';
@@ -30,6 +31,18 @@ class UserProfileScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: kPrimaryColor,
+        actions: [
+          controller.isCurrentUser
+              ? IconButton(
+                  onPressed: () {
+                    Get.to(() => SettingScreen());
+                  },
+                  icon: Icon(
+                    Icons.settings,
+                  ),
+                )
+              : SizedBox()
+        ],
       ),
       bottomSheet: Padding(
         padding: EdgeInsets.fromLTRB(24, 0, 24, kBottomSafea),
@@ -188,32 +201,33 @@ class InfoView extends StatelessWidget {
                 const SizedBox(
                   height: 16,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Obx(() => KaireteActionButton(
-                            onTap: () {
-                              controller.onFollow();
-                            },
-                            title: (controller.user.value.isFollowed ?? false)
-                                ? 'Unfollow'
-                                : 'Follow',
-                          )),
-                    ),
-                    const SizedBox(
-                      width: 16,
-                    ),
-                    Expanded(
-                      child: Obx(() => KaireteActionButton(
-                            onTap: () {},
-                            title: (controller.user.value.isWatched ?? false)
-                                ? 'Unwatch'
-                                : 'Watch',
-                          )),
-                    )
-                  ],
-                ),
+                if (!controller.isCurrentUser)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Obx(() => KaireteActionButton(
+                              onTap: () {
+                                controller.onFollow();
+                              },
+                              title: (controller.user.value.isFollowed ?? false)
+                                  ? 'Unfollow'
+                                  : 'Follow',
+                            )),
+                      ),
+                      const SizedBox(
+                        width: 16,
+                      ),
+                      Expanded(
+                        child: Obx(() => KaireteActionButton(
+                              onTap: () {},
+                              title: (controller.user.value.isWatched ?? false)
+                                  ? 'Unwatch'
+                                  : 'Watch',
+                            )),
+                      )
+                    ],
+                  ),
                 const SizedBox(
                   height: 16,
                 ),

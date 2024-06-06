@@ -7,9 +7,8 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:kairete/components/kairete_popup.dart';
 import 'package:kairete/helper/user.dart';
+import 'package:requests_inspector/requests_inspector.dart';
 import '../constants/color_constant.dart';
-import '../constants/key_constant.dart';
-import '../local/data_local.dart';
 import 'rest_client_gen.dart';
 
 class AppApiService {
@@ -53,6 +52,8 @@ class AppApiService {
       {bool isShowErrorPopup = true,
       String? userId,
       bool isShowloading = true}) {
+    dio.interceptors.add(RequestsInspectorInterceptor());
+
     EasyLoading.instance
       ..indicatorType = EasyLoadingIndicatorType.circle
       ..backgroundColor = kTextPrimaryColor

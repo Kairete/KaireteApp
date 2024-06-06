@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hashtagable/functions.dart';
 import 'package:kairete/components/kairete_popup.dart';
 import 'package:kairete/features/blogs/models/blog_cate_model.dart';
 import 'package:kairete/features/blogs/models/blog_model.dart';
@@ -22,6 +23,7 @@ class BlogCreateController extends GetxController {
 
   TextEditingController titleController = TextEditingController();
   TextEditingController messageController = TextEditingController();
+  var tags = '';
 
   @override
   void onInit() {
@@ -126,12 +128,15 @@ class BlogCreateController extends GetxController {
   }
 
   void createBlog() async {
+    final tag =
+        extractHashTags(tags).map((e) => e.replaceAll('#', '')).toList();
     final body = {
       'category_id': selectedCategory.value.categoryId,
       'blog_id': selectedBlog.value.blogId,
       'message': messageController.text,
       'title': titleController.text,
-      'user_id': UserManager.instance.userId
+      'user_id': UserManager.instance.userId,
+      'tags[]': tag,
     };
     print(body);
     final json = await usecase.createBlog(body: body);

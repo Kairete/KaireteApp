@@ -75,6 +75,7 @@ class Threads {
   bool isReation = false;
   String? reactionIconUrl;
   bool? isWatched;
+  List<String> tagsKey = [];
 
   Threads({
     this.canEdit,
@@ -156,9 +157,10 @@ class Threads {
     if (json['tags'] != null) {
       json['tags'].forEach((e) {
         final tag = e['tag'].replaceAll(' ', '');
+        final tagKey = e['tag_url'].replaceAll(' ', '');
         final string = '#' + tag + ' ';
         tags += string;
-        print(tags);
+        tagsKey.add(tagKey);
       });
     }
     // tags = json['tags'].cast<String>();

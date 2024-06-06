@@ -1,3 +1,4 @@
+import '../helper/user.dart';
 import 'app_api_service.dart';
 
 abstract class BaseClient {
@@ -10,6 +11,8 @@ abstract class BaseClient {
   }
 
   void onCreate({dynamic userId}) {
-    appApiService.create(isShowErrorPopup: isShowPopupError, userId: userId);
+    appApiService.create(
+        isShowErrorPopup: isShowPopupError,
+        userId: userId ?? UserManager.instance.userId.toString());
   }
 }

@@ -1,5 +1,6 @@
 import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
+import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/components/kairete_search_field.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
@@ -9,6 +10,8 @@ import 'package:get/get.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/notice/screens/notice_screen.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
+import 'package:kairete/features/settings/setting_screen.dart';
+import 'package:kairete/helper/extenstions.dart';
 import '../../../components/cache_image.dart';
 import '../../../helper/time.dart';
 import '../../articles/screens/articles_screen.dart';
@@ -20,24 +23,37 @@ class DashboardScreen extends GetView<DashboardController> {
 
   // @override
   // DashboardController controller = Get.put(DashboardController());
+  var currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _key,
-      appBar: baseAppBar(key: _key),
+      appBar: baseAppBar(
+        key: _key,
+        contorller: controller,
+      ),
       drawer: AppDrawer(
         controller: controller,
       ),
       body: ContainedTabBarView(
         key: controller.keyTabbar,
-        tabs: const [
-          TabbarIcon(),
-          TabbarIcon(
-            title: 'Blogs',
-          ),
-          TabbarIcon(
-            title: 'Articles',
+        tabs: [
+          Obx(() => TabbarIcon(
+                icon: 'ic_tab_home',
+                count: controller.user.value.navigationCounters?.threads,
+              )),
+          Obx(() => TabbarIcon(
+                title: 'Blogs',
+                icon: 'ic_tab_blog',
+                count: controller.user.value.navigationCounters?.ubsBlogEntries,
+              )),
+          Obx(
+            () => TabbarIcon(
+              icon: 'ic_tab_new',
+              title: 'Articles',
+              count: controller.user.value.navigationCounters?.amsArticles,
+            ),
           ),
         ],
         views: [
@@ -58,51 +74,81 @@ AppBar baseAppBar({
   bool isShowBack = false,
   bool isShowSearch = true,
   bool isShowMenu = true,
+  bool isShowActions = true,
   String? title,
+  DashboardController? contorller,
 }) {
   return AppBar(
     titleTextStyle: TextStyle(),
-    actions: [
-      Obx(
-        () => Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Row(
-            children: [
-              InkWell(
-                onTap: () {
-                  Get.to(() => NoticeScreen());
-                },
-                child: Icon(
-                  Icons.notifications,
-                  size: 30,
+    actions: isShowActions
+        ? [
+            Obx(
+              () => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Row(
+                  children: [
+                    Stack(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Get.to(() => NoticeScreen(), arguments: {
+                              'count': contorller
+                                      ?.user.value.navigationCounters?.alerts ??
+                                  0,
+                            });
+                          },
+                          child: Icon(
+                            Icons.notifications,
+                            size: 30,
+                          ),
+                        ),
+                        if (Get.find<DashboardController>()
+                                .user
+                                .value
+                                .navigationCounters
+                                ?.alerts !=
+                            null)
+                          Positioned(
+                            right: 1,
+                            top: 2,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(
+                      width: 4,
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Get.to(() => UserProfileScreen());
+                      },
+                      child: KaireteCacheNetworkImage(
+                        url: Get.find<DashboardController>()
+                                .user
+                                .value
+                                .avatarUrls
+                                ?.o ??
+                            '',
+                        nameImage:
+                            Get.find<DashboardController>().user.value.username,
+                        width: 30,
+                        height: 30,
+                        isCircle: true,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(
-                width: 4,
-              ),
-              InkWell(
-                onTap: () {
-                  Get.to(() => UserProfileScreen());
-                },
-                child: KaireteCacheNetworkImage(
-                  url: Get.find<DashboardController>()
-                          .user
-                          .value
-                          .avatarUrls
-                          ?.o ??
-                      '',
-                  nameImage:
-                      Get.find<DashboardController>().user.value.username,
-                  width: 30,
-                  height: 30,
-                  isCircle: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-      )
-    ],
+            )
+          ]
+        : null,
     leading: Row(
       children: [
         SizedBox(
@@ -314,17 +360,62 @@ class TabbarIcon extends StatelessWidget {
     Key? key,
     this.icon,
     this.title,
+    this.count,
+    this.iconWidget,
   }) : super(key: key);
 
-  final Widget? icon;
+  final String? icon;
   final String? title;
+  final int? count;
+  final Widget? iconWidget;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title ?? 'Newsfeed',
-      style: kTextMediumtStyle.copyWith(
-          color: kPrimaryColor, fontWeight: FontWeight.w600),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (iconWidget != null) iconWidget!,
+            if (icon != null)
+              SvgIcon(
+                name: icon!,
+                width: 16,
+                height: 16,
+              ),
+            Text(
+              title ?? 'Newsfeed',
+              style: kTextMediumtStyle.copyWith(
+                  color: kPrimaryColor, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        if (count != null)
+          Positioned(
+            bottom: 20,
+            right: 0,
+            child: Container(
+              width: 23,
+              height: 23,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red,
+              ),
+              child: Center(
+                child: Text(
+                  count!.formatNumber(),
+                  style: kTextRegularStyle.copyWith(
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
