@@ -4,6 +4,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:hashtagable/widgets/hashtag_text.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
@@ -30,11 +31,11 @@ class NewsFeedScreen extends StatelessWidget {
     return Obx(() => controller.items.isEmpty
         ? const SizedBox()
         : Scaffold(
-            bottomSheet: KaireteWriteTextField(
-              onTap: () {
-                controller.toCreate();
-              },
-            ),
+            // bottomSheet: KaireteWriteTextField(
+            //   onTap: () {
+            //     controller.toCreate();
+            //   },
+            // ),
             body: NewsfeedListItem(
               items: controller.items.value,
               onCreate: () {
@@ -55,90 +56,6 @@ class NewsFeedScreen extends StatelessWidget {
 }
 
 // ignore: must_be_immutable
-class KaireteWriteTextField extends StatelessWidget {
-  KaireteWriteTextField({
-    super.key,
-    this.onTap,
-    this.onChanged,
-    this.onSend,
-    this.controller,
-  });
-
-  final Function()? onTap;
-  final Function(String)? onChanged;
-  final Function()? onSend;
-  final TextEditingController? controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(0, 8, 0, kBottomSafea),
-        width: double.infinity,
-        height: 120,
-        child: Column(
-          children: [
-            Divider(),
-            SizedBox(
-              height: 8,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                right: 16,
-                left: 16,
-              ),
-              child: Row(
-                children: [
-                  KaireteCacheNetworkImage(
-                    url: Get.find<DashboardController>()
-                            .user
-                            .value
-                            .avatarUrls
-                            ?.o ??
-                        '',
-                    nameImage:
-                        Get.find<DashboardController>().user.value.username,
-                    width: 30,
-                    height: 30,
-                    isCircle: true,
-                  ),
-                  SizedBox(
-                    width: 16,
-                  ),
-                  Expanded(
-                    child: onTap != null
-                        ? Text(
-                            'Write something…',
-                            style: kTextRegularStyle.copyWith(
-                              color: Colors.black.withAlpha(100),
-                              fontSize: 16,
-                            ),
-                          )
-                        : TextField(
-                            decoration: InputDecoration.collapsed(
-                              hintText: 'Write something…',
-                            ),
-                            onChanged: onChanged,
-                            controller: controller,
-                          ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.send,
-                      color: kPrimaryColor,
-                    ),
-                    onPressed: onSend,
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class NewsfeedListItem extends GetView<NewsFeedController> {
   const NewsfeedListItem({
@@ -178,6 +95,11 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          KaireteTextFieldButotn(
+                            onTap: () {
+                              controller.toCreate();
+                            },
+                          ),
                           Obx(() => Padding(
                                 padding: const EdgeInsets.only(
                                     left: 16, right: 16, bottom: 16),

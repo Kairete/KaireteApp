@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
 import 'package:hashtagable/widgets/hashtag_text.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
@@ -30,70 +31,83 @@ class ForumDetailScreen extends StatelessWidget {
         key: _key,
         isShowBack: true,
       ),
-      bottomSheet: KaireteWriteTextField(
-        onTap: () {
-          controller.toCreate();
-        },
-      ),
+      // bottomSheet: KaireteWriteTextField(
+      //   onTap: () {
+      //     controller.toCreate();
+      //   },
+      // ),
       body: SafeArea(
-        child: Container(
-          color: Colors.grey.shade200,
-          padding: const EdgeInsets.only(top: 16),
-          child: Obx(() => controller.items.isEmpty
-              ? Container()
-              : ListView.builder(
-                  itemCount: controller.items.length + 1,
-                  itemBuilder: (context, index) {
-                    final originIndex = index == 0 ? 0 : index - 1;
-                    final item = controller.items[originIndex];
-                    return index == 0
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Obx(
-                                () => ActionButton(
-                                  padding: EdgeInsets.only(
-                                    right: 16,
-                                    bottom: 8,
-                                  ),
-                                  title: item.user?.isFollowed ?? false
-                                      ? 'Unfollow'
-                                      : 'Follow',
-                                  onTap: () {
-                                    controller.updateWatch();
-                                    // if (onTapWatch != null) {
-                                    //   onTapWatch!();
-                                    // }
+        child: Column(
+          children: [
+            SizedBox(
+              height: 16,
+            ),
+            KaireteTextFieldButotn(
+              onTap: () {
+                controller.toCreate();
+              },
+            ),
+            Expanded(
+              child: Container(
+                child: Obx(() => controller.items.isEmpty
+                    ? Container()
+                    : ListView.builder(
+                        itemCount: controller.items.length + 1,
+                        itemBuilder: (context, index) {
+                          final originIndex = index == 0 ? 0 : index - 1;
+                          final item = controller.items[originIndex];
+                          return index == 0
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Obx(
+                                      () => ActionButton(
+                                        padding: EdgeInsets.only(
+                                          right: 16,
+                                          bottom: 8,
+                                        ),
+                                        title: item.user?.isFollowed ?? false
+                                            ? 'Unfollow'
+                                            : 'Follow',
+                                        onTap: () {
+                                          controller.updateWatch();
+                                          // if (onTapWatch != null) {
+                                          //   onTapWatch!();
+                                          // }
+                                        },
+                                        // padding: EdgeInsets.only(bottom: 8),
+                                        icon: 'ic_ignore',
+                                        isActive:
+                                            controller.isWatchedForum.value,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : ThreadItemCell(
+                                  item: item,
+                                  onTapComment: () {
+                                    controller.toComment(item: item);
                                   },
-                                  // padding: EdgeInsets.only(bottom: 8),
-                                  icon: 'ic_ignore',
-                                  isActive: controller.isWatchedForum.value,
-                                ),
-                              ),
-                            ],
-                          )
-                        : ThreadItemCell(
-                            item: item,
-                            onTapComment: () {
-                              controller.toComment(item: item);
-                            },
-                            onTapReactions: () {
-                              controller.showReactionPopup(item: item);
-                            },
-                            onTapDetail: () {
-                              controller.toDetail(item: item);
-                            },
-                            maxLine: 5,
-                            onTapWatch: () {},
-                            onTapTag: (p0) {
-                              final tag = p0.replaceAll('#', '');
-                              final key = item.tagsKey.firstWhereOrNull(
-                                  (element) => element.contains(tag));
-                              controller.toTagDetail(id: key ?? '');
-                            },
-                          );
-                  },
-                )),
+                                  onTapReactions: () {
+                                    controller.showReactionPopup(item: item);
+                                  },
+                                  onTapDetail: () {
+                                    controller.toDetail(item: item);
+                                  },
+                                  maxLine: 5,
+                                  onTapWatch: () {},
+                                  onTapTag: (p0) {
+                                    final tag = p0.replaceAll('#', '');
+                                    final key = item.tagsKey.firstWhereOrNull(
+                                        (element) => element.contains(tag));
+                                    controller.toTagDetail(id: key ?? '');
+                                  },
+                                );
+                        },
+                      )),
+              ),
+            ),
+          ],
         ),
       ),
     );

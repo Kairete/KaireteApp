@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/kairete_button.dart';
+import 'package:kairete/components/kairete_form.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/features/blogs/controllers/blog_controller.dart';
 import 'package:kairete/features/blogs/screens/blog_create_screen.dart';
 import '../../newsfeed/screens/newsfeed_screen.dart';
@@ -11,11 +14,11 @@ class BlogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomSheet: KaireteWriteTextField(
-        onTap: () {
-          Get.to(() => BlogCreateScreen(), fullscreenDialog: true);
-        },
-      ),
+      // bottomSheet: KaireteWriteTextField(
+      //   onTap: () {
+      // Get.to(() => BlogCreateScreen(), fullscreenDialog: true);
+      //   },
+      // ),
       body: GetX<BlogController>(
         init: BlogController(),
         builder: (controller) {
@@ -23,6 +26,11 @@ class BlogScreen extends StatelessWidget {
             children: [
               SizedBox(
                 height: 8,
+              ),
+              KaireteTextFieldButotn(
+                onTap: () {
+                  Get.to(() => BlogCreateScreen(), fullscreenDialog: true);
+                },
               ),
               Expanded(
                 child: RefreshIndicator(

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:kairete/components/cache_image.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/newsfeed/controllers/reply_controller.dart';
+import 'package:kairete/features/newsfeed/models/comment_model/comment.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 
-import '../../../components/kairete_button.dart';
-import '../../../components/kairete_form.dart';
 import '../../../components/reactions_view.dart';
 import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
@@ -58,6 +59,7 @@ class ReplyScreen extends StatelessWidget {
       body: SafeArea(
         child: Obx(() => Container(
               color: Colors.white,
+              padding: EdgeInsets.only(bottom: kBottomSafea + 80),
               child: ListView.builder(
                 itemCount: controller.items.length,
                 itemBuilder: (context, index) {
@@ -78,34 +80,40 @@ class ReplyScreen extends StatelessWidget {
                           controller.showReactions(
                               commentId: item.commentId ?? 0);
                         },
+                        subComment: item.reply,
+                        onTapLikeSubComment: (p0) {
+                          controller.showReactions(
+                              commentId: p0.commentId ?? 0);
+                        },
+                        // elevation: 0,
                       ),
-                      if (item.reply != null)
-                        Column(
-                          children: item.reply!
-                              .map<Padding>((data) => Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(60, 0, 12, 0),
-                                    child: Column(
-                                      children: [
-                                        CommentItem(
-                                          content: data.messageParsed ?? '',
-                                          name: data.user?.username ?? '',
-                                          avatar: data.user?.avatarUrls?.h,
-                                          isLikeAction: data.canReact ?? true,
-                                          isReplyAction: false,
-                                          backgroundColor: Colors.white,
-                                          reactions: data.reactions,
-                                          urlReaction: data.reactionIconUrl,
-                                          onTapLike: () {
-                                            controller.showReactions(
-                                                commentId: data.commentId ?? 0);
-                                          },
-                                        )
-                                      ],
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
+                      // if (item.reply != null)
+                      //   Column(
+                      //     children: item.reply!
+                      //         .map<Padding>((data) => Padding(
+                      //               padding:
+                      //                   const EdgeInsets.fromLTRB(60, 0, 12, 0),
+                      //               child: Column(
+                      //                 children: [
+                      //                   CommentItem(
+                      //                     content: data.messageParsed ?? '',
+                      //                     name: data.user?.username ?? '',
+                      //                     avatar: data.user?.avatarUrls?.h,
+                      //                     isLikeAction: data.canReact ?? true,
+                      //                     isReplyAction: false,
+                      //                     backgroundColor: Colors.white,
+                      //                     reactions: data.reactions,
+                      //                     urlReaction: data.reactionIconUrl,
+                      //                     onTapLike: () {
+                      //                       controller.showReactions(
+                      //                           commentId: data.commentId ?? 0);
+                      //                     },
+                      //                   )
+                      //                 ],
+                      //               ),
+                      //             ))
+                      //         .toList(),
+                      //   ),
                     ],
                   );
                 },
@@ -131,6 +139,10 @@ class CommentItem extends StatelessWidget {
     this.reactions,
     this.urlReaction,
     this.isLikeAction = true,
+    this.elevation,
+    this.shadowColor,
+    this.subComment,
+    this.onTapLikeSubComment,
   }) : super(key: key);
 
   final Widget? child;
@@ -145,101 +157,144 @@ class CommentItem extends StatelessWidget {
   final List<Reactions>? reactions;
   final String? urlReaction;
   final bool isLikeAction;
+  final double? elevation;
+  final Color? shadowColor;
+  final List<Comment>? subComment;
+  final Function(Comment)? onTapLikeSubComment;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
+    return Card(
+      // padding: const EdgeInsets.all(8),
+      margin: shadowColor == null ? EdgeInsets.all(8) : EdgeInsets.zero,
       color: backgroundColor ?? Colors.white,
-      child: Column(
-        children: [
-          Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  KaireteCacheNetworkImage(
-                    url: avatar ?? '',
-                    width: 36,
-                    height: 36,
-                    isCircle: true,
-                    nameImage: name,
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: kTextRegularStyle.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        HtmlWidget(
-                          content
-                              .replaceAll("\n", "")
-                              .replaceAll("=\\  ", "=")
-                              .replaceAll("g\\", ""),
-                          textStyle: const TextStyle(fontSize: 17),
-                        )
-                      ],
+      elevation: 3,
+      shadowColor: shadowColor,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    KaireteCacheNetworkImage(
+                      url: avatar ?? '',
+                      width: 36,
+                      height: 36,
+                      isCircle: true,
+                      nameImage: name,
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (isLikeAction)
-                KaireteIconButton(
-                  title: 'Like',
-                  icon: 'ic_like',
-                  color: backgroundColor ?? Colors.white,
-                  textColor: kPrimaryColor,
-                  url: urlReaction,
-                  onTap: () {
-                    if (onTapLike != null) {
-                      onTapLike!();
-                    }
-                  },
+                    const SizedBox(
+                      width: 16,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: kTextRegularStyle.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 4,
+                          ),
+                          HtmlWidget(
+                            content
+                                .replaceAll("\n", "")
+                                .replaceAll("=\\  ", "=")
+                                .replaceAll("g\\", ""),
+                            textStyle: const TextStyle(fontSize: 17),
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              if (isReplyAction)
-                const SizedBox(
-                  width: 8,
-                ),
-              if (isReplyAction)
-                KaireteIconButton(
-                  title: 'Reply',
-                  onTap: () {
-                    if (onTapReply != null) {
-                      onTapReply!();
-                    }
-                  },
-                  width: 60,
-                  color: backgroundColor ?? Colors.white,
-                  textColor: kPrimaryColor,
-                ),
-            ],
-          ),
-          if (child != null) child!,
-          if (reactions != null) ReactionsItemView(reactions: reactions ?? []),
-          if (reactions != null)
+              ],
+            ),
             const SizedBox(
               height: 8,
             ),
-        ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (isLikeAction)
+                  KaireteIconButton(
+                    title: 'Like',
+                    icon: 'ic_like',
+                    color: backgroundColor ?? Colors.white,
+                    textColor: kPrimaryColor,
+                    url: urlReaction,
+                    onTap: () {
+                      if (onTapLike != null) {
+                        onTapLike!();
+                      }
+                    },
+                  ),
+                if (isReplyAction)
+                  const SizedBox(
+                    width: 8,
+                  ),
+                if (isReplyAction)
+                  KaireteIconButton(
+                    title: 'Reply',
+                    onTap: () {
+                      if (onTapReply != null) {
+                        onTapReply!();
+                      }
+                    },
+                    width: 60,
+                    color: backgroundColor ?? Colors.white,
+                    textColor: kPrimaryColor,
+                  ),
+              ],
+            ),
+            if (child != null) child!,
+            if (reactions != null)
+              ReactionsItemView(reactions: reactions ?? []),
+            if (reactions != null)
+              const SizedBox(
+                height: 8,
+              ),
+            if (subComment != null)
+              Column(
+                children: subComment!
+                    .map<Padding>((data) => Padding(
+                          padding: const EdgeInsets.only(
+                            left: 50,
+                          ),
+                          child: Column(
+                            children: [
+                              CommentItem(
+                                content: data.messageParsed ?? '',
+                                name: data.user?.username ?? '',
+                                avatar: data.user?.avatarUrls?.h,
+                                isLikeAction: data.canReact ?? true,
+                                isReplyAction: false,
+                                backgroundColor: Colors.white,
+                                reactions: data.reactions,
+                                urlReaction: data.reactionIconUrl,
+                                onTapLike: () {
+                                  // controller.showReactions(
+                                  //     commentId: data.commentId ?? 0);
+                                  if (onTapLike != null) {
+                                    onTapLikeSubComment!(data);
+                                  }
+                                },
+                                shadowColor: Colors.transparent,
+                              )
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+          ],
+        ),
       ),
     );
   }

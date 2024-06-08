@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/forum/controllers/thread_comment_controller.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/kairete_form.dart';
@@ -22,71 +24,79 @@ class ThreadCommentScreen extends StatelessWidget {
           'Replies',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
-        actions: [
-          Obx(() => KairetePrimaryButton(
-                onTap: () {
-                  controller.postComent();
-                },
-                title: 'POST',
-                width: 100,
-                state: controller.isEnable.value
-                    ? StateButton.active
-                    : StateButton.disable,
-              ))
-        ],
+        // actions: [
+        //   Obx(() => KairetePrimaryButton(
+        //         onTap: () {
+        //           controller.postComent();
+        //         },
+        //         title: 'POST',
+        //         width: 100,
+        //         state: controller.isEnable.value
+        //             ? StateButton.active
+        //             : StateButton.disable,
+        //       ))
+        // ],
       ),
       // backgroundColor: Colors.white,
+      bottomSheet: KaireteWriteTextField(
+        onChanged: (p0) {
+          controller.textOnChanged(text: p0);
+        },
+        onSend: () {
+          controller.postComent();
+        },
+        controller: controller.textEditingController,
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: KaireteTextField(
-                onChanged: (value) {
-                  controller.textOnChanged(text: value);
-                },
-                hint: 'Write something…',
-                maxLine: 3,
-                borderColor: kPrimaryColor,
-                controller: controller.textEditingController,
-                textStyle: kTextRegularStyle.copyWith(
-                  fontWeight: FontWeight.w300,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            Obx(() => Expanded(
-                  child: ListView.builder(
-                    itemCount: controller.items.length,
-                    itemBuilder: (context, index) {
-                      final item = controller.items[index];
-                      return Column(
-                        children: [
-                          CommentItem(
-                            content: item.messageParsed ?? '',
-                            name: item.user?.username ?? 'Unknown',
-                            avatar: item.user?.avatarUrls?.h,
-                            onTapReply: () {
-                              controller.toSubReply(item: item);
-                            },
-                            isLikeAction: item.canReact ?? true,
-                            urlReaction: item.reactionIconUrl,
-                            reactions: item.reactions,
-                            onTapLike: () {
-                              controller.showReactions(
-                                  commentId: item.commentId ?? 0);
-                            },
-                          ),
-                          Container(
-                            height: 0.5,
-                            color: Colors.grey,
-                          )
-                        ],
-                      );
-                    },
-                  ),
-                )),
-          ],
+        child: Padding(
+          padding: EdgeInsets.only(bottom: kBottomSafea + 80),
+          child: Column(
+            children: [
+              // Padding(
+              //   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              //   child: KaireteTextField(
+              //     onChanged: (value) {
+              //       controller.textOnChanged(text: value);
+              //     },
+              //     hint: 'Write something…',
+              //     maxLine: 3,
+              //     borderColor: kPrimaryColor,
+              //     controller: controller.textEditingController,
+              //     textStyle: kTextRegularStyle.copyWith(
+              //       fontWeight: FontWeight.w300,
+              //       fontSize: 18,
+              //     ),
+              //   ),
+              // ),
+              Obx(() => Expanded(
+                    child: ListView.builder(
+                      itemCount: controller.items.length,
+                      itemBuilder: (context, index) {
+                        final item = controller.items[index];
+                        return Column(
+                          children: [
+                            CommentItem(
+                              content: item.messageParsed ?? '',
+                              name: item.user?.username ?? 'Unknown',
+                              avatar: item.user?.avatarUrls?.h,
+                              onTapReply: () {
+                                controller.toSubReply(item: item);
+                              },
+                              isLikeAction: item.canReact ?? true,
+                              urlReaction: item.reactionIconUrl,
+                              reactions: item.reactions,
+                              onTapLike: () {
+                                controller.showReactions(
+                                    commentId: item.commentId ?? 0);
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  )),
+            ],
+          ),
         ),
       ),
     );

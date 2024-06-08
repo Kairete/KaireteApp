@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/constants/color_constant.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/newsfeed/screens/reply_screen.dart';
 
@@ -72,54 +74,62 @@ class SubReplyScreen extends StatelessWidget {
               color: kBorderDefaultColor,
             ),
             Expanded(
-                child: Obx(() => Column(
-                      children: [
-                        CommentItem(
-                          content: controller.item?.messageParsed ?? '',
-                          name: controller.item?.user?.username ?? '',
-                          avatar: controller.item?.user?.avatarUrls?.h,
-                          isReplyAction: false,
-                          reactions: controller.item?.reactions,
-                          urlReaction: controller.item?.reactionIconUrl,
-                          isLikeAction: controller.item?.canReact ?? true,
-                          onTapLike: () {
-                            controller.showReactions(
-                                commentId: controller.item?.commentId ?? 0);
-                          },
-                        ),
-                        Expanded(
-                            child: ListView.builder(
-                          itemCount: controller.items.length,
-                          itemBuilder: (context, index) {
-                            final item = controller.items[index];
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                              child: Column(
-                                children: [
-                                  CommentItem(
-                                    content: item.messageParsed ?? '',
-                                    name: item.user?.username ?? '',
-                                    avatar: item.user?.avatarUrls?.h,
-                                    isLikeAction: item.canReact ?? true,
-                                    isReplyAction: false,
-                                    backgroundColor: const Color(0xFFF5F5F5),
-                                    reactions: item.reactions,
-                                    urlReaction: item.reactionIconUrl,
-                                    onTapLike: () {
-                                      controller.showReactions(
-                                          commentId: item.commentId ?? 0);
-                                    },
-                                  ),
-                                  Container(
-                                    height: 0.5,
-                                    color: kBorderDefaultColor,
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        )),
-                      ],
+                child: Obx(() => Padding(
+                      padding: EdgeInsets.only(bottom: kBottomSafea + 80),
+                      child: Column(
+                        children: [
+                          CommentItem(
+                            content: controller.item?.messageParsed ?? '',
+                            name: controller.item?.user?.username ?? '',
+                            avatar: controller.item?.user?.avatarUrls?.h,
+                            isReplyAction: false,
+                            reactions: controller.item?.reactions,
+                            urlReaction: controller.item?.reactionIconUrl,
+                            isLikeAction: controller.item?.canReact ?? true,
+                            onTapLike: () {
+                              controller.showReactions(
+                                  commentId: controller.item?.commentId ?? 0);
+                            },
+                            subComment: controller.items,
+                            onTapLikeSubComment: (p0) {
+                              controller.showReactions(
+                                  commentId: p0.commentId ?? 0);
+                            },
+                          ),
+                          // Expanded(
+                          //     child: ListView.builder(
+                          //   itemCount: controller.items.length,
+                          //   itemBuilder: (context, index) {
+                          //     final item = controller.items[index];
+                          //     return Padding(
+                          //       padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                          //       child: Column(
+                          //         children: [
+                          //           CommentItem(
+                          //             content: item.messageParsed ?? '',
+                          //             name: item.user?.username ?? '',
+                          //             avatar: item.user?.avatarUrls?.h,
+                          //             isLikeAction: item.canReact ?? true,
+                          //             isReplyAction: false,
+                          //             backgroundColor: const Color(0xFFF5F5F5),
+                          //             reactions: item.reactions,
+                          //             urlReaction: item.reactionIconUrl,
+                          //             onTapLike: () {
+                          //               controller.showReactions(
+                          //                   commentId: item.commentId ?? 0);
+                          //             },
+                          //           ),
+                          //           Container(
+                          //             height: 0.5,
+                          //             color: kBorderDefaultColor,
+                          //           )
+                          //         ],
+                          //       ),
+                          //     );
+                          //   },
+                          // )),
+                        ],
+                      ),
                     )))
           ],
         ),

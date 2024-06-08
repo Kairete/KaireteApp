@@ -38,7 +38,7 @@ class RestClient {
           _data.addAll(body);
         }
       }
-      queryParameters['limit'] = 20;
+      queryParameters['limit'] = 3;
       if (parameters != null) {
         queryParameters.addAll(parameters);
         queryParameters.removeWhere((k, v) => v == null);
