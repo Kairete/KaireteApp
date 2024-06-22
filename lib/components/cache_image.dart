@@ -14,6 +14,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
     this.isCircle = false,
     this.nameImage,
     this.fontSize,
+    this.borderRadius,
   }) : super(key: key);
   final String url;
   final double? width;
@@ -21,6 +22,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
   final bool isCircle;
   final String? nameImage;
   final double? fontSize;
+  final BorderRadiusGeometry? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +60,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
                     image: imageProvider,
                     fit: BoxFit.fill,
                   ),
+                  borderRadius: borderRadius,
                   shape: isCircle ? BoxShape.circle : BoxShape.rectangle),
             ),
             errorWidget: (context, error, _) {

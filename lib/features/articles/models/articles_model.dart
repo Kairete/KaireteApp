@@ -50,6 +50,9 @@ class ArticleItems {
   List<Attachments>? attachments;
   bool? isWatched;
   String tags = '';
+  int? viewCount;
+  int? commentCount;
+  int? newfeedId;
 
   ArticleItems({
     this.articleId,
@@ -72,6 +75,9 @@ class ArticleItems {
   });
 
   ArticleItems.fromJson(Map<String, dynamic> json) {
+    newfeedId = json['newsfeed_item_id'];
+    viewCount = json['view_count'];
+    commentCount = json['comment_count'];
     articleId = json['article_id'];
     canComment = json['can_comment'];
     canDelete = json['can_delete'];

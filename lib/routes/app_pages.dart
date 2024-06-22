@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/articles/screens/articles_detail_screen.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/login/screens/login_screen.dart';
 import 'package:kairete/features/register/screens/register_screen.dart';
@@ -32,6 +33,10 @@ class AppPages {
       name: Routes.tagsDetail,
       page: () => TagsScreen(),
     ),
+    GetPage(
+      name: Routes.articlesCate,
+      page: () => ArticlesDetailScreen(),
+    )
   ];
 }
 

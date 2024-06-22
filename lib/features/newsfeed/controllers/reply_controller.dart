@@ -31,6 +31,11 @@ class ReplyController extends GetxController {
     super.onInit();
   }
 
+  @override
+  void onClose() {
+    super.onClose();
+  }
+
   void fetchItems() async {
     if (item == null) {
       return;

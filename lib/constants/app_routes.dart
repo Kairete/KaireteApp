@@ -3,4 +3,5 @@ class Routes {
   static const login = '/login';
   static const register = '/register';
   static const tagsDetail = '/tags';
+  static const articlesCate = '/articlesCate';
 }

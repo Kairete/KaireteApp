@@ -77,6 +77,7 @@ AppBar baseAppBar({
   bool isShowActions = true,
   String? title,
   DashboardController? contorller,
+  Function? onTapBack,
 }) {
   return AppBar(
     titleTextStyle: TextStyle(),
@@ -158,6 +159,9 @@ AppBar baseAppBar({
           GestureDetector(
             child: Icon(Icons.arrow_back_ios),
             onTap: () {
+              if (onTapBack != null) {
+                onTapBack();
+              }
               Get.back();
             },
           ),

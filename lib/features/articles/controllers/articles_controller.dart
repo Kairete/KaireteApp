@@ -39,7 +39,11 @@ class ArticlesController extends GetxController {
   }
 
   void toDetail({required ArticleItems item}) {
-    Get.to(() => ArticlesDetailScreen(), arguments: {'item': item});
+    Get.toNamed(
+      Routes.articlesCate,
+      arguments: {'item': item},
+      preventDuplicates: true,
+    );
   }
 
   Future updateWatch({required ArticleItems item}) async {

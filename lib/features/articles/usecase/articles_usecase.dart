@@ -6,6 +6,7 @@ abstract class ArticlesUsecase {
   Future fetItems({dynamic body});
   Future fetItem({dynamic body});
   Future updateWatch({dynamic body});
+  Future fetchNewfeedItem({required int id});
 }
 
 class IArticlesUsecase extends BaseClient implements ArticlesUsecase {
@@ -32,6 +33,15 @@ class IArticlesUsecase extends BaseClient implements ArticlesUsecase {
       path: ApiRoutes.articles + '/' + body['id'] + '/watch',
       body: body,
       method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future fetchNewfeedItem({required int id}) async {
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.reactions + '$id',
+      method: HttpMethodCustom.GET,
     );
     return json;
   }
