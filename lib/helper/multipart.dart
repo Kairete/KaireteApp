@@ -26,8 +26,24 @@ Future getMultipartFiles({required List<XFile> files}) async {
   return formData;
 }
 
-Future getMultipartFilesNew({required List<XFile> files}) async {
+Future getMultipartFilesNew({required List<XFile> files, dynamic body}) async {
   // Chuyển đổi List<XFile> thành List<MultipartFile>
+  final multipartFiles = await creatPartFiles(files: files);
+
+  final data = body ??
+      {
+        "attachment": multipartFiles,
+        'type': 'profile_post',
+        'context[profile_user_id]': UserManager.instance.userId,
+      };
+  // Tạo FormData
+  FormData formData = FormData.fromMap(
+    data,
+  );
+  return formData;
+}
+
+Future creatPartFiles({required List<XFile> files}) async {
   List<MultipartFile> multipartFiles = [];
 
   for (var file in files) {
@@ -43,13 +59,7 @@ Future getMultipartFilesNew({required List<XFile> files}) async {
     ));
   }
 
-  // Tạo FormData
-  FormData formData = FormData.fromMap({
-    "attachment": multipartFiles,
-    'type': 'profile_post',
-    'context[profile_user_id]': UserManager.instance.userId,
-  });
-  return formData;
+  return multipartFiles;
 }
 
 Future<List<int>> compressFile(String filePath) async {

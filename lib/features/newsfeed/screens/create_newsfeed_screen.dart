@@ -1,15 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:hashtagable/hashtagable.dart';
-import 'package:hashtagable/widgets/hashtag_text_field.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/components/kairete_form.dart';
 import 'package:kairete/features/newsfeed/controllers/create_newsfeed_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../constants/color.dart';
-import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 
 // ignore: must_be_immutable

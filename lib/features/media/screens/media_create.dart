@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hashtagable/widgets/hashtag_text_field.dart';
-import 'package:kairete/features/blogs/controllers/blog_create_controller.dart';
+import 'package:kairete/features/media/controllers/media_create_controller.dart';
 
 import '../../../components/kairete_button.dart';
 import '../../../components/kairete_form.dart';
@@ -9,10 +12,10 @@ import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
 
 // ignore: must_be_immutable
-class BlogCreateScreen extends StatelessWidget {
-  BlogCreateScreen({super.key});
+class MediaCreateScreen extends StatelessWidget {
+  MediaCreateScreen({super.key});
 
-  BlogCreateController controller = Get.put(BlogCreateController());
+  MediaCreateController controller = Get.put(MediaCreateController());
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +23,14 @@ class BlogCreateScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
         title: Text(
-          'Create blog',
+          'Create Media',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
         actions: [
           Obx(() => KairetePrimaryButton(
                 onTap: () {
-                  controller.createBlog();
+                  controller.onCreate();
+                  // controller.createBlog();
                 },
                 title: 'POST',
                 width: 100,
@@ -44,19 +48,19 @@ class BlogCreateScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => dropdownButton(
-                    title: 'Your blogs:',
-                    content: controller.selectedBlog.value.title ??
-                        'Post blog entry in',
+                    title: 'Your albums:',
+                    content: controller.selectedAlbum.value.title ??
+                        'Selected album',
                     onTap: () {
-                      controller.showBlogs();
+                      controller.showAlbums();
                     })),
                 SizedBox(
                   height: 8,
                 ),
                 Obx(() => dropdownButton(
-                    title: 'UBS Category:',
+                    title: 'Your categories',
                     content: controller.selectedCategory.value.title ??
-                        'Post blog entry in...',
+                        'Selected category',
                     onTap: () {
                       controller.showCategory();
                     })),
@@ -67,24 +71,24 @@ class BlogCreateScreen extends StatelessWidget {
                   onChanged: (value) {
                     controller.checkData();
                   },
-                  hint: 'Title',
+                  hint: 'Embed media',
                   maxLine: 1,
                   borderColor: kPrimaryColor,
-                  controller: controller.titleController,
+                  controller: controller.embedEditingController,
                 ),
-                KaireteTextField(
-                  onChanged: (value) {
-                    controller.checkData();
-                  },
-                  hint: 'Write something…',
-                  maxLine: 10,
-                  borderColor: kPrimaryColor,
-                  controller: controller.messageController,
-                  textStyle: kTextRegularStyle.copyWith(
-                    fontWeight: FontWeight.w300,
-                    fontSize: 18,
-                  ),
-                ),
+                // KaireteTextField(
+                //   onChanged: (value) {
+                //     controller.checkData();
+                //   },
+                //   hint: 'Write something…',
+                //   maxLine: 10,
+                //   borderColor: kPrimaryColor,
+                //   controller: controller.messageController,
+                //   textStyle: kTextRegularStyle.copyWith(
+                //     fontWeight: FontWeight.w300,
+                //     fontSize: 18,
+                //   ),
+                // ),
                 HashTagTextField(
                   decoratedStyle: TextStyle(fontSize: 14, color: kPrimaryColor),
                   basicStyle: TextStyle(fontSize: 14, color: Colors.black),
@@ -104,32 +108,54 @@ class BlogCreateScreen extends StatelessWidget {
                   ),
                   cursorColor: kPrimaryColor,
                   onChanged: (value) {
+                    print(value);
                     controller.tags = value;
                   },
                 ),
                 // Spacer(),
                 SizedBox(
-                  height: 40,
+                  height: 16,
                 ),
                 InkWell(
                   onTap: () {
-                    Get.back();
+                    controller.onSelectedImage();
                   },
                   child: Container(
+                    height: 120,
+                    width: 120,
                     decoration: BoxDecoration(
-                      border: Border.all(width: 1, color: kPrimaryColor),
                       borderRadius: BorderRadius.circular(8),
-                      color: kPrimaryColor,
+                      border: Border.all(
+                        width: 1,
+                        color: kPrimaryColor,
+                      ),
+                      color: Colors.white,
                     ),
-                    padding: EdgeInsets.all(8),
-                    child: Text(
-                      'post a new entry',
-                      style: kTextRegularStyle.copyWith(
-                        color: Colors.white,
+                    child: Center(
+                      child: Icon(
+                        Icons.camera_alt,
+                        color: kPrimaryColor,
+                        size: 50,
                       ),
                     ),
                   ),
-                )
+                ),
+                Obx(
+                  () => controller.paths.value.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.file(
+                              File(controller.paths.value.first),
+                              width: (1.sw - 48) / 3,
+                              height: (1.sw - 48) / 3,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                ),
               ],
             ),
           ),

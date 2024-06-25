@@ -28,4 +28,5 @@ class ApiRoutes {
   static const widget = 'api/widgets/';
   static const tags = 'api/tags/';
   static const notice = 'api/alerts/';
+  static const media = 'api/media/';
 }

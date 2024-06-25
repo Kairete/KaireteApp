@@ -7,10 +7,10 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/blogs/screens/blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/media/screens/media_screen.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/notice/screens/notice_screen.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
-import 'package:kairete/features/settings/setting_screen.dart';
 import 'package:kairete/helper/extenstions.dart';
 import '../../../components/cache_image.dart';
 import '../../../helper/time.dart';
@@ -55,11 +55,16 @@ class DashboardScreen extends GetView<DashboardController> {
               count: controller.user.value.navigationCounters?.amsArticles,
             ),
           ),
+          TabbarIcon(
+            icon: 'ic_tab_new',
+            title: 'Media',
+          ),
         ],
         views: [
           NewsFeedScreen(),
           BlogScreen(),
           ArticlesScreen(),
+          MediaScreen(),
         ],
         onChange: (index) {},
         tabBarProperties: const TabBarProperties(

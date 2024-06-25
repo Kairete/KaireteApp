@@ -298,6 +298,10 @@ class NewfeedCell extends StatelessWidget {
     this.tags,
     this.onTapTag,
     this.onTapReaction,
+    this.category,
+    this.isShowWatch = true,
+    this.onTapTitle,
+    this.onTapThumb,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -305,6 +309,7 @@ class NewfeedCell extends StatelessWidget {
   final String? nameImage;
   final String? userName;
   final String? blogTitle;
+  final String? category;
   final String? groupTitle;
   final int? date;
   final int? commentCount;
@@ -329,9 +334,12 @@ class NewfeedCell extends StatelessWidget {
   final Function? onTapFolow;
   final bool? isIgnore;
   final Function? onTapIgnore;
+  final bool isShowWatch;
   final String? tags;
   final Function(String?)? onTapTag;
   final Function()? onTapReaction;
+  final Function()? onTapTitle;
+  final Function()? onTapThumb;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -379,16 +387,17 @@ class NewfeedCell extends StatelessWidget {
                 //   isWatched: isWatched,
                 //   onTapWatch: onTapWatch,
                 // ),
-                ActionButton(
-                  title: isFollow ?? false ? 'Unfollow' : 'Follow',
-                  onTap: () {
-                    if (onTapWatch != null) {
-                      onTapWatch!();
-                    }
-                  },
-                  icon: 'ic_ignore',
-                  isActive: isWatched,
-                ),
+                if (isShowWatch)
+                  ActionButton(
+                    title: isFollow ?? false ? 'Unfollow' : 'Follow',
+                    onTap: () {
+                      if (onTapWatch != null) {
+                        onTapWatch!();
+                      }
+                    },
+                    icon: 'ic_ignore',
+                    isActive: isWatched,
+                  ),
               ],
             ),
           ),
@@ -401,18 +410,21 @@ class NewfeedCell extends StatelessWidget {
                   height: 16,
                 ),
                 if (title != null)
-                  Text(
-                    title ?? '',
-                    style: kTextMediumtStyle.copyWith(
-                      color: style?.newsfeedItemHeaderInsideBody?.color
-                              .toColor() ??
-                          Colors.red,
-                      fontSize: style?.newsfeedItemHeaderInsideBody?.fontSize
-                              .parseDouble() ??
-                          22,
-                      fontWeight: style
-                          ?.newsfeedItemHeaderInsideBody?.fontWeight
-                          .getWegiht(),
+                  InkWell(
+                    onTap: onTapTitle,
+                    child: Text(
+                      title ?? '',
+                      style: kTextMediumtStyle.copyWith(
+                        color: style?.newsfeedItemHeaderInsideBody?.color
+                                .toColor() ??
+                            Colors.red,
+                        fontSize: style?.newsfeedItemHeaderInsideBody?.fontSize
+                                .parseDouble() ??
+                            22,
+                        fontWeight: style
+                            ?.newsfeedItemHeaderInsideBody?.fontWeight
+                            .getWegiht(),
+                      ),
                     ),
                   ),
                 if (title != null)
@@ -420,8 +432,11 @@ class NewfeedCell extends StatelessWidget {
                     height: 8,
                   ),
                 if (thumbnailUrl != null)
-                  KaireteCacheNetworkImage(
-                    url: thumbnailUrl!,
+                  InkWell(
+                    onTap: onTapThumb,
+                    child: KaireteCacheNetworkImage(
+                      url: thumbnailUrl!,
+                    ),
                   ),
                 if (thumbnailUrl != null)
                   const SizedBox(
@@ -519,6 +534,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
     required this.titleCate,
     this.onTap,
     this.customAction,
+    this.category,
   }) : super(key: key);
 
   final Function? onTapAvatar;
@@ -532,6 +548,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
   final String? titleCate;
   final Function? onTap;
   final Widget? customAction;
+  final String? category;
 
   @override
   Widget build(BuildContext context) {
@@ -658,6 +675,7 @@ class HeaderInfoCellItem extends StatelessWidget {
     required this.date,
     required this.titleCate,
     this.customAction,
+    this.category,
   }) : super(key: key);
 
   final String? userName;
@@ -668,6 +686,7 @@ class HeaderInfoCellItem extends StatelessWidget {
   final int? date;
   final String? titleCate;
   final Widget? customAction;
+  final String? category;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -706,7 +725,7 @@ class HeaderInfoCellItem extends StatelessWidget {
                         size: 16,
                       )),
                     TextSpan(
-                      text: blogTitle ?? groupTitle ?? '',
+                      text: category ?? blogTitle ?? groupTitle ?? '',
                       style: kTextRegularStyle.copyWith(
                         fontWeight: FontWeight.w600,
                         color:

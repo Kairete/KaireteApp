@@ -24,13 +24,46 @@ class UserProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Profile',
-          style: kTextTitle.copyWith(
-            color: Colors.white,
+        title: Obx(
+          () => Row(
+            children: [
+              KaireteCacheNetworkImage(
+                url: controller.user.value.avatarUrls?.l ?? '',
+                width: 35,
+                height: 35,
+                nameImage: controller.user.value.username,
+                isCircle: true,
+              ),
+              SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    controller.user.value.username ?? '',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // Text(
+                  //   '50k',
+                  //   style: TextStyle(
+                  //     fontSize: 14,
+                  //     color: Colors.white70,
+                  //   ),
+                  // ),
+                ],
+              ),
+            ],
           ),
         ),
         backgroundColor: kPrimaryColor,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Get.back();
+          },
+        ),
         actions: [
           controller.isCurrentUser
               ? IconButton(
