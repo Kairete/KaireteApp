@@ -87,6 +87,7 @@ class User {
   CustomFields? customFields;
   List<dynamic>? secondaryGroupIds;
   NavigationCounter? navigationCounters;
+  int? followerCount;
 
   User(
       {this.about,
@@ -152,6 +153,7 @@ class User {
       this.website});
 
   User.fromJson(Map<String, dynamic> json) {
+    followerCount = json['follower_count'];
     about = json['about'];
     activityVisible = json['activity_visible'];
     allowPostProfile = json['allow_post_profile'];

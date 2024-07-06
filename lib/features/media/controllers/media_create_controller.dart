@@ -8,12 +8,13 @@ import 'package:kairete/components/kairete_checkbox.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/components/kairete_popup.dart';
 import 'package:kairete/constants/size.dart';
-import 'package:kairete/features/media/controllers/media_controller.dart';
 import 'package:kairete/features/media/models/media_model.dart';
 import 'package:kairete/features/media/usecase/media_uscase.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/helper/image_picker.dart';
 import 'package:kairete/helper/multipart.dart';
+
+import 'media_controller.dart';
 
 class MediaCreateController extends GetxController {
   MediaUsecase usecase = IMediaUsecase();
@@ -24,6 +25,7 @@ class MediaCreateController extends GetxController {
   var selectedCategory = MediaCategoryModel().obs;
   var selectedAlbum = MediaAlbumModel().obs;
   var isEnable = false.obs;
+  var isSelectedItem = false.obs;
   var tags = '';
 
   TextEditingController embedEditingController = TextEditingController();
@@ -41,18 +43,18 @@ class MediaCreateController extends GetxController {
   }
 
   void onCreate() async {
-    if (selectedItem == null) {
+    if (selectedItem == null && embedEditingController.text.isEmpty) {
       return;
     }
     final partFiles = await creatPartFiles(files: [selectedItem!]);
 
-    final tag =
-        extractHashTags(tags).map((e) => e.replaceAll('#', '')).toList();
+    final tag = extractHashTags(tags.replaceAll(',', ' '))
+        .map((e) => e.replaceAll('#', ''))
+        .toList();
 
     Map<String, dynamic> body = {
       'category_id': selectedCategory.value.categoryId,
       'album_id': selectedAlbum.value.albumId,
-      'embed_url': embedEditingController.text,
       'file': partFiles,
     };
 
@@ -60,7 +62,9 @@ class MediaCreateController extends GetxController {
       body['tags[]'] = tag;
     }
 
-    print(body);
+    if (selectedItem == null && embedEditingController.text.isNotEmpty) {
+      body['embed_url'] = embedEditingController.text;
+    }
 
     final formData = await getMultipartFilesNew(
       files: [],
@@ -189,6 +193,8 @@ class MediaCreateController extends GetxController {
                 if (file != null) {
                   // uploadFile(item: file);
                   selectedItem = file;
+                  isSelectedItem.value = true;
+
                   paths.clear();
                   paths.add(file.path);
                 }
@@ -205,6 +211,7 @@ class MediaCreateController extends GetxController {
                     .pickImage(source: ImageSource.camera);
                 if (file != null) {
                   selectedItem = file;
+                  isSelectedItem.value = true;
                   paths.clear();
                   paths.add(file.path);
                 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/constants/color.dart';
@@ -8,6 +9,7 @@ import 'package:kairete/features/profile/controllers/use_profile_controller.dart
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kairete/features/settings/setting_screen.dart';
+import 'package:kairete/helper/extenstions.dart';
 import 'package:kairete/helper/time.dart';
 
 import '../../../constants/color_constant.dart';
@@ -45,13 +47,13 @@ class UserProfileScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Text(
-                  //   '50k',
-                  //   style: TextStyle(
-                  //     fontSize: 14,
-                  //     color: Colors.white70,
-                  //   ),
-                  // ),
+                  Text(
+                    (controller.user.value.followerCount ?? 0).formatNumber(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
                 ],
               ),
             ],

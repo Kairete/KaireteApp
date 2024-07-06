@@ -27,17 +27,17 @@ class MediaCreateScreen extends StatelessWidget {
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
         actions: [
-          Obx(() => KairetePrimaryButton(
-                onTap: () {
-                  controller.onCreate();
-                  // controller.createBlog();
-                },
-                title: 'POST',
-                width: 100,
-                state: controller.isEnable.value
-                    ? StateButton.active
-                    : StateButton.disable,
-              ))
+          KairetePrimaryButton(
+            onTap: () {
+              controller.onCreate();
+              // controller.createBlog();
+            },
+            title: 'POST',
+            width: 100,
+            // state: controller.isEnable.value
+            //     ? StateButton.active
+            //     : StateButton.disable,
+          )
         ],
       ),
       body: SingleChildScrollView(
@@ -67,28 +67,37 @@ class MediaCreateScreen extends StatelessWidget {
                 SizedBox(
                   height: 16,
                 ),
-                KaireteTextField(
-                  onChanged: (value) {
-                    controller.checkData();
-                  },
-                  hint: 'Embed media',
-                  maxLine: 1,
-                  borderColor: kPrimaryColor,
-                  controller: controller.embedEditingController,
+                Obx(
+                  () => !controller.isSelectedItem.value
+                      ? Column(
+                          children: [
+                            KaireteTextField(
+                              onChanged: (value) {
+                                controller.checkData();
+                              },
+                              hint: 'Embed media',
+                              maxLine: 1,
+                              borderColor: kPrimaryColor,
+                              controller: controller.embedEditingController,
+                            ),
+                            // KaireteTextField(
+                            //   onChanged: (value) {
+                            //     controller.checkData();
+                            //   },
+                            //   hint: 'Write something…',
+                            //   maxLine: 10,
+                            //   borderColor: kPrimaryColor,
+                            //   controller: controller.messageController,
+                            //   textStyle: kTextRegularStyle.copyWith(
+                            //     fontWeight: FontWeight.w300,
+                            //     fontSize: 18,
+                            //   ),
+                            // ),
+                          ],
+                        )
+                      : SizedBox(),
                 ),
-                // KaireteTextField(
-                //   onChanged: (value) {
-                //     controller.checkData();
-                //   },
-                //   hint: 'Write something…',
-                //   maxLine: 10,
-                //   borderColor: kPrimaryColor,
-                //   controller: controller.messageController,
-                //   textStyle: kTextRegularStyle.copyWith(
-                //     fontWeight: FontWeight.w300,
-                //     fontSize: 18,
-                //   ),
-                // ),
+
                 HashTagTextField(
                   decoratedStyle: TextStyle(fontSize: 14, color: kPrimaryColor),
                   basicStyle: TextStyle(fontSize: 14, color: Colors.black),

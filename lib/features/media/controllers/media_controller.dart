@@ -5,8 +5,6 @@ import 'package:kairete/features/media/models/media_model.dart';
 import 'package:kairete/features/media/screens/media_reply_screen.dart';
 import 'package:kairete/features/media/screens/media_type_screen.dart';
 import 'package:kairete/features/media/usecase/media_uscase.dart';
-import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
-import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MediaController extends GetxController {
