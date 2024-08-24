@@ -114,7 +114,7 @@ class ForumDetailScreen extends StatelessWidget {
   }
 }
 
-class ThreadItemCell extends StatelessWidget {
+class ThreadItemCell extends GetView<ForumDetailController> {
   ThreadItemCell({
     Key? key,
     required this.item,
@@ -169,13 +169,34 @@ class ThreadItemCell extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.username ?? '',
-                        style: kTextMediumtStyle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: kPrimaryColor,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            item.username ?? '',
+                            style: kTextMediumtStyle.copyWith(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.play_arrow,
+                                color: kPrimaryColor,
+                                size: 16,
+                              ),
+                              Text(
+                                ' ${controller.item?.title ?? ''}',
+                                style: kTextMediumtStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: kPrimaryColor,
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
                       ),
                       SizedBox(
                         height: 4,

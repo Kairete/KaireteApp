@@ -123,8 +123,8 @@ void showKairetePopup(
           insetPadding: const EdgeInsets.all(16),
           child: KairetePopUpDefault(
             cancelTitle: cancelTitle,
-            doneTitle: 'Ok',
-            title: 'notice',
+            doneTitle: doneTitle ?? 'Ok',
+            title: title ?? 'notice',
             content: content,
             customContent: customContent,
             onTapDone: () {

@@ -2,23 +2,32 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:hashtagable/widgets/hashtag_text.dart';
+import 'package:kairete/admob/admob_manager.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
-import 'package:kairete/constants/size.dart';
+import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
+import 'package:kairete/features/forum/screens/forum_detail_screen.dart';
+import 'package:kairete/features/groups/controllers/group_controller.dart';
+import 'package:kairete/features/groups/screens/newfeed_group_screen.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_controller.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/newsfeed/models/suggestion_model/suggestion_model.dart';
+import 'package:kairete/features/newsfeed/screens/create_newsfeed_screen.dart';
+import 'package:kairete/features/profile/usecase/user_profile_usecase.dart';
 import 'package:kairete/helper/extenstions.dart';
 import 'package:kairete/helper/time.dart';
 import 'package:kairete/helper/user.dart';
 import '../../../components/kairete_button.dart';
+import '../../../components/kairete_popup.dart';
 import '../../../components/reactions_view.dart';
 import '../../dashboard/models/style_model/css.dart';
 import '../models/newsfeed_model.dart';
+import '../usecase/newsfeed_usecase.dart';
 
 // ignore: must_be_immutable
 class NewsFeedScreen extends StatelessWidget {
@@ -36,6 +45,7 @@ class NewsFeedScreen extends StatelessWidget {
             //     controller.toCreate();
             //   },
             // ),
+            // bottomSheet: AdMobManager().getBannerAdWidget(),
             body: NewsfeedListItem(
               items: controller.items.value,
               onCreate: () {
@@ -50,6 +60,7 @@ class NewsFeedScreen extends StatelessWidget {
               onTabFilter: (value) {
                 controller.onSelectedTabFilter(index: value);
               },
+              suggestions: controller.suggestions.value,
             ),
           ));
   }
@@ -66,6 +77,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
     this.isShowCreate = true,
     this.onFilter,
     this.onTabFilter,
+    this.suggestions,
   }) : super(key: key);
 
   final List<NewsfeedModel> items;
@@ -74,6 +86,7 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
   final bool isShowCreate;
   final Function? onFilter;
   final Function(int)? onTabFilter;
+  final SuggestionModel? suggestions;
 
   @override
   Widget build(BuildContext context) {
@@ -85,179 +98,513 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
           final originIndex = index == 0 ? 0 : index - 1;
           final item = items[originIndex];
           return index == 0
-              ? (isShowCreate
-                  ? GestureDetector(
-                      onTap: () {
-                        if (onCreate != null) {
-                          onCreate!();
-                        }
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          KaireteTextFieldButotn(
-                            onTap: () {
-                              controller.toCreate();
-                            },
-                          ),
-                          Obx(() => Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 16, right: 16, bottom: 16),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    FilterButton(
-                                      icon: 'ic_user',
-                                      onTap: () {
-                                        if (onTabFilter != null) {
-                                          onTabFilter!(0);
-                                        }
-                                      },
-                                      isActive:
-                                          controller.selectedTabFilter.value ==
-                                              0,
-                                    ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ),
-                                    FilterButton(
-                                      icon: 'ic_news',
-                                      onTap: () {
-                                        if (onTabFilter != null) {
-                                          onTabFilter!(1);
-                                        }
-                                      },
-                                      isActive:
-                                          controller.selectedTabFilter.value ==
-                                              1,
-                                    ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ),
-                                    FilterButton(
-                                      icon: 'ic_friends',
-                                      onTap: () {
-                                        if (onTabFilter != null) {
-                                          onTabFilter!(2);
-                                        }
-                                      },
-                                      isActive:
-                                          controller.selectedTabFilter.value ==
-                                              2,
-                                    ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ),
-                                    FilterButton(
-                                      icon: 'ic_home',
-                                      onTap: () {
-                                        if (onTabFilter != null) {
-                                          onTabFilter!(3);
-                                        }
-                                      },
-                                      isActive:
-                                          controller.selectedTabFilter.value ==
-                                              3,
-                                    ),
-                                    Expanded(child: Container()),
-                                    InkWell(
-                                      onTap: () {
-                                        controller.onSort();
-                                      },
-                                      child: const Icon(
-                                        Icons.sort_rounded,
-                                        color: kPrimaryColor,
-                                        size: 25,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        if (onFilter != null) {
-                                          onFilter!();
-                                        }
-                                      },
-                                      child: const SvgIcon(
-                                        name: 'ic_filter',
-                                        color: kPrimaryColor,
-                                        width: 25,
-                                        height: 25,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ))
-                        ],
-                      ),
-                    )
-                  : const SizedBox())
-              : NewfeedCell(
-                  onTapDetail: () {
-                    if (onTapDetail != null) {
-                      onTapDetail!(item);
-                    }
-                  },
-                  onTapAvatar: () {
-                    controller.toProfile(user: item.user);
-                  },
-                  onTapHeader: () {
-                    print(item.type);
-                    if (item.type == ContentTypeNewFeed.blogEntry) {
-                      controller.toMyBlogs(blog: item.blogEntryItem);
-                    }
-                  },
-                  // authorBlog: item.type == ContentTypeNewFeed.blogEntry
-                  //     ? item.blogEntryItem?.user?.username
-                  //     : null,
-                  onTapReply: () {
-                    controller.toReplies(item: item);
-                  },
-                  onTapReactions: () {
-                    controller.showReactionPopup(item: item);
-                  },
-                  avatar: item.user?.avatarUrls?.l,
-                  nameImage: (item.user?.customFields?.fullName ??
-                      item.user?.username ??
-                      ''),
-                  userName: item.user?.customFields?.fullName ??
-                      item.user?.username ??
-                      '',
-                  blogTitle: item.blogEntryItem?.blog?.title,
-                  groupTitle: item.groupPostItem?.group?.name,
-                  date: item.itemDate,
-                  commentCount: item.commentCount,
-                  shareCount: item.shareCount,
-                  reactionIconUrl: item.reactionIconUrl,
-                  isShowLike: item.user?.userId != UserManager.instance.userId,
-                  reactions: item.reactions,
-                  messagePlainText: item.messagePlainText,
-                  title: (item.title != '' &&
-                          item.groupPostItem == null &&
-                          item.type != ContentTypeNewFeed.tlGroupPost)
-                      ? item.title
-                      : null,
-                  thumbnailUrl:
-                      item.blogEntryItem?.attachments?[0].thumbnailUrl ??
-                          item.groupPostItem?.firstComment?.attachments?[0]
-                              .thumbnailUrl,
-                  tags: item.blogEntryItem?.tags,
-                  onTapTag: (p0) {
-                    final tag = p0?.replaceAll('#', '');
-                    List<dynamic> list = item.blogEntryItem?.tagsKey.toList();
-                    final key = list.firstWhereOrNull((element) {
-                      Map<String, dynamic> data = element;
-                      return data['tag'].replaceAll(' ', '') == tag;
-                    });
-                    controller.toTagDetail(id: key?['tag_url']);
-                  },
-                  onTapReaction: () {
-                    controller.getReactionsList(item: item);
-                  },
-                );
+              ? (isShowCreate ? createView() : const SizedBox())
+              : getView(index: index, list: controller.randomList, item: item);
         },
       ),
+    );
+  }
+
+  Widget getView({
+    required int index,
+    required List<int> list,
+    required NewsfeedModel item,
+  }) {
+    print("=====");
+    print(index);
+    print(list);
+    // print(list[1]);
+    // print(list[2]);
+
+    if (list[0] == index) {
+      return groupView(item);
+    } else if (list[1] == index) {
+      return blogView(item);
+    } else if (list[2] == index) {
+      return friendView(item);
+    } else if (list[3] == index) {
+      return groupForum(item);
+    } else {
+      return feedCell(item);
+    }
+  }
+
+  Column groupForum(NewsfeedModel item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                ),
+                child: Text(
+                  'Suggested forums for you:',
+                  style: kTextTitleBlog.copyWith(color: kPrimaryColor),
+                ),
+              ),
+              if (controller.suggestions.value.forums != null)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: controller.suggestions.value.forums!
+                        .map(
+                          (e) => infoSuggestionView(
+                            e.title,
+                            'Discusstion: ${e.typeData?.discussionCount}',
+                            null,
+                            null,
+                            '${TimeManager.instance.convertFromTimeStamp(timestamp: e.typeData?.lastPostDate ?? 0)}',
+                            'join',
+                            () {
+                              Get.to(() => ForumDetailScreen(), arguments: {
+                                'item': e,
+                              });
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        feedCell(item)
+      ],
+    );
+  }
+
+  Column groupView(NewsfeedModel item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                ),
+                child: Text(
+                  'Suggested groups for you:',
+                  style: kTextTitleBlog.copyWith(color: kPrimaryColor),
+                ),
+              ),
+              if (controller.suggestions.value.groups != null)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: controller.suggestions.value.groups!
+                        .map(
+                          (e) => infoSuggestionView(
+                            e.name,
+                            '${e.privacy} - ${e.memberCount.toString()}',
+                            e.avatarUrl,
+                            e.ownerUsername,
+                            e.category?.title,
+                            'join',
+                            () {
+                              Get.put(GroupController());
+                              Get.find<GroupController>().upDateGroup(item: e);
+                              Get.to(
+                                () => NewfeedGroupScreen(),
+                                arguments: {'groupId': e.groupId},
+                              );
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        feedCell(item)
+      ],
+    );
+  }
+
+  Column blogView(NewsfeedModel item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                ),
+                child: Text(
+                  'Suggested blogs for you:',
+                  style: kTextTitleBlog.copyWith(color: kPrimaryColor),
+                ),
+              ),
+              SizedBox(
+                height: 16,
+              ),
+              if (controller.suggestions.value.blogs != null)
+                Obx(
+                  () => SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: controller.suggestions.value.blogs!
+                          .map(
+                            (e) => infoSuggestionView(
+                              e.title,
+                              'Views: ${e.viewCount}',
+                              e.user?.avatarUrls?.m,
+                              e.user?.username,
+                              '${TimeManager.instance.convertFromTimeStamp(timestamp: e.lastBlogEntryDate ?? 0)}',
+                              'join',
+                              () {
+                                Get.to(
+                                  () => MyBlogScreen(),
+                                  arguments: {'blog': BlogEntryItem(blog: e)},
+                                );
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        feedCell(item)
+      ],
+    );
+  }
+
+  Column friendView(NewsfeedModel item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                ),
+                child: Text(
+                  'Suggested friends for you:',
+                  style: kTextTitleBlog.copyWith(color: kPrimaryColor),
+                ),
+              ),
+              SizedBox(
+                height: 16,
+              ),
+              if (controller.suggestions.value.users != null)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: controller.suggestions.value.users!
+                        .map(
+                          (e) => infoSuggestionView(
+                            e.username,
+                            'Reactions: ${e.reactionScore}\nMessage: ${e.messageCount}',
+                            e.avatarUrls?.m,
+                            e.username,
+                            '${TimeManager.instance.convertFromTimeStamp(timestamp: e.registerDate ?? 0)}',
+                            'Follow',
+                            () async {
+                              final useCase = IUserProfileUsecase();
+                              final body = {
+                                'reaction_id': 1,
+                                'id': e.userId,
+                              };
+                              final json = await useCase.follow(body: body);
+                              if (json != null) {
+                                controller.fetchSuggestions();
+                              }
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        feedCell(item)
+      ],
+    );
+  }
+
+  Widget infoSuggestionView(
+    String? title,
+    String? content,
+    String? avatarUrl,
+    String? userName,
+    String? subContent,
+    String? titleAction,
+    Function() onTap,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 8,
+        bottom: 8,
+        left: 16,
+      ),
+      child: Card(
+        child: Container(
+          padding: EdgeInsets.only(
+            top: 8,
+          ),
+          height: titleAction != null ? 140 : 110,
+          width: 300,
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    KaireteCacheNetworkImage(
+                      url: avatarUrl ?? '',
+                      width: 36,
+                      height: 36,
+                      isCircle: true,
+                      nameImage: userName,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title ?? '',
+                            style: kTextTitleBlog.copyWith(
+                              color: kPrimaryColor,
+                            ),
+                            maxLines: 2,
+                          ),
+                          SizedBox(
+                            height: 2,
+                          ),
+                          Text(
+                            content ?? '',
+                            style: kTextRegularStyle,
+                            maxLines: 2,
+                          ),
+                          SizedBox(
+                            height: 2,
+                          ),
+                          Text(
+                            subContent ?? '',
+                            style: kTextRegularStyle,
+                            maxLines: 2,
+                          ),
+                          if (titleAction != null)
+                            SizedBox(
+                              height: 8,
+                            ),
+                          if (titleAction != null)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                KaireteActionButton(
+                                  onTap: onTap,
+                                  title: titleAction,
+                                  width: 80,
+                                  height: 30,
+                                ),
+                              ],
+                            )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Divider(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  GestureDetector createView() {
+    return GestureDetector(
+      onTap: () {
+        if (onCreate != null) {
+          onCreate!();
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          KaireteTextFieldButotn(
+            onTap: () {
+              controller.toCreate();
+            },
+          ),
+          Obx(() => Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FilterButton(
+                      icon: 'ic_user',
+                      onTap: () {
+                        if (onTabFilter != null) {
+                          onTabFilter!(0);
+                        }
+                      },
+                      isActive: controller.selectedTabFilter.value == 0,
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    FilterButton(
+                      icon: 'ic_news',
+                      onTap: () {
+                        if (onTabFilter != null) {
+                          onTabFilter!(1);
+                        }
+                      },
+                      isActive: controller.selectedTabFilter.value == 1,
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    FilterButton(
+                      icon: 'ic_friends',
+                      onTap: () {
+                        if (onTabFilter != null) {
+                          onTabFilter!(2);
+                        }
+                      },
+                      isActive: controller.selectedTabFilter.value == 2,
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    FilterButton(
+                      icon: 'ic_home',
+                      onTap: () {
+                        if (onTabFilter != null) {
+                          onTabFilter!(3);
+                        }
+                      },
+                      isActive: controller.selectedTabFilter.value == 3,
+                    ),
+                    Expanded(child: Container()),
+                    InkWell(
+                      onTap: () {
+                        controller.onSort();
+                      },
+                      child: const Icon(
+                        Icons.sort_rounded,
+                        color: kPrimaryColor,
+                        size: 25,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    InkWell(
+                      onTap: () {
+                        if (onFilter != null) {
+                          onFilter!();
+                        }
+                      },
+                      child: const SvgIcon(
+                        name: 'ic_filter',
+                        color: kPrimaryColor,
+                        width: 25,
+                        height: 25,
+                      ),
+                    ),
+                  ],
+                ),
+              ))
+        ],
+      ),
+    );
+  }
+
+  NewfeedCell feedCell(NewsfeedModel item) {
+    return NewfeedCell(
+      onTapDetail: () {
+        if (onTapDetail != null) {
+          onTapDetail!(item);
+        }
+      },
+      onTapAvatar: () {
+        controller.toProfile(user: item.user);
+      },
+      onTapHeader: () {
+        print(item.type);
+        // if (item.type == ContentTypeNewFeed.blogEntry) {
+        controller.toMyBlogs(blog: item.blogEntryItem);
+        // }
+      },
+      // authorBlog: item.type == ContentTypeNewFeed.blogEntry
+      //     ? item.blogEntryItem?.user?.username
+      //     : null,
+      onTapReply: () {
+        controller.toReplies(item: item);
+      },
+      onTapReactions: () {
+        controller.showReactionPopup(item: item);
+      },
+      avatar: item.user?.avatarUrls?.l,
+      nameImage:
+          (item.user?.customFields?.fullName ?? item.user?.username ?? ''),
+      userName: item.user?.customFields?.fullName ?? item.user?.username ?? '',
+      blogTitle: item.blogEntryItem?.blog?.title,
+      groupTitle: item.groupPostItem?.group?.name,
+      date: item.itemDate,
+      commentCount: item.commentCount,
+      shareCount: item.shareCount,
+      reactionIconUrl: item.reactionIconUrl,
+      isShowLike: item.user?.userId != UserManager.instance.userId,
+      isShowDelete: item.user?.userId == UserManager.instance.userId,
+      reactions: item.reactions,
+      messagePlainText: item.messagePlainText,
+      title: (item.title != '' &&
+              item.groupPostItem == null &&
+              item.type != ContentTypeNewFeed.tlGroupPost)
+          ? item.title
+          : null,
+      thumbnailUrl: item.blogEntryItem?.attachments?[0].thumbnailUrl ??
+          item.groupPostItem?.firstComment?.attachments?[0].thumbnailUrl,
+      tags: item.blogEntryItem?.tags,
+      onTapTag: (p0) {
+        final tag = p0?.replaceAll('#', '');
+        List<dynamic> list = item.blogEntryItem?.tagsKey.toList();
+        final key = list.firstWhereOrNull((element) {
+          Map<String, dynamic> data = element;
+          return data['tag'].replaceAll(' ', '') == tag;
+        });
+        controller.toTagDetail(id: key?['tag_url']);
+      },
+      onTapReaction: () {
+        controller.getReactionsList(item: item);
+      },
+      itemId: item.itemId,
+      onDeleteSuccess: () {
+        controller.fechItems();
+      },
     );
   }
 }
@@ -302,6 +649,12 @@ class NewfeedCell extends StatelessWidget {
     this.isShowWatch = true,
     this.onTapTitle,
     this.onTapThumb,
+    this.onTapDelete,
+    this.isShowDelete = false,
+    this.itemId,
+    this.onDeleteSuccess,
+    this.onEdit,
+    this.newfeed,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -336,10 +689,16 @@ class NewfeedCell extends StatelessWidget {
   final Function? onTapIgnore;
   final bool isShowWatch;
   final String? tags;
+  final bool isShowDelete;
+  final int? itemId;
+  final NewsfeedModel? newfeed;
   final Function(String?)? onTapTag;
   final Function()? onTapReaction;
   final Function()? onTapTitle;
   final Function()? onTapThumb;
+  final Function()? onTapDelete;
+  final Function()? onDeleteSuccess;
+  final Function()? onEdit;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -388,15 +747,71 @@ class NewfeedCell extends StatelessWidget {
                 //   onTapWatch: onTapWatch,
                 // ),
                 if (isShowWatch)
-                  ActionButton(
-                    title: isFollow ?? false ? 'Unfollow' : 'Follow',
-                    onTap: () {
-                      if (onTapWatch != null) {
-                        onTapWatch!();
-                      }
-                    },
-                    icon: 'ic_ignore',
-                    isActive: isWatched,
+                  Row(
+                    children: [
+                      ActionButton(
+                        title: isFollow ?? false ? 'Unfollow' : 'Follow',
+                        onTap: () {
+                          if (onTapWatch != null) {
+                            onTapWatch!();
+                          }
+                        },
+                        icon: 'ic_ignore',
+                        isActive: isWatched,
+                      ),
+                      if (isShowDelete)
+                        SizedBox(
+                          width: 4,
+                        ),
+                      if (isShowDelete)
+                        InkWell(
+                          onTap: () {
+                            if (itemId != null) {
+                              final useCase = INewsFeedUsecase();
+                              showKairetePopup(
+                                onTapDone: () async {
+                                  final json =
+                                      await useCase.delete(id: itemId!);
+                                  if (json != null) {
+                                    onDeleteSuccess!();
+                                  }
+                                },
+                                title: 'Delete',
+                                content:
+                                    'Are you sure you want to delete this item?',
+                                cancelTitle: 'cancel',
+                              );
+                            } else {
+                              onTapDelete!();
+                            }
+                          },
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.black,
+                          ),
+                        ),
+                      if (isShowDelete)
+                        InkWell(
+                          onTap: () async {
+                            if (newfeed != null) {
+                              final result = await Get.to(
+                                () => CreateNewsfeedScreen(),
+                                fullscreenDialog: true,
+                                arguments: {
+                                  'item': newfeed,
+                                },
+                              );
+                              if (result != null) {
+                                onEdit!();
+                              }
+                            }
+                          },
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.black,
+                          ),
+                        ),
+                    ],
                   ),
               ],
             ),

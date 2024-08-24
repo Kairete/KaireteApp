@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/components/cache_image.dart';
@@ -9,6 +11,7 @@ import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
+import 'package:kairete/features/newsfeed/models/suggestion_model/suggestion_model.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_detail_screen.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/features/profile/screens/user_profile_screen.dart';
@@ -40,10 +43,12 @@ class NewsFeedController extends GetxController {
     NewsfeedFilterModel(title: 'Popularity'),
   ];
   NewsfeedFilterModel? sortItemSelected;
+  var suggestions = SuggestionModel().obs;
 
   var selectedTabFilter = 99.obs;
   var onChangeFilter = false;
   var onChangeSort = false;
+  List<int> randomList = [];
 
   @override
   void onInit() {
@@ -56,9 +61,31 @@ class NewsFeedController extends GetxController {
     final body = {};
     final json = await usecase.fetchItems(body: body);
     final item = BaseNewsfeedModel.fromJson(json);
+    randomList = generateRandomNumbers(4, 6, item.newsfeedItems?.length ?? 20);
+
     setFilterItem(items: item.filters ?? []);
     items.value = item.newsfeedItems ?? [];
     items.refresh();
+    fetchSuggestions();
+  }
+
+  List<int> generateRandomNumbers(int count, int min, int max) {
+    final random = Random();
+    final numbers = <int>{};
+
+    while (numbers.length < count) {
+      numbers.add(min + random.nextInt(max - min + 1));
+    }
+
+    return numbers.toList();
+  }
+
+  void fetchSuggestions({bool onReload = false}) async {
+    final json = await usecase.suggestions();
+    suggestions.value = SuggestionModel.fromJson(json);
+    if (onReload) {
+      items.refresh();
+    }
   }
 
   void setFilterItem({required List<String> items}) {
@@ -479,6 +506,21 @@ class NewsFeedController extends GetxController {
         ),
       ),
       backgroundColor: Colors.white,
+    );
+  }
+
+  void onDeleteItem({required int id}) async {
+    final useCase = INewsFeedUsecase();
+    showKairetePopup(
+      onTapDone: () async {
+        final json = await useCase.delete(id: id);
+        if (json != null) {
+          fechItems();
+        }
+      },
+      title: 'Delete',
+      content: 'Are you sure you want to delete this item?',
+      cancelTitle: 'cancel',
     );
   }
 }

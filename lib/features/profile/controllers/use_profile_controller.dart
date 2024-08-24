@@ -135,4 +135,19 @@ class UserProfileController extends GetxController {
   void toMyBlogs({BlogEntryItem? blog}) {
     Get.to(() => MyBlogScreen(), arguments: {'blog': blog});
   }
+
+  void onDeleteItem({required int id}) async {
+    final useCase = INewsFeedUsecase();
+    showKairetePopup(
+      onTapDone: () async {
+        final json = await useCase.delete(id: id);
+        if (json != null) {
+          fechFeed();
+        }
+      },
+      title: 'Delete',
+      content: 'Are you sure you want to delete this item?',
+      cancelTitle: 'cancel',
+    );
+  }
 }

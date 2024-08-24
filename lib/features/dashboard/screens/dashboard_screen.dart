@@ -5,6 +5,7 @@ import 'package:kairete/components/kairete_search_field.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/features/blogs/screens/blog_screen.dart';
+import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/media/screens/media_screen.dart';
@@ -24,6 +25,7 @@ class DashboardScreen extends GetView<DashboardController> {
   // @override
   // DashboardController controller = Get.put(DashboardController());
   var currentIndex = 0;
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
@@ -36,39 +38,86 @@ class DashboardScreen extends GetView<DashboardController> {
       drawer: AppDrawer(
         controller: controller,
       ),
-      body: ContainedTabBarView(
-        key: controller.keyTabbar,
-        tabs: [
-          Obx(() => TabbarIcon(
-                icon: 'ic_tab_home',
-                count: controller.user.value.navigationCounters?.threads,
-              )),
-          Obx(() => TabbarIcon(
-                title: 'Blogs',
-                icon: 'ic_tab_blog',
-                count: controller.user.value.navigationCounters?.ubsBlogEntries,
-              )),
-          Obx(
-            () => TabbarIcon(
-              icon: 'ic_tab_new',
-              title: 'Articles',
-              count: controller.user.value.navigationCounters?.amsArticles,
+      // body: ContainedTabBarView(
+      //   key: controller.keyTabbar,
+      //   tabs: [
+      // Obx(() => TabbarIcon(
+      //       icon: 'ic_tab_home',
+      //       count: controller.user.value.navigationCounters?.threads,
+      //     )),
+      // Obx(() => TabbarIcon(
+      //       title: 'Blogs',
+      //       icon: 'ic_tab_blog',
+      //       count: controller.user.value.navigationCounters?.ubsBlogEntries,
+      //     )),
+      // Obx(
+      //   () => TabbarIcon(
+      //     icon: 'ic_tab_new',
+      //     title: 'Articles',
+      //     count: controller.user.value.navigationCounters?.amsArticles,
+      //   ),
+      // ),
+      // TabbarIcon(
+      //   icon: 'ic_tab_new',
+      //   title: 'Media',
+      // ),
+      //   ],
+      //   views: [
+      // NewsFeedScreen(),
+      // BlogScreen(),
+      // ArticlesScreen(),
+      // MediaScreen(),
+      //   ],
+      //   onChange: (index) {},
+      //   tabBarProperties: const TabBarProperties(
+      //       indicatorColor: kPrimaryColor, indicatorWeight: 2),
+      // ),
+      body: Column(
+        children: [
+          TabBar(
+            controller: controller.tabController,
+            dividerColor: kPrimaryColor,
+            indicatorColor: kPrimaryColor,
+            tabs: [
+              Obx(() => TabbarIcon(
+                    icon: 'ic_tab_home',
+                    count: controller.user.value.navigationCounters?.threads,
+                  )),
+              Obx(() => TabbarIcon(
+                    title: 'Blogs',
+                    icon: 'ic_tab_blog',
+                    count: controller
+                        .user.value.navigationCounters?.ubsBlogEntries,
+                  )),
+              Obx(
+                () => TabbarIcon(
+                  icon: 'ic_tab_new',
+                  title: 'Articles',
+                  count: controller.user.value.navigationCounters?.amsArticles,
+                ),
+              ),
+              TabbarIcon(
+                icon: 'ic_tab_new',
+                title: 'Media',
+              ),
+            ],
+            onTap: (index) {
+              _pageController.jumpToPage(index);
+            },
+          ),
+          Expanded(
+            child: PageView(
+              physics: NeverScrollableScrollPhysics(), // Disable swipe scroll
+              controller: _pageController,
+              children: [
+                NewsFeedScreen(),
+                BlogScreen(),
+                ArticlesScreen(),
+                MediaScreen(),
+              ],
             ),
-          ),
-          TabbarIcon(
-            icon: 'ic_tab_new',
-            title: 'Media',
-          ),
+          )
         ],
-        views: [
-          NewsFeedScreen(),
-          BlogScreen(),
-          ArticlesScreen(),
-          MediaScreen(),
-        ],
-        onChange: (index) {},
-        tabBarProperties: const TabBarProperties(
-            indicatorColor: kPrimaryColor, indicatorWeight: 2),
       ),
     );
   }
@@ -80,9 +129,11 @@ AppBar baseAppBar({
   bool isShowSearch = true,
   bool isShowMenu = true,
   bool isShowActions = true,
+  bool isShowCreateBlog = true,
   String? title,
   DashboardController? contorller,
   Function? onTapBack,
+  List<Widget>? actions,
 }) {
   return AppBar(
     titleTextStyle: TextStyle(),
@@ -93,6 +144,20 @@ AppBar baseAppBar({
                 padding: const EdgeInsets.only(right: 16),
                 child: Row(
                   children: [
+                    if (isShowSearch)
+                      InkWell(
+                        onTap: () {
+                          Get.to(() => NewsfeedSearchScreen(),
+                              fullscreenDialog: true);
+                        },
+                        child: Icon(
+                          Icons.search_sharp,
+                          size: 30,
+                        ),
+                      ),
+                    SizedBox(
+                      width: 4,
+                    ),
                     Stack(
                       children: [
                         InkWell(
@@ -154,7 +219,7 @@ AppBar baseAppBar({
               ),
             )
           ]
-        : null,
+        : actions,
     leading: Row(
       children: [
         SizedBox(
@@ -192,17 +257,17 @@ AppBar baseAppBar({
         : SizedBox(
             child: Row(
               children: [
-                if (isShowSearch)
-                  Expanded(
-                    child: KaireteSearchField(
-                      onChanged: (value) {},
-                      readOnly: true,
-                      onTap: () {
-                        Get.to(() => NewsfeedSearchScreen(),
-                            fullscreenDialog: true);
-                      },
-                    ),
-                  ),
+                // if (isShowSearch)
+                //   Expanded(
+                //     child: KaireteSearchField(
+                //       onChanged: (value) {},
+                //       readOnly: true,
+                //       onTap: () {
+                //         Get.to(() => NewsfeedSearchScreen(),
+                //             fullscreenDialog: true);
+                //       },
+                //     ),
+                //   ),
               ],
             ),
             height: 36,
@@ -387,17 +452,23 @@ class TabbarIcon extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            SizedBox(
+              height: 16,
+            ),
             if (iconWidget != null) iconWidget!,
             if (icon != null)
               SvgIcon(
                 name: icon!,
-                width: 16,
-                height: 16,
+                width: 20,
+                height: 20,
               ),
             Text(
               title ?? 'Newsfeed',
               style: kTextMediumtStyle.copyWith(
-                  color: kPrimaryColor, fontWeight: FontWeight.w600),
+                color: kPrimaryColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ],
         ),

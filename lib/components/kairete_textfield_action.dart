@@ -51,7 +51,7 @@ class KaireteWriteTextField extends StatelessWidget {
 
   final Function()? onTap;
   final Function(String)? onChanged;
-  final Function()? onSend;
+  final Function(String?)? onSend;
   final TextEditingController? controller;
 
   @override
@@ -113,7 +113,11 @@ class KaireteWriteTextField extends StatelessWidget {
                       Icons.send,
                       color: kPrimaryColor,
                     ),
-                    onPressed: onSend,
+                    onPressed: () {
+                      if (onSend != null) {
+                        onSend!(controller?.text);
+                      }
+                    },
                   )
                 ],
               ),

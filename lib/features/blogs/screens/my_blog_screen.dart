@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kairete/constants/color.dart';
+import 'package:kairete/features/blogs/screens/blog_create_screen.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:get/get.dart';
 
@@ -31,16 +33,23 @@ class MyBlogScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Obx(
-                      () => ActionButton(
-                        padding: EdgeInsets.only(right: 16, bottom: 8, top: 8),
-                        title: '',
-                        onTap: () {
-                          controller.updateWatch();
-                        },
-                        icon: 'ic_ignore',
-                        isActive: controller.isWatchedForum.value,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Obx(
+                          () => ActionButton(
+                            padding:
+                                EdgeInsets.only(right: 16, bottom: 8, top: 8),
+                            title: '',
+                            onTap: () {
+                              controller.updateWatch();
+                            },
+                            icon: 'ic_ignore',
+                            isActive: controller.isWatchedForum.value,
+                          ),
+                        ),
+                        CreateBlogButton()
+                      ],
                     ),
                     Expanded(
                       child: ListView.builder(
@@ -99,5 +108,31 @@ class MyBlogScreen extends StatelessWidget {
             },
           ),
         ));
+  }
+}
+
+class CreateBlogButton extends StatelessWidget {
+  CreateBlogButton({
+    super.key,
+    this.color,
+  });
+
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    print('=====');
+    return InkWell(
+      onTap: () {
+        Get.to(() => BlogCreateScreen(), fullscreenDialog: true);
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: Icon(
+          Icons.add,
+          color: color ?? kPrimaryColor,
+        ),
+      ),
+    );
   }
 }

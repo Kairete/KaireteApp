@@ -21,7 +21,7 @@ class BlogCommentScreen extends StatelessWidget {
         onChanged: (p0) {
           controller.textOnChanged(text: p0);
         },
-        onSend: () {
+        onSend: (p0) {
           controller.postComent();
         },
         controller: controller.textEditingController,

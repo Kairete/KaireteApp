@@ -21,7 +21,7 @@ class CreateNewsfeedScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
         title: Text(
-          'Create newsfeed',
+          controller.item == null ? 'Create newsfeed' : 'Update newsfeed',
           style: kTextHeadingStyle.copyWith(color: Colors.white),
         ),
         actions: [
@@ -29,7 +29,7 @@ class CreateNewsfeedScreen extends StatelessWidget {
                 onTap: () {
                   controller.onCreate();
                 },
-                title: 'POST',
+                title: controller.item == null ? 'POST' : 'Update',
                 width: 100,
                 state: controller.isEnable.value
                     ? StateButton.active

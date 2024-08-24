@@ -5,6 +5,7 @@ import 'package:kairete/components/action_item.dart';
 import 'package:kairete/components/kairete_bottom_sheet.dart';
 import 'package:kairete/components/kairete_popup.dart';
 import 'package:kairete/constants/key_constant.dart';
+import 'package:kairete/features/newsfeed/models/newsfeed_model.dart';
 import 'package:kairete/features/newsfeed/usecase/newsfeed_usecase.dart';
 import 'package:kairete/helper/image_picker.dart';
 import 'package:kairete/local/data_local.dart';
@@ -21,11 +22,18 @@ class CreateNewsfeedController extends GetxController {
   var isEnable = false.obs;
   var paths = [].obs;
   List<String> tempFile = [];
+  NewsfeedModel? item;
 
   @override
   void onInit() {
     if (Get.arguments != null) {
-      usecase = Get.arguments['usecase'];
+      if (Get.arguments['usecase'] != null) {
+        usecase = Get.arguments['usecase'];
+      }
+      if (Get.arguments['item'] != null) {
+        item = Get.arguments['item'];
+        textController.text = item?.messagePlainText ?? '';
+      }
     }
     super.onInit();
   }
@@ -44,7 +52,15 @@ class CreateNewsfeedController extends GetxController {
       body['attachment_key'] = tempFile.first;
     }
     print(body);
-    final json = await usecase.create(body: body);
+    dynamic json;
+    if (item != null) {
+      // edit
+      body['id'] = item!.itemId;
+      json = await usecase.update(body: body);
+    } else {
+      // create
+      json = await usecase.create(body: body);
+    }
     if (json != null) {
       showKairetePopup(
         onTapDone: () {

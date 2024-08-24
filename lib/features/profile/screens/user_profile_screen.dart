@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
+// import 'package:get_storage/get_storage.dart';
 import 'package:kairete/components/cache_image.dart';
 import 'package:kairete/components/kairete_button.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
 import 'package:kairete/constants/size.dart';
+import 'package:kairete/features/conversation/create/conversation_create_screen.dart';
 import 'package:kairete/features/profile/controllers/use_profile_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -140,9 +141,9 @@ class UserProfileScreen extends StatelessWidget {
                           controller.toMyBlogs(blog: item.blogEntryItem);
                         }
                       },
-                      authorBlog: item.type == ContentTypeNewFeed.blogEntry
-                          ? item.blogEntryItem?.user?.username
-                          : null,
+                      // authorBlog: item.type == ContentTypeNewFeed.blogEntry
+                      //     ? item.blogEntryItem?.user?.username
+                      //     : null,
                       onTapReply: () {
                         controller.toReplies(item: item);
                       },
@@ -156,14 +157,27 @@ class UserProfileScreen extends StatelessWidget {
                       userName: item.user?.customFields?.fullName ??
                           item.user?.username ??
                           '',
-                      blogTitle: item.blogEntryItem?.user?.username,
-                      groupTitle: item.groupPostItem?.group?.name,
+                      blogTitle: item.blogEntryItem?.category?.title,
+                      // groupTitle: item.groupPostItem?.group?.name,
                       date: item.itemDate,
                       commentCount: item.commentCount,
                       shareCount: item.shareCount,
                       reactionIconUrl: item.reactionIconUrl,
                       isShowLike:
                           item.user?.userId != UserManager.instance.userId,
+                      isShowDelete:
+                          item.user?.userId == UserManager.instance.userId,
+                      // onTapDelete: () {
+                      //   controller.onDeleteItem(id: item.itemId ?? 0);
+                      // },
+                      newfeed: item,
+                      itemId: item.itemId,
+                      onDeleteSuccess: () {
+                        controller.fechFeed();
+                      },
+                      onEdit: () {
+                        controller.fechFeed();
+                      },
                       reactions: item.reactions,
                       messagePlainText: item.messagePlainText,
                       title: (item.title != '' &&
@@ -260,7 +274,23 @@ class InfoView extends StatelessWidget {
                                   ? 'Unwatch'
                                   : 'Watch',
                             )),
-                      )
+                      ),
+                      if (!controller.isCurrentUser)
+                        const SizedBox(
+                          width: 16,
+                        ),
+                      if (!controller.isCurrentUser)
+                        Expanded(
+                          child: KaireteActionButton(
+                            onTap: () {
+                              Get.to(() => ConversationCreateScreen(),
+                                  arguments: {
+                                    'id': controller.user.value.userId,
+                                  });
+                            },
+                            title: 'Conversation',
+                          ),
+                        )
                     ],
                   ),
                 const SizedBox(

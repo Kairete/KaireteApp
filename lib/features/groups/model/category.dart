@@ -8,6 +8,7 @@ class Category {
   int? displayOrder;
   int? groupCount;
   int? parentCategoryId;
+  String? title;
 
   Category({
     this.canAddGroup,
@@ -19,6 +20,7 @@ class Category {
     this.displayOrder,
     this.groupCount,
     this.parentCategoryId,
+    this.title,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
@@ -31,6 +33,7 @@ class Category {
         displayOrder: json['display_order'] as int?,
         groupCount: json['group_count'] as int?,
         parentCategoryId: json['parent_category_id'] as int?,
+        title: json['title'] as String?,
       );
 
   Map<String, dynamic> toJson() => {

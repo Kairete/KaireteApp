@@ -1,7 +1,9 @@
 import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/admob/admob_manager.dart';
 import 'package:kairete/constants/app_routes.dart';
+import 'package:kairete/features/conversation/conversation_screen.dart';
 import 'package:kairete/features/dashboard/models/style_model/css.dart';
 import 'package:kairete/features/dashboard/usecase/master_data_usecase.dart';
 import 'package:kairete/features/forum/screens/forum_screen.dart';
@@ -17,9 +19,12 @@ import '../../newsfeed/models/newsfeed_model.dart';
 import '../../profile/usecase/user_profile_usecase.dart';
 import '../models/menu_item_model.dart';
 
-class DashboardController extends GetxController {
+class DashboardController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   var items = <GroupMenuModel>[].obs;
   GlobalKey<ContainedTabBarViewState> keyTabbar = GlobalKey();
+  late TabController tabController;
+
   UserProfileUsecase usecase = IUserProfileUsecase();
   var user = User().obs;
   MasterDataUsecase masterDataUsecase = IMasterDataUsecase();
@@ -29,6 +34,11 @@ class DashboardController extends GetxController {
 
   @override
   void onInit() {
+    tabController = TabController(length: 4, vsync: this);
+    // AdMobManager().initialize();
+    // AdMobManager().loadBannerAd(); // Load banner ad
+    // AdMobManager().loadInterstitialAd(); // Load interstitial ad
+
     fetchFcmToken();
     fetchIcons();
     fetchWidget();
@@ -120,6 +130,11 @@ class DashboardController extends GetxController {
           MenuItemModel(name: 'Search blogs'),
         ],
       ),
+      GroupMenuModel(
+        name: 'Conversation',
+        type: GroupItemType.conversation,
+        items: [],
+      ),
     ];
     if (UserManager.instance.userId == null) {
       items.insert(
@@ -171,6 +186,9 @@ class DashboardController extends GetxController {
       case GroupItemType.groups:
         Navigator.pop(Get.context!);
         Get.to(() => GroupScreen());
+        break;
+      case GroupItemType.conversation:
+        Get.to(() => ConversationScreen());
         break;
       default:
     }

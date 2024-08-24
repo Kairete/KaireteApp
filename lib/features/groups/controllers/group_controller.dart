@@ -67,4 +67,8 @@ class GroupController extends GetxController {
     }
     currentGroup = item;
   }
+
+  void upDateGroup({required Group item}) {
+    currentGroup = item;
+  }
 }

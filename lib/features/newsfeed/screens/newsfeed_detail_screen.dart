@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:kairete/constants/color.dart';
-import 'package:kairete/constants/font_constant.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:kairete/features/newsfeed/controllers/newsfeed_detail_controller.dart';
@@ -36,10 +33,10 @@ class NewsfeedDetailScreen extends StatelessWidget {
                       arguments: {'id': controller.item.value.user?.userId},
                     );
                   },
-                  authorBlog:
-                      controller.item.value.type == ContentTypeNewFeed.blogEntry
-                          ? controller.item.value.blogEntryItem?.user?.username
-                          : null,
+                  // authorBlog:
+                  //     controller.item.value.type == ContentTypeNewFeed.blogEntry
+                  //         ? controller.item.value.blogEntryItem?.user?.username
+                  //         : null,
                   onTapReply: () {
                     controller.toReplies();
                   },
@@ -55,8 +52,9 @@ class NewsfeedDetailScreen extends StatelessWidget {
                       controller.item.value.user?.customFields?.fullName ??
                           controller.item.value.user?.username ??
                           '',
-                  blogTitle: controller.item.value.blogEntryItem?.blog?.title,
-                  groupTitle: controller.item.value.groupPostItem?.group?.name,
+                  blogTitle:
+                      controller.item.value.blogEntryItem?.category?.title,
+                  // groupTitle: controller.item.value.groupPostItem?.group?.name,
                   date: controller.item.value.itemDate,
                   commentCount: controller.item.value.commentCount,
                   shareCount: controller.item.value.shareCount,

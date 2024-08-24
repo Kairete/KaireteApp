@@ -26,6 +26,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(nameImage);
     return url == ""
         ? (nameImage != null
             ? Container(

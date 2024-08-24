@@ -22,7 +22,9 @@ class TimeManager {
 
   String convertFromTimeStamp({required int timestamp, String? format}) {
     var date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    var dateString = Jiffy(date).format(format ?? "MMM do, yyyy - hh:mm");
+    var dateString = Jiffy.parseFromDateTime(date)
+        .format(pattern: format ?? "MMM do, yyyy - hh:mm");
+    // var dateString = Jiffy.pa
     return dateString;
   }
 

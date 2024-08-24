@@ -52,14 +52,14 @@ class BlogScreen extends StatelessWidget {
                         onTapWatch: () {
                           controller.toUpdateWatch(item: item);
                         },
-                        titleCate: item.category?.title,
+                        // titleCate: item.category?.title,
                         userName: item.user?.customFields?.fullName ??
                             item.user?.username ??
                             '',
                         title: item.title,
                         avatar: item.user?.avatarUrls?.l,
                         date: item.attachments?[0].attachDate,
-                        blogTitle: item.blog?.title,
+                        blogTitle: item.category?.title,
                         thumbnailUrl: item.coverImage?.thumbnailUrl,
                         messagePlainText: item.messagePlainText,
                         reactionIconUrl: item.reactionIconUrl,

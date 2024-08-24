@@ -20,6 +20,9 @@ abstract class NewsFeedUsecase {
   Future feedDetail({dynamic body});
   Future updateWatch({dynamic body});
   Future getReactionsList({dynamic body});
+  Future delete({required int id});
+  Future update({dynamic body});
+  Future suggestions({dynamic body});
 }
 
 class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
@@ -164,6 +167,38 @@ class INewsFeedUsecase extends BaseClient implements NewsFeedUsecase {
   @override
   Future getReactionsList({body}) async {
     final path = ApiRoutes.reactions + '${body['id']}';
+    final json = await appApiService.client?.requestApi(
+      path: path,
+      method: HttpMethodCustom.GET,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future delete({required int id}) async {
+    final path = 'api/newsfeed-items' + '/$id';
+    final json = await appApiService.client?.requestApi(
+      path: path,
+      method: HttpMethodCustom.DELETE,
+    );
+    return json;
+  }
+
+  @override
+  Future update({body}) async {
+    final path = 'api/newsfeed-items' + '/${body['id']}';
+    final json = await appApiService.client?.requestApi(
+      path: path,
+      method: HttpMethodCustom.POST,
+      body: body,
+    );
+    return json;
+  }
+
+  @override
+  Future suggestions({body}) async {
+    final path = 'api/suggestions';
     final json = await appApiService.client?.requestApi(
       path: path,
       method: HttpMethodCustom.GET,

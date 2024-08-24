@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kairete/features/newsfeed/models/gr_model.dart';
 
 import '../../../../helper/user.dart';
 import '../../../../local/master_data.dart';
