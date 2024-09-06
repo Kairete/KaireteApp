@@ -18,12 +18,12 @@ class ConversationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: baseAppBar(
-        key: _key,
-        isShowBack: true,
-        isShowMenu: false,
-        isShowActions: false,
-        isShowSearch: false,
-      ),
+          key: _key,
+          isShowBack: true,
+          isShowMenu: false,
+          isShowActions: false,
+          isShowSearch: false,
+          title: 'Conversatios'),
       // bottomSheet: KaireteWriteTextField(
       //   onChanged: (p0) {
       //     // controller.textOnChanged(text: p0);
@@ -51,6 +51,7 @@ class ConversationScreen extends StatelessWidget {
               onTap: () {
                 Get.to(() => MessageScreen(), arguments: {
                   'id': item.id,
+                  'firstMessageId': item.firstMessageId,
                 });
               },
               child: Container(
@@ -58,6 +59,7 @@ class ConversationScreen extends StatelessWidget {
                 // color: Colors.red,
                 padding: EdgeInsets.all(16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     KaireteCacheNetworkImage(
                       url: item.avatarUrls?.m ?? '',
@@ -68,21 +70,23 @@ class ConversationScreen extends StatelessWidget {
                     SizedBox(
                       width: 16,
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title ?? '',
-                          style: kTextRegularStyle.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title ?? '',
+                            style: kTextRegularStyle.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        Text(
-                          item.message ?? '',
-                          style: kTextRegularStyle.copyWith(fontSize: 16),
-                        )
-                      ],
+                          Text(
+                            item.message ?? '',
+                            style: kTextRegularStyle.copyWith(fontSize: 16),
+                          )
+                        ],
+                      ),
                     )
                   ],
                 ),

@@ -73,7 +73,7 @@ class MediaScreen extends StatelessWidget {
                         title: item.title,
                         avatar: item.user?.avatarUrls?.l,
                         date: item.mediaDate,
-                        blogTitle: item.containerName,
+                        // blogTitle: item.containerName,
                         thumbnailUrl: item.thumbnailUrl,
                         category: item.containerName,
                         reactionIconUrl: item.reactionIconUrl,

@@ -39,7 +39,7 @@ class BlogDetailScreen extends StatelessWidget {
                 title: controller.item.value.title,
                 avatar: controller.item.value.user?.avatarUrls?.l,
                 date: controller.item.value.attachments?[0].attachDate,
-                blogTitle: controller.item.value.category?.title,
+                blogTitle: controller.item.value.blog?.title,
                 thumbnailUrl: controller.item.value.coverImage?.thumbnailUrl,
                 messagePlainText: controller.item.value.messagePlainText,
                 reactionIconUrl: controller.item.value.reactionIconUrl,

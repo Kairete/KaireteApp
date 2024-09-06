@@ -33,10 +33,10 @@ class NewsfeedDetailScreen extends StatelessWidget {
                       arguments: {'id': controller.item.value.user?.userId},
                     );
                   },
-                  // authorBlog:
-                  //     controller.item.value.type == ContentTypeNewFeed.blogEntry
-                  //         ? controller.item.value.blogEntryItem?.user?.username
-                  //         : null,
+                  authorBlog:
+                      controller.item.value.type == ContentTypeNewFeed.blogEntry
+                          ? controller.item.value.blogEntryItem?.category?.title
+                          : null,
                   onTapReply: () {
                     controller.toReplies();
                   },

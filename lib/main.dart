@@ -11,7 +11,7 @@ import 'features/dashboard/controllers/dashboard_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // AdMobManager().initialize();
+  AdMobManager().initialize();
   await Firebase.initializeApp();
   // await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
   //   alert: true,

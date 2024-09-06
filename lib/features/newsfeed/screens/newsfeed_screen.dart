@@ -9,8 +9,11 @@ import 'package:kairete/components/kairete_textfield_action.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/color_constant.dart';
 import 'package:kairete/constants/font_constant.dart';
+import 'package:kairete/features/articles/models/articles_model.dart';
+import 'package:kairete/features/articles/screens/articles_category_screen.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
+import 'package:kairete/features/forum/models/forum_model.dart';
 import 'package:kairete/features/forum/screens/forum_detail_screen.dart';
 import 'package:kairete/features/groups/controllers/group_controller.dart';
 import 'package:kairete/features/groups/screens/newfeed_group_screen.dart';
@@ -25,7 +28,9 @@ import 'package:kairete/helper/user.dart';
 import '../../../components/kairete_button.dart';
 import '../../../components/kairete_popup.dart';
 import '../../../components/reactions_view.dart';
+import '../../../constants/app_routes.dart';
 import '../../dashboard/models/style_model/css.dart';
+import '../../login/models/user_model.dart';
 import '../models/newsfeed_model.dart';
 import '../usecase/newsfeed_usecase.dart';
 
@@ -543,6 +548,31 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
   }
 
   NewfeedCell feedCell(NewsfeedModel item) {
+    String? userName;
+    String? blogTitle = item.itemCategory;
+    switch (item.type) {
+      case ContentTypeNewFeed.profilePost:
+        userName = item.user?.username;
+        break;
+      case ContentTypeNewFeed.album:
+        userName = item.user?.username;
+        blogTitle = null;
+        break;
+      case ContentTypeNewFeed.blogEntry:
+        userName = item.user?.username;
+        blogTitle = item.blogEntryItem?.blog?.title;
+        break;
+      case ContentTypeNewFeed.thread:
+        userName = item.user?.username;
+        break;
+      case ContentTypeNewFeed.tlGroupPost:
+        userName = item.user?.username;
+        break;
+      default:
+        userName = item.title;
+        break;
+    }
+
     return NewfeedCell(
       onTapDetail: () {
         if (onTapDetail != null) {
@@ -552,11 +582,40 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
       onTapAvatar: () {
         controller.toProfile(user: item.user);
       },
-      onTapHeader: () {
+      onTapGroupTitle: () {
         print(item.type);
         // if (item.type == ContentTypeNewFeed.blogEntry) {
-        controller.toMyBlogs(blog: item.blogEntryItem);
+        // controller.toMyBlogs(blog: item.blogEntryItem);
         // }
+
+        switch (item.type) {
+          case ContentTypeNewFeed.thread:
+            final node = Nodes();
+            node.nodeId = int.parse(item.itemCategory ?? '0');
+            Get.to(() => ForumDetailScreen(), arguments: {'item': node});
+            break;
+          case ContentTypeNewFeed.blogEntry:
+            controller.toMyBlogs(blog: item.blogEntryItem);
+            break;
+          case ContentTypeNewFeed.profilePost:
+            final user = User();
+            user.userId = int.parse(item.itemCategory ?? '0');
+            controller.toProfile(user: user);
+            break;
+          case ContentTypeNewFeed.tlGroupPost:
+            // Get.to(() => GroupFeedScreen(), arguments: {
+            //   'groupId': item.groupId,
+            //   'postId': item.postId,
+            // });
+            break;
+          case ContentTypeNewFeed.article:
+            final id = int.parse(item.itemCategory ?? '0');
+            Get.to(() => AritclesCategoryScreen(), arguments: {
+              'id': id,
+            });
+            break;
+          default:
+        }
       },
       // authorBlog: item.type == ContentTypeNewFeed.blogEntry
       //     ? item.blogEntryItem?.user?.username
@@ -570,9 +629,9 @@ class NewsfeedListItem extends GetView<NewsFeedController> {
       avatar: item.user?.avatarUrls?.l,
       nameImage:
           (item.user?.customFields?.fullName ?? item.user?.username ?? ''),
-      userName: item.user?.customFields?.fullName ?? item.user?.username ?? '',
-      blogTitle: item.blogEntryItem?.blog?.title,
-      groupTitle: item.groupPostItem?.group?.name,
+      userName: userName,
+      blogTitle: blogTitle,
+      // groupTitle: 'item.groupPostItem?.group?.name',
       date: item.itemDate,
       commentCount: item.commentCount,
       shareCount: item.shareCount,
@@ -655,6 +714,7 @@ class NewfeedCell extends StatelessWidget {
     this.onDeleteSuccess,
     this.onEdit,
     this.newfeed,
+    this.onTapGroupTitle,
   }) : super(key: key);
 
   final Function? onTapDetail;
@@ -699,6 +759,7 @@ class NewfeedCell extends StatelessWidget {
   final Function()? onTapDelete;
   final Function()? onDeleteSuccess;
   final Function()? onEdit;
+  final Function? onTapGroupTitle;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -732,6 +793,7 @@ class NewfeedCell extends StatelessWidget {
                     date: date,
                     titleCate: titleCate,
                     onTap: onTapHeader,
+                    onTapGroupTitle: onTapGroupTitle,
                     // customAction: ActionsView(
                     //   isFollowed: isFollow,
                     //   isIgnored: isIgnore,
@@ -950,6 +1012,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
     this.onTap,
     this.customAction,
     this.category,
+    this.onTapGroupTitle,
   }) : super(key: key);
 
   final Function? onTapAvatar;
@@ -964,6 +1027,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
   final Function? onTap;
   final Widget? customAction;
   final String? category;
+  final Function? onTapGroupTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -1003,6 +1067,7 @@ class HeaderInfoCellWithAvatar extends StatelessWidget {
               date: date,
               titleCate: titleCate,
               customAction: customAction,
+              onTapGroupTitle: onTapGroupTitle,
             ),
           ),
         ],
@@ -1091,6 +1156,7 @@ class HeaderInfoCellItem extends StatelessWidget {
     required this.titleCate,
     this.customAction,
     this.category,
+    this.onTapGroupTitle,
   }) : super(key: key);
 
   final String? userName;
@@ -1102,6 +1168,7 @@ class HeaderInfoCellItem extends StatelessWidget {
   final String? titleCate;
   final Widget? customAction;
   final String? category;
+  final Function? onTapGroupTitle;
 
   Css? style = Get.find<DashboardController>().style;
 
@@ -1140,6 +1207,12 @@ class HeaderInfoCellItem extends StatelessWidget {
                         size: 16,
                       )),
                     TextSpan(
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          if (onTapGroupTitle != null) {
+                            onTapGroupTitle!();
+                          }
+                        },
                       text: category ?? blogTitle ?? groupTitle ?? '',
                       style: kTextRegularStyle.copyWith(
                         fontWeight: FontWeight.w600,

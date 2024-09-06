@@ -44,7 +44,7 @@ class IConversationUsecase extends BaseClient implements ConversationUsecase {
 
   @override
   Future postMessage({body}) async {
-    final path = 'api/conversation-messages/${body['id']}';
+    final path = 'api/conversation-messages';
     final json = await appApiService.client?.requestApi(
       path: path,
       method: HttpMethodCustom.POST,

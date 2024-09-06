@@ -1,11 +1,14 @@
 import 'package:contained_tab_bar_view/contained_tab_bar_view.dart';
 import 'package:flutter/material.dart';
+import 'package:kairete/admob/admob_manager.dart';
 import 'package:kairete/components/kairete_icon.dart';
 import 'package:kairete/components/kairete_search_field.dart';
 import 'package:kairete/constants/color.dart';
 import 'package:kairete/constants/font_constant.dart';
+import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/blogs/screens/blog_screen.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
+import 'package:kairete/features/conversation/conversation_screen.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/media/screens/media_screen.dart';
@@ -37,6 +40,9 @@ class DashboardScreen extends GetView<DashboardController> {
       ),
       drawer: AppDrawer(
         controller: controller,
+      ),
+      bottomSheet: Container(
+        child: AdMobManager().getBannerAdWidget(),
       ),
       // body: ContainedTabBarView(
       //   key: controller.keyTabbar,
@@ -144,6 +150,18 @@ AppBar baseAppBar({
                 padding: const EdgeInsets.only(right: 16),
                 child: Row(
                   children: [
+                    InkWell(
+                      onTap: () {
+                        Get.to(() => ConversationScreen());
+                      },
+                      child: Icon(
+                        Icons.message,
+                        size: 25,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 4,
+                    ),
                     if (isShowSearch)
                       InkWell(
                         onTap: () {

@@ -26,7 +26,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(nameImage);
+    print('======11 $nameImage');
     return url == ""
         ? (nameImage != null
             ? Container(
@@ -37,11 +37,7 @@ class KaireteCacheNetworkImage extends StatelessWidget {
                     color: kPrimaryColor),
                 child: Center(
                   child: Text(
-                    nameImage
-                            ?.replaceAll(' ', '')
-                            .substring(0, 1)
-                            .toUpperCase() ??
-                        '',
+                    nameImage!.isNotEmpty ? nameImage![0] : '',
                     style: kTextMediumtStyle.copyWith(
                       fontSize: fontSize ?? 17,
                       fontWeight: FontWeight.w700,

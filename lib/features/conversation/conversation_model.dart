@@ -5,6 +5,7 @@ class ConversationModel {
   int? id;
   AvatarUrls? avatarUrls;
   String? message;
+  int? firstMessageId;
 
   ConversationModel({this.title});
 
@@ -15,6 +16,7 @@ class ConversationModel {
     avatarUrls = json['Starter']['avatar_urls'] != null
         ? AvatarUrls.fromJson(json['Starter']['avatar_urls'])
         : null;
+    firstMessageId = json['first_message_id'];
   }
 
   Map<String, dynamic> toJson() {

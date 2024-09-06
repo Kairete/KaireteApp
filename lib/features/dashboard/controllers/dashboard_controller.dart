@@ -36,7 +36,7 @@ class DashboardController extends GetxController
   void onInit() {
     tabController = TabController(length: 4, vsync: this);
     // AdMobManager().initialize();
-    // AdMobManager().loadBannerAd(); // Load banner ad
+    AdMobManager().loadBannerAd(); // Load banner ad
     // AdMobManager().loadInterstitialAd(); // Load interstitial ad
 
     fetchFcmToken();

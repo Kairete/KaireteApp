@@ -53,13 +53,11 @@ class BlogScreen extends StatelessWidget {
                           controller.toUpdateWatch(item: item);
                         },
                         // titleCate: item.category?.title,
-                        userName: item.user?.customFields?.fullName ??
-                            item.user?.username ??
-                            '',
+                        userName: item.user?.username ?? '',
                         title: item.title,
                         avatar: item.user?.avatarUrls?.l,
                         date: item.attachments?[0].attachDate,
-                        blogTitle: item.category?.title,
+                        blogTitle: item.blog?.title,
                         thumbnailUrl: item.coverImage?.thumbnailUrl,
                         messagePlainText: item.messagePlainText,
                         reactionIconUrl: item.reactionIconUrl,
@@ -76,7 +74,7 @@ class BlogScreen extends StatelessWidget {
                         onTapReply: () {
                           controller.toComment(item: item);
                         },
-                        onTapHeader: () {
+                        onTapGroupTitle: () {
                           controller.toMyBlogs(blog: item);
                         },
                         isFollow: item.user?.isFollowed,

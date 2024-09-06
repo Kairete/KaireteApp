@@ -8,11 +8,13 @@ class MessageController extends GetxController {
   TextEditingController textEditingController = TextEditingController();
 
   int? id;
+  int? firstMessageId;
   var conversations = <MessageModel>[].obs;
 
   @override
   void onInit() {
     id = Get.arguments['id'];
+    firstMessageId = Get.arguments['firstMessageId'];
     super.onInit();
     fetchItems();
   }
@@ -28,7 +30,7 @@ class MessageController extends GetxController {
   void postMessage({required String message}) async {
     final body = {
       'message': message,
-      'id': id,
+      'conversation_id': id,
     };
     final json = await usecase.postMessage(body: body);
     if (json != null) {

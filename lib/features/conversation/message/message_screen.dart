@@ -22,6 +22,7 @@ class MessageScreen extends StatelessWidget {
         isShowMenu: false,
         isShowActions: false,
         isShowSearch: false,
+        title: 'Messages',
       ),
       bottomSheet: KaireteWriteTextField(
         onChanged: (p0) {
@@ -58,14 +59,16 @@ class MessageScreen extends StatelessWidget {
                     SizedBox(
                       width: 16,
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.message ?? '',
-                          style: kTextRegularStyle.copyWith(fontSize: 16),
-                        )
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.message ?? '',
+                            style: kTextRegularStyle.copyWith(fontSize: 16),
+                          )
+                        ],
+                      ),
                     )
                   ],
                 ),

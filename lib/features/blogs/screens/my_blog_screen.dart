@@ -60,7 +60,7 @@ class MyBlogScreen extends StatelessWidget {
                             onTapDetail: () {
                               controller.toDetail(item: item);
                             },
-                            titleCate: item.category?.title,
+                            // titleCate: item.category?.title,
                             userName: item.user?.customFields?.fullName ??
                                 item.user?.username ??
                                 '',

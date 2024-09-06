@@ -161,7 +161,7 @@ class ThreadItemCell extends GetView<ForumDetailController> {
                     width: 36,
                     height: 36,
                     isCircle: true,
-                    nameImage: (item.username ?? '1')),
+                    nameImage: (item.user?.username ?? '1')),
                 const SizedBox(
                   width: 8,
                 ),
@@ -172,30 +172,30 @@ class ThreadItemCell extends GetView<ForumDetailController> {
                       Row(
                         children: [
                           Text(
-                            item.username ?? '',
+                            item.user?.username ?? '',
                             style: kTextMediumtStyle.copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: kPrimaryColor,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.play_arrow,
-                                color: kPrimaryColor,
-                                size: 16,
-                              ),
-                              Text(
-                                ' ${controller.item?.title ?? ''}',
-                                style: kTextMediumtStyle.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrimaryColor,
-                                ),
-                              ),
-                            ],
-                          )
+                          // Row(
+                          //   children: [
+                          //     Icon(
+                          //       Icons.play_arrow,
+                          //       color: kPrimaryColor,
+                          //       size: 16,
+                          //     ),
+                          //     Text(
+                          //       ' ${controller.item?.title ?? ''}',
+                          //       style: kTextMediumtStyle.copyWith(
+                          //         fontSize: 15,
+                          //         fontWeight: FontWeight.w600,
+                          //         color: kPrimaryColor,
+                          //       ),
+                          //     ),
+                          //   ],
+                          // )
                         ],
                       ),
                       SizedBox(
