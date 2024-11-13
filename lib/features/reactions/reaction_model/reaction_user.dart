@@ -120,49 +120,61 @@ class ReactionUser {
     return 'Messages: ${messageCount.toString()} • Reaction score: ${reactionScore.toString()} • Points: ${trophyPoints.toString()} • Referrals: ${questionSolutionCount.toString()}';
   }
 
-  factory ReactionUser.fromJson(Map<String, dynamic> json) => ReactionUser(
-        activityVisible: json['activity_visible'] as bool?,
+  factory ReactionUser.fromJson(Map<String, dynamic> json) {
+    try {
+      return ReactionUser(
+        activityVisible:
+            tryParse<bool>(json['activity_visible'], 'activity_visible'),
         avatarUrls: json['avatar_urls'] == null
             ? null
             : AvatarUrls.fromJson(json['avatar_urls'] as Map<String, dynamic>),
-        canBan: json['can_ban'] as bool?,
-        canConverse: json['can_converse'] as bool?,
-        canEdit: json['can_edit'] as bool?,
-        canFollow: json['can_follow'] as bool?,
-        canIgnore: json['can_ignore'] as bool?,
-        canPostProfile: json['can_post_profile'] as bool?,
-        canViewProfile: json['can_view_profile'] as bool?,
-        canViewProfilePosts: json['can_view_profile_posts'] as bool?,
-        canWarn: json['can_warn'] as bool?,
-        canWatch: json['can_watch'] as bool?,
-        contentSubscribeCostAmount:
-            json['content_subscribe_cost_amount'] as String?,
-        contentSubscribeCtaMessage:
-            json['content_subscribe_cta_message'] as String?,
-        contentSubscribeCtaTitle:
-            json['content_subscribe_cta_title'] as String?,
-        contentSubscribePeriod: json['content_subscribe_period'] as String?,
+        canBan: tryParse<bool>(json['can_ban'], 'can_ban'),
+        canConverse: tryParse<bool>(json['can_converse'], 'can_converse'),
+        canEdit: tryParse<bool>(json['can_edit'], 'can_edit'),
+        canFollow: tryParse<bool>(json['can_follow'], 'can_follow'),
+        canIgnore: tryParse<bool>(json['can_ignore'], 'can_ignore'),
+        canPostProfile:
+            tryParse<bool>(json['can_post_profile'], 'can_post_profile'),
+        canViewProfile:
+            tryParse<bool>(json['can_view_profile'], 'can_view_profile'),
+        canViewProfilePosts: tryParse<bool>(
+            json['can_view_profile_posts'], 'can_view_profile_posts'),
+        canWarn: tryParse<bool>(json['can_warn'], 'can_warn'),
+        canWatch: tryParse<bool>(json['can_watch'], 'can_watch'),
+        contentSubscribeCostAmount: tryParse<String>(
+            json['content_subscribe_cost_amount'],
+            'content_subscribe_cost_amount'),
+        contentSubscribeCtaMessage: tryParse<String>(
+            json['content_subscribe_cta_message'],
+            'content_subscribe_cta_message'),
+        contentSubscribeCtaTitle: tryParse<String>(
+            json['content_subscribe_cta_title'], 'content_subscribe_cta_title'),
+        contentSubscribePeriod: tryParse<String>(
+            json['content_subscribe_period'], 'content_subscribe_period'),
         customFields: json['custom_fields'] == null
             ? null
             : CustomFields.fromJson(
                 json['custom_fields'] as Map<String, dynamic>),
-        customTitle: json['custom_title'] as String?,
-        firebaseDeviceToken: json['firebase_device_token'] as String?,
-        isAdmin: json['is_admin'] as bool?,
-        isBanned: json['is_banned'] as bool?,
-        isContentSubscribable: json['is_content_subscribable'] as bool?,
-        isDiscouraged: json['is_discouraged'] as bool?,
-        isDonationsEnabled: json['is_donations_enabled'] as bool?,
-        isFollowed: json['is_followed'] as bool?,
-        isIgnored: json['is_ignored'] as bool?,
-        isModerator: json['is_moderator'] as bool?,
-        isStaff: json['is_staff'] as bool?,
-        isSubscribed: json['is_subscribed'] as bool?,
-        isSuperAdmin: json['is_super_admin'] as bool?,
-        isWatched: json['is_watched'] as bool?,
-        lastActivity: json['last_activity'] as int?,
-        location: json['location'] as String?,
-        messageCount: json['message_count'] as int?,
+        customTitle: tryParse<String>(json['custom_title'], 'custom_title'),
+        firebaseDeviceToken: tryParse<String>(
+            json['firebase_device_token'], 'firebase_device_token'),
+        isAdmin: tryParse<bool>(json['is_admin'], 'is_admin'),
+        isBanned: tryParse<bool>(json['is_banned'], 'is_banned'),
+        isContentSubscribable: tryParse<bool>(
+            json['is_content_subscribable'], 'is_content_subscribable'),
+        isDiscouraged: tryParse<bool>(json['is_discouraged'], 'is_discouraged'),
+        isDonationsEnabled: tryParse<bool>(
+            json['is_donations_enabled'], 'is_donations_enabled'),
+        isFollowed: tryParse<bool>(json['is_followed'], 'is_followed'),
+        isIgnored: tryParse<bool>(json['is_ignored'], 'is_ignored'),
+        isModerator: tryParse<bool>(json['is_moderator'], 'is_moderator'),
+        isStaff: tryParse<bool>(json['is_staff'], 'is_staff'),
+        isSubscribed: tryParse<bool>(json['is_subscribed'], 'is_subscribed'),
+        isSuperAdmin: tryParse<bool>(json['is_super_admin'], 'is_super_admin'),
+        isWatched: tryParse<bool>(json['is_watched'], 'is_watched'),
+        lastActivity: tryParse<int>(json['last_activity'], 'last_activity'),
+        location: tryParse<String>(json['location'], 'location'),
+        messageCount: tryParse<int>(json['message_count'], 'message_count'),
         navigationCounters: json['navigationCounters'] == null
             ? null
             : NavigationCounters.fromJson(
@@ -171,25 +183,35 @@ class ReactionUser {
             ? null
             : ProfileBannerUrls.fromJson(
                 json['profile_banner_urls'] as Map<String, dynamic>),
-        questionSolutionCount: json['question_solution_count'] as int?,
-        reactionScore: json['reaction_score'] as int?,
-        registerDate: json['register_date'] as int?,
-        secondaryGroupIds: json['secondary_group_ids'] as List<dynamic>?,
-        sgCanAddGroup: json['sg_can_add_group'] as bool?,
-        signature: json['signature'] as String?,
-        subscribedUserIds: json['subscribed_user_ids'] as List<dynamic>?,
-        trophyPoints: json['trophy_points'] as int?,
-        userGroupId: json['user_group_id'] as int?,
-        userId: json['user_id'] as int?,
-        userState: json['user_state'] as String?,
-        userTitle: json['user_title'] as String?,
-        username: json['username'] as String?,
-        viewUrl: json['view_url'] as String?,
-        visible: json['visible'] as bool?,
-        voteScore: json['vote_score'] as int?,
-        warningPoints: json['warning_points'] as int?,
-        website: json['website'] as String?,
+        questionSolutionCount: tryParse<int>(
+            json['question_solution_count'], 'question_solution_count'),
+        reactionScore: tryParse<int>(json['reaction_score'], 'reaction_score'),
+        registerDate: tryParse<int>(json['register_date'], 'register_date'),
+        secondaryGroupIds: tryParse<List<dynamic>>(
+            json['secondary_group_ids'], 'secondary_group_ids'),
+        sgCanAddGroup:
+            tryParse<bool>(json['sg_can_add_group'], 'sg_can_add_group'),
+        signature: tryParse<String>(json['signature'], 'signature'),
+        subscribedUserIds: tryParse<List<dynamic>>(
+            json['subscribed_user_ids'], 'subscribed_user_ids'),
+        trophyPoints: tryParse<int>(json['trophy_points'], 'trophy_points'),
+        userGroupId: tryParse<int>(json['user_group_id'], 'user_group_id'),
+        userId: tryParse<int>(json['user_id'], 'user_id'),
+        userState: tryParse<String>(json['user_state'], 'user_state'),
+        userTitle: tryParse<String>(json['user_title'], 'user_title'),
+        username: tryParse<String>(json['username'], 'username'),
+        viewUrl: tryParse<String>(json['view_url'], 'view_url'),
+        visible: tryParse<bool>(json['visible'], 'visible'),
+        voteScore: tryParse<int>(json['vote_score'], 'vote_score'),
+        warningPoints: tryParse<int>(json['warning_points'], 'warning_points'),
+        website: tryParse<String>(json['website'], 'website'),
       );
+    } catch (e, stack) {
+      print('Error parsing ReactionUser: $e');
+      print('Stack trace: $stack');
+      return ReactionUser();
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'activity_visible': activityVisible,
@@ -247,4 +269,13 @@ class ReactionUser {
         'warning_points': warningPoints,
         'website': website,
       };
+}
+
+T? tryParse<T>(dynamic value, String fieldName) {
+  try {
+    return value as T;
+  } catch (e) {
+    print('Error parsing field $fieldName: $e');
+    return null;
+  }
 }

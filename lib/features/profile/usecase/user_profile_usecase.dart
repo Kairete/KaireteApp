@@ -13,6 +13,7 @@ abstract class UserProfileUsecase {
 
 abstract class FCMUsecase {
   Future pushFCM({dynamic body});
+  Future removeFCM({dynamic body});
 }
 
 abstract class UserUsecase {
@@ -64,6 +65,18 @@ class IFCMUsecase extends BaseClient implements FCMUsecase {
       path: ApiRoutes.pushFCM + '$id/firebase-device-token',
       body: body,
       method: HttpMethodCustom.POST,
+    );
+    return json;
+  }
+
+  @override
+  Future removeFCM({body}) async {
+    final id =
+        await LocalManager.instance.read(key: PreferencesKey.token) ?? '1';
+    final json = await appApiService.client?.requestApi(
+      path: ApiRoutes.pushFCM + '$id/firebase-device-token',
+      body: body,
+      method: HttpMethodCustom.DELETE,
     );
     return json;
   }

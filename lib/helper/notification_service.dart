@@ -15,6 +15,7 @@ class NotificationManager {
       NotificationManager._privateConstructor();
 
   static NotificationManager get instance => _instance;
+  String? currentFCMToken;
 
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   FCMNavigator navigator = IFCMNavigator();
@@ -106,10 +107,22 @@ class NotificationManager {
 
   updateFCM(String fcmToken) async {
     FCMUsecase usecase = IFCMUsecase();
+    NotificationManager.instance.currentFCMToken = fcmToken;
     final body = {
       'token': fcmToken,
     };
     final json = await usecase.pushFCM(body: body);
+    if (json != null) {
+      print('Push FCM success');
+    }
+  }
+
+  deleteFCM() async {
+    FCMUsecase usecase = IFCMUsecase();
+    final body = {
+      'token': NotificationManager.instance.currentFCMToken,
+    };
+    final json = await usecase.removeFCM(body: body);
     if (json != null) {
       print('Push FCM success');
     }
