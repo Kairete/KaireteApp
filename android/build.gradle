@@ -1,14 +1,14 @@
 buildscript {
-    ext.kotlin_version = '1.9.0'
+    ext.kotlin_version = '1.8.22'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.4'
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.3.13'  // Google Services plugin
+        classpath 'com.google.gms:google-services:4.3.15'
     }
 }
 
@@ -22,33 +22,6 @@ allprojects {
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects { subproject ->
-    subproject.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-}
-// AGP 8+: vecchi plugin Flutter senza namespace (es. sensors_plus)
-subprojects { subproject ->
-    subproject.afterEvaluate {
-        if (subproject.plugins.hasPlugin("com.android.library")) {
-            def androidExt = subproject.extensions.findByName("android")
-            if (androidExt != null && androidExt.namespace == null) {
-                def manifestFile = subproject.file("src/main/AndroidManifest.xml")
-                if (manifestFile.exists()) {
-                    def pkg = new groovy.xml.XmlParser().parse(manifestFile).attribute("package")
-                    if (pkg != null) {
-                        androidExt.namespace = pkg
-                    }
-                }
-            }
-        }
-    }
-}
-subprojects {
-    project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {
