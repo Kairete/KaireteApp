@@ -42,8 +42,18 @@ jobs:
       - name: Build debug APK (arm64)
         run: flutter build apk --debug --target-platform android-arm64
 
-      - name: Rename APK for download
-        run: cp build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk Kairete-debug.apk
+      - name: Prepare APK for download
+        run: |
+          APK_DIR=build/app/outputs/flutter-apk
+          ls -la "$APK_DIR"
+          if [ -f "$APK_DIR/app-arm64-v8a-debug.apk" ]; then
+            cp "$APK_DIR/app-arm64-v8a-debug.apk" Kairete-debug.apk
+          elif [ -f "$APK_DIR/app-debug.apk" ]; then
+            cp "$APK_DIR/app-debug.apk" Kairete-debug.apk
+          else
+            cp "$APK_DIR"/*debug*.apk Kairete-debug.apk
+          fi
+          ls -la Kairete-debug.apk
 
       - name: Upload APK artifact (Actions tab)
         uses: actions/upload-artifact@v4
