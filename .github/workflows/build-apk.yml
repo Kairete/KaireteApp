@@ -10,11 +10,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JAVA_HOME: ${{ github.workspace }}/jdk
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java
+        id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -40,6 +43,8 @@ jobs:
         run: flutter pub get
 
       - name: Build debug APK
+        env:
+          JAVA_HOME: ${{ steps.setup-java.outputs.path }}
         run: flutter build apk --debug
 
       - name: Upload APK artifact

@@ -23,6 +23,30 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+subprojects { subproject ->
+    subproject.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}
+// AGP 8+: vecchi plugin Flutter senza namespace (es. sensors_plus)
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        if (subproject.plugins.hasPlugin("com.android.library")) {
+            def androidExt = subproject.extensions.findByName("android")
+            if (androidExt != null && androidExt.namespace == null) {
+                def manifestFile = subproject.file("src/main/AndroidManifest.xml")
+                if (manifestFile.exists()) {
+                    def pkg = new groovy.xml.XmlParser().parse(manifestFile).attribute("package")
+                    if (pkg != null) {
+                        androidExt.namespace = pkg
+                    }
+                }
+            }
+        }
+    }
+}
 subprojects {
     project.evaluationDependsOn(':app')
 }
