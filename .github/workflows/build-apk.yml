@@ -39,20 +39,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK (arm64)
-        run: flutter build apk --debug --target-platform android-arm64
+      - name: Build debug APK
+        run: flutter build apk --debug
 
       - name: Prepare APK for download
         run: |
-          APK_DIR=build/app/outputs/flutter-apk
-          ls -la "$APK_DIR"
-          if [ -f "$APK_DIR/app-arm64-v8a-debug.apk" ]; then
-            cp "$APK_DIR/app-arm64-v8a-debug.apk" Kairete-debug.apk
-          elif [ -f "$APK_DIR/app-debug.apk" ]; then
-            cp "$APK_DIR/app-debug.apk" Kairete-debug.apk
-          else
-            cp "$APK_DIR"/*debug*.apk Kairete-debug.apk
-          fi
+          ls -la build/app/outputs/flutter-apk/
+          cp build/app/outputs/flutter-apk/app-debug.apk Kairete-debug.apk
           ls -la Kairete-debug.apk
 
       - name: Upload APK artifact (Actions tab)
@@ -62,11 +55,11 @@ jobs:
           path: Kairete-debug.apk
           if-no-files-found: error
 
-      - name: Publish GitHub Release (link permanente)
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-debug-${{ github.run_number }}
-          name: Kairete debug APK #${{ github.run_number }}
+          tag_name: apk-${{ github.run_id }}
+          name: Kairete debug APK
           prerelease: true
           files: Kairete-debug.apk
           generate_release_notes: true
@@ -75,7 +68,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true
         run: mkdir -p ftp-upload && cp Kairete-debug.apk ftp-upload/
 
-      - name: Upload to FTP (secret FTP_HOST, FTP_USER, FTP_PASSWORD, FTP_DIR)
+      - name: Upload to FTP
         if: github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
