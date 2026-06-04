@@ -2,11 +2,6 @@ name: Build APK (debug)
 
 on:
   workflow_dispatch:
-    inputs:
-      upload_ftp:
-        description: Carica anche su FTP (secret FTP_* configurati)
-        type: boolean
-        default: false
   push:
     branches: [main, master]
 
@@ -39,21 +34,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Build debug APK (arm64)
+        run: flutter build apk --debug --target-platform android-arm64
 
       - name: Prepare APK for download
         run: |
-          ls -la build/app/outputs/flutter-apk/
-          cp build/app/outputs/flutter-apk/app-debug.apk Kairete-debug.apk
+          APK_DIR=build/app/outputs/flutter-apk
+          ls -la "$APK_DIR"
+          APK_FILE=$(find "$APK_DIR" -maxdepth 1 -name '*debug*.apk' | head -n 1)
+          test -n "$APK_FILE"
+          cp "$APK_FILE" Kairete-debug.apk
           ls -la Kairete-debug.apk
 
-      - name: Upload APK artifact (Actions tab)
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kairete-debug-apk
           path: Kairete-debug.apk
-          if-no-files-found: error
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -62,18 +59,3 @@ jobs:
           name: Kairete debug APK
           prerelease: true
           files: Kairete-debug.apk
-          generate_release_notes: true
-
-      - name: Prepare FTP upload folder
-        if: github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true
-        run: mkdir -p ftp-upload && cp Kairete-debug.apk ftp-upload/
-
-      - name: Upload to FTP
-        if: github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ftp-upload/
-          server-dir: ${{ secrets.FTP_DIR }}
