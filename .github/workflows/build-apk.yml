@@ -20,12 +20,21 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.16.9"
           channel: stable
           cache: true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
 
       - name: Install dependencies
         run: flutter pub get
@@ -41,6 +50,4 @@ jobs:
           if-no-files-found: error
 
       - name: APK info
-        run: |
-          ls -lh build/app/outputs/flutter-apk/
-          echo "Scarica l'APK da: Actions → questo workflow → Artifacts → kairete-debug-apk"
+        run: ls -lh build/app/outputs/flutter-apk/
