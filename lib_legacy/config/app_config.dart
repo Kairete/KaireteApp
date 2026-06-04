@@ -1,4 +1,4 @@
-﻿/// Ambiente API Kairete.
+﻿/// Configurazione ambiente API.
 class AppConfig {
   AppConfig._();
 
@@ -14,6 +14,8 @@ class AppConfig {
   }
 
   static const String appName = 'Kairete';
+  static const String tenantHeader = 'X-Ms-Tenant-Id';
+  static const String appIdHeader = 'X-Kairete-App-Id';
   static const String mobileAppId = 'com.kairete.app';
   static const String xenforoApiKey = 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
 }
