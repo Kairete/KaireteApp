@@ -7,7 +7,8 @@ if (-not (Test-Path $jdk)) {
 }
 $env:JAVA_HOME = $jdk
 $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
-$env:GRADLE_OPTS = "-Xmx768m"
+# PC con poca RAM: abbassate a -Xmx768m se serve
+$env:GRADLE_OPTS = "-Xmx1024m"
 $env:DART_VM_OPTIONS = "--old_gen_heap_size=512"
 
 $flutter = "C:\Users\hp\flutter\bin\flutter.bat"
