@@ -7,14 +7,12 @@ import 'package:kairete/constants/color.dart';
 import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_detail_controller.dart';
 import 'package:kairete/features/forum/models/forum_detail_model.dart';
+import 'package:kairete/theme/kairete_theme.dart';
+import 'package:kairete/widgets/cards/kairete_thread_card.dart';
 
-import '../../../components/cache_image.dart';
 import '../../../components/kairete_button.dart';
-import '../../../components/reactions_view.dart';
-import '../../../constants/color_constant.dart';
 import '../../../constants/font_constant.dart';
 import '../../../helper/time.dart';
-import '../../newsfeed/screens/newsfeed_screen.dart';
 
 // ignore: must_be_immutable
 class ForumDetailScreen extends StatelessWidget {
@@ -27,84 +25,80 @@ class ForumDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _key,
+      backgroundColor: KaireteTheme.bodyBackground,
       appBar: baseAppBar(
         key: _key,
         isShowBack: true,
+        isShowMenu: false,
+        title: controller.item?.title ?? 'Forum',
       ),
-      // bottomSheet: KaireteWriteTextField(
-      //   onTap: () {
-      //     controller.toCreate();
-      //   },
-      // ),
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 16,
-            ),
-            KaireteTextFieldButotn(
-              onTap: () {
-                controller.toCreate();
-              },
+            Material(
+              color: KaireteTheme.headerBackground,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Obx(
+                        () => OutlinedButton(
+                          onPressed: controller.updateWatch,
+                          child: Text(
+                            controller.isWatchedForum.value
+                                ? 'Non seguire'
+                                : 'Segui forum',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: controller.toCreate,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: KaireteTheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Nuovo thread'),
+                    ),
+                  ],
+                ),
+              ),
             ),
             Expanded(
-              child: Container(
-                child: Obx(() => controller.items.isEmpty
-                    ? Container()
+              child: Obx(
+                () => controller.items.isEmpty
+                    ? const Center(child: Text('Nessun thread'))
                     : ListView.builder(
-                        itemCount: controller.items.length + 1,
+                        padding: const EdgeInsets.only(top: 4, bottom: 16),
+                        itemCount: controller.items.length,
                         itemBuilder: (context, index) {
-                          final originIndex = index == 0 ? 0 : index - 1;
-                          final item = controller.items[originIndex];
-                          return index == 0
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Obx(
-                                      () => ActionButton(
-                                        padding: EdgeInsets.only(
-                                          right: 16,
-                                          bottom: 8,
-                                        ),
-                                        title: item.user?.isFollowed ?? false
-                                            ? 'Unfollow'
-                                            : 'Follow',
-                                        onTap: () {
-                                          controller.updateWatch();
-                                          // if (onTapWatch != null) {
-                                          //   onTapWatch!();
-                                          // }
-                                        },
-                                        // padding: EdgeInsets.only(bottom: 8),
-                                        icon: 'ic_ignore',
-                                        isActive:
-                                            controller.isWatchedForum.value,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : ThreadItemCell(
-                                  item: item,
-                                  onTapComment: () {
-                                    controller.toComment(item: item);
-                                  },
-                                  onTapReactions: () {
-                                    controller.showReactionPopup(item: item);
-                                  },
-                                  onTapDetail: () {
-                                    controller.toDetail(item: item);
-                                  },
-                                  maxLine: 5,
-                                  onTapWatch: () {},
-                                  onTapTag: (p0) {
-                                    final tag = p0.replaceAll('#', '');
-                                    final key = item.tagsKey.firstWhereOrNull(
-                                        (element) => element.contains(tag));
-                                    controller.toTagDetail(id: key ?? '');
-                                  },
-                                );
+                          final thread = controller.items[index];
+                          return KaireteThreadCard(
+                            authorName: thread.user?.username ??
+                                thread.username ??
+                                'Utente',
+                            dateLabel: TimeManager.instance
+                                .convertFromTimeStamp(
+                                    timestamp: thread.postDate ?? 0),
+                            title: thread.title ?? '',
+                            preview: _threadPreview(thread),
+                            replyCount: thread.replyCount ?? 0,
+                            isPinned: thread.sticky ?? false,
+                            lastReplyHint: thread.lastPostUsername != null
+                                ? 'Ultima risposta: ${thread.lastPostUsername}'
+                                : null,
+                            onTap: () => controller.toDetail(item: thread),
+                            onTapDetail: () =>
+                                controller.toDetail(item: thread),
+                            onTapReply: () =>
+                                controller.toComment(item: thread),
+                            onTapLike: () =>
+                                controller.showReactionPopup(item: thread),
+                          );
                         },
-                      )),
+                      ),
               ),
             ),
           ],
@@ -114,6 +108,13 @@ class ForumDetailScreen extends StatelessWidget {
   }
 }
 
+String? _threadPreview(Threads thread) {
+  final raw = thread.message?.replaceAll(RegExp(r'<[^>]*>'), ' ').trim();
+  if (raw == null || raw.isEmpty) return null;
+  return raw.length > 160 ? '${raw.substring(0, 160)}…' : raw;
+}
+
+/// Legacy cell — usare [KaireteThreadCard] per nuove schermate.
 class ThreadItemCell extends GetView<ForumDetailController> {
   ThreadItemCell({
     Key? key,

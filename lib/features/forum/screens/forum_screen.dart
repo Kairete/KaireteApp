@@ -3,6 +3,7 @@ import 'package:kairete/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kairete/features/forum/controllers/forum_controller.dart';
 import 'package:get/get.dart';
 import '../../../constants/color.dart';
+import '../../../theme/kairete_theme.dart';
 import '../../../constants/font_constant.dart';
 import '../../../helper/time.dart';
 import 'package:cupertino_listview/cupertino_listview.dart';
@@ -34,12 +35,12 @@ class ForumScreen extends StatelessWidget {
                             ? controller.items[index.section].title
                             : 'Forum statistics';
                         return Container(
-                          color: kPrimaryColor,
+                          color: KaireteTheme.sectionHeaderBackground,
                           padding: const EdgeInsets.all(16),
                           child: Text(
                             title ?? '',
                             style: kTextHeadingStyle.copyWith(
-                                color: Colors.white,
+                                color: KaireteTheme.textPrimary,
                                 fontWeight: FontWeight.bold),
                           ),
                         );

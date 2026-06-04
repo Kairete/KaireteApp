@@ -9,6 +9,7 @@ import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart
 
 import 'helper/localization_service.dart';
 import 'routes/app_pages.dart';
+import 'theme/kairete_theme.dart';
 
 class MyApp extends StatefulWidget {
   @override
@@ -21,7 +22,9 @@ class _MyAppState extends State<MyApp> {
     return ScreenUtilInit(
       designSize: const Size(375, 812),
       builder: (context, child) {
-        return GetCupertinoApp(
+        return Theme(
+          data: KaireteTheme.material,
+          child: GetCupertinoApp(
           debugShowCheckedModeBanner: false,
           enableLog: true,
           initialRoute: AuthMiddleware.instance.currentState,
@@ -38,6 +41,7 @@ class _MyAppState extends State<MyApp> {
           locale: LocalizationService.locale,
           fallbackLocale: LocalizationService.fallbackLocale,
           translations: LocalizationService(),
+        ),
         );
       },
     );

@@ -81,8 +81,13 @@ class NotificationManager {
       default:
         print('FlutterFire Messaging: Getting FCM token...');
         String? token = await FirebaseMessaging.instance.getToken();
+        FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+          print("FlutterFire Messaging refreshed: $newToken");
+          updateFCM(newToken);
+        });
         print('FlutterFire Messaging: Got FCM token: $token');
         if (token != null) {
+          print('======fcm token: $token');
           updateFCM(token);
         }
         handlerMessage();
@@ -124,7 +129,7 @@ class NotificationManager {
     };
     final json = await usecase.removeFCM(body: body);
     if (json != null) {
-      print('Push FCM success');
+      print('Deleted FCM success');
     }
   }
 

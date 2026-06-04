@@ -69,8 +69,11 @@ class UserProfileController extends GetxController {
   }
 
   void onLogout() async {
-    NotificationManager.instance.disableNotice();
-    NotificationManager.instance.deleteFCM();
+    // NotificationManager.instance.disableNotice();
+    print("=====a");
+    await NotificationManager.instance.deleteFCM();
+    print("=====b");
+
     await LocalManager.instance.remove(key: PreferencesKey.token);
     UserManager.instance.userId = null;
     Get.offAllNamed(Routes.login);

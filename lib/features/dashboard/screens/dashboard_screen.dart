@@ -9,8 +9,10 @@ import 'package:kairete/constants/size.dart';
 import 'package:kairete/features/blogs/screens/blog_screen.dart';
 import 'package:kairete/features/blogs/screens/my_blog_screen.dart';
 import 'package:kairete/features/conversation/conversation_screen.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
+import 'package:kairete/theme/kairete_theme.dart';
 import 'package:kairete/features/media/screens/media_screen.dart';
 import 'package:kairete/features/newsfeed/screens/newsfeed_screen.dart';
 import 'package:kairete/features/notice/screens/notice_screen.dart';
@@ -34,6 +36,7 @@ class DashboardScreen extends GetView<DashboardController> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _key,
+      backgroundColor: KaireteTheme.bodyBackground,
       appBar: baseAppBar(
         key: _key,
         contorller: controller,
@@ -80,10 +83,14 @@ class DashboardScreen extends GetView<DashboardController> {
       // ),
       body: Column(
         children: [
-          TabBar(
+          Material(
+            color: KaireteTheme.headerBackground,
+            child: TabBar(
             controller: controller.tabController,
-            dividerColor: kPrimaryColor,
-            indicatorColor: kPrimaryColor,
+            dividerColor: KaireteTheme.borderColor,
+            indicatorColor: KaireteTheme.primary,
+            labelColor: KaireteTheme.primary,
+            unselectedLabelColor: KaireteTheme.textSecondary,
             tabs: [
               Obx(() => TabbarIcon(
                     icon: 'ic_tab_home',
@@ -110,6 +117,7 @@ class DashboardScreen extends GetView<DashboardController> {
             onTap: (index) {
               _pageController.jumpToPage(index);
             },
+          ),
           ),
           Expanded(
             child: PageView(
@@ -266,29 +274,21 @@ AppBar baseAppBar({
           ),
       ],
     ),
-    backgroundColor: kPrimaryColor,
+    backgroundColor: KaireteTheme.headerBackground,
+    foregroundColor: KaireteTheme.textPrimary,
+    iconTheme: const IconThemeData(color: KaireteTheme.textPrimary),
     title: title != null
         ? Text(
             title,
-            style: kTextHeadingStyle.copyWith(color: Colors.white),
+            style: kTextHeadingStyle.copyWith(color: KaireteTheme.textPrimary),
           )
-        : SizedBox(
-            child: Row(
-              children: [
-                // if (isShowSearch)
-                //   Expanded(
-                //     child: KaireteSearchField(
-                //       onChanged: (value) {},
-                //       readOnly: true,
-                //       onTap: () {
-                //         Get.to(() => NewsfeedSearchScreen(),
-                //             fullscreenDialog: true);
-                //       },
-                //     ),
-                //   ),
-              ],
+        : Text(
+            AppConfig.appName,
+            style: kTextHeadingStyle.copyWith(
+              color: KaireteTheme.primary,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
             ),
-            height: 36,
           ),
   );
 }

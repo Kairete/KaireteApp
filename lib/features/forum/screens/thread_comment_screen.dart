@@ -7,6 +7,8 @@ import '../../../components/kairete_button.dart';
 import '../../../components/kairete_form.dart';
 import '../../../constants/color.dart';
 import '../../../constants/font_constant.dart';
+import 'package:kairete/theme/kairete_theme.dart';
+import 'package:kairete/widgets/cards/kairete_comment_card.dart';
 import '../../newsfeed/screens/reply_screen.dart';
 
 // ignore: must_be_immutable
@@ -19,10 +21,11 @@ class ThreadCommentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: kPrimaryColor,
+        backgroundColor: KaireteTheme.headerBackground,
+        foregroundColor: KaireteTheme.textPrimary,
         title: Text(
-          'Replies',
-          style: kTextHeadingStyle.copyWith(color: Colors.white),
+          'Risposte',
+          style: kTextHeadingStyle.copyWith(color: KaireteTheme.textPrimary),
         ),
         // actions: [
         //   Obx(() => KairetePrimaryButton(
@@ -73,22 +76,26 @@ class ThreadCommentScreen extends StatelessWidget {
                       itemCount: controller.items.length,
                       itemBuilder: (context, index) {
                         final item = controller.items[index];
+                        final html = (item.messageParsed ?? '')
+                            .replaceAll('\n', '')
+                            .replaceAll('=\\  ', '=')
+                            .replaceAll('g\\', '');
                         return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            CommentItem(
-                              content: item.messageParsed ?? '',
-                              name: item.user?.username ?? 'Unknown',
-                              avatar: item.user?.avatarUrls?.h,
+                            KaireteCommentCard(
+                              authorName: item.user?.username ?? 'Unknown',
+                              dateLabel: '',
+                              contentHtml: html.isEmpty ? '<p></p>' : html,
                               onTapReply: () {
                                 controller.toSubReply(item: item);
                               },
-                              isLikeAction: item.canReact ?? true,
-                              urlReaction: item.reactionIconUrl,
-                              reactions: item.reactions,
-                              onTapLike: () {
-                                controller.showReactions(
-                                    commentId: item.commentId ?? 0);
-                              },
+                              onTapLike: item.canReact ?? true
+                                  ? () {
+                                      controller.showReactions(
+                                          commentId: item.commentId ?? 0);
+                                    }
+                                  : null,
                             ),
                           ],
                         );

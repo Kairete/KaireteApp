@@ -48,5 +48,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/key.properties
+*.jks
+local.properties
+.fvm/flutter_sdk
 analysis_options.yaml
 .metadata

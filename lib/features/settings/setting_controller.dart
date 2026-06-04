@@ -308,7 +308,14 @@ class SettingController extends GetxController {
   }
 
   void onLogout() async {
-    NotificationManager.instance.disableNotice();
+    // NotificationManager.instance.disableNotice();
+    // await LocalManager.instance.remove(key: PreferencesKey.token);
+    // UserManager.instance.userId = null;
+    // Get.offAllNamed(Routes.login);
+    print("=====a");
+    await NotificationManager.instance.deleteFCM();
+    print("=====b");
+
     await LocalManager.instance.remove(key: PreferencesKey.token);
     UserManager.instance.userId = null;
     Get.offAllNamed(Routes.login);
