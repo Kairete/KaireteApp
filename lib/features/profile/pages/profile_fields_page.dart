@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 
-/// Campi profilo XenForo (allineati ai custom_fields del web).
+/// Nome e cognome (custom_fields XenForo). Altri campi profilo verranno aggiunti dopo.
 class ProfileFieldsPage extends StatefulWidget {
   const ProfileFieldsPage({super.key});
 
@@ -13,8 +13,6 @@ class ProfileFieldsPage extends StatefulWidget {
 class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
-  final _residence = TextEditingController();
-  final _hometown = TextEditingController();
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
 
@@ -24,17 +22,20 @@ class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
     final fields = _auth.currentUser.value?.customFields ?? {};
     _firstName.text = fields['firstName'] ?? '';
     _lastName.text = fields['lastName'] ?? '';
-    _residence.text = fields['residence'] ?? '';
-    _hometown.text = fields['hometown'] ?? '';
   }
 
   void _save() {
     _auth.saveProfileFields({
       'firstName': _firstName.text.trim(),
       'lastName': _lastName.text.trim(),
-      'residence': _residence.text.trim(),
-      'hometown': _hometown.text.trim(),
     });
+  }
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    super.dispose();
   }
 
   @override
@@ -49,28 +50,20 @@ class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Inserisci i dati come sul sito web.',
+                  'Inserisci nome e cognome.',
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _firstName,
+                  textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: 'Nome'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _lastName,
+                  textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: 'Cognome'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _residence,
-                  decoration: const InputDecoration(labelText: 'Residenza'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _hometown,
-                  decoration: const InputDecoration(labelText: 'Città'),
                 ),
                 if (_auth.errorMessage.value.isNotEmpty) ...[
                   const SizedBox(height: 12),

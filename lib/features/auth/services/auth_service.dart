@@ -85,7 +85,7 @@ class AuthService {
       body['custom_fields[$key]'] = value;
     });
 
-    final json = await _api.post('${ApiPaths.users}$userId/', body: body);
+    final json = await _api.post('${ApiPaths.users}/$userId/', body: body);
     final err = XenforoApi.firstErrorMessage(json);
     if (err != null) throw AuthException(err);
 
