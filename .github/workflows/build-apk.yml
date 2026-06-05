@@ -2,6 +2,11 @@ name: Build APK (debug)
 
 on:
   workflow_dispatch:
+    inputs:
+      upload_ftp:
+        description: Carica Kairete-debug.apk sul server FTP
+        type: boolean
+        default: true
   push:
     branches: [main, master]
 
@@ -59,3 +64,11 @@ jobs:
           name: Kairete debug APK
           prerelease: true
           files: Kairete-debug.apk
+
+      - name: Upload APK to FTP server
+        if: ${{ secrets.FTP_HOST != '' && (github.event_name == 'push' || inputs.upload_ftp) }}
+        run: |
+          curl -T Kairete-debug.apk \
+            --ftp-create-dirs \
+            -u "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}" \
+            "ftp://${{ secrets.FTP_HOST }}${{ secrets.FTP_DIR }}/Kairete-debug.apk"
