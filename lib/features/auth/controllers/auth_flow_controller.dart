@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
@@ -83,6 +85,8 @@ class AuthFlowController extends GetxController {
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
+    } on DioException catch (e) {
+      errorMessage.value = XenforoApi.connectionMessage(e);
     } catch (_) {
       errorMessage.value = 'Errore di connessione. Riprova.';
     } finally {
@@ -109,6 +113,8 @@ class AuthFlowController extends GetxController {
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
+    } on DioException catch (e) {
+      errorMessage.value = XenforoApi.connectionMessage(e);
     } catch (_) {
       errorMessage.value = 'Errore di connessione. Riprova.';
     } finally {

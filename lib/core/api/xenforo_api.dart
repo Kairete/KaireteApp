@@ -7,8 +7,9 @@ class XenforoApi {
     _dio.options.connectTimeout = const Duration(seconds: 15);
     _dio.options.receiveTimeout = const Duration(seconds: 20);
     _dio.options.sendTimeout = const Duration(seconds: 20);
+    // Accetta 4xx così XenForo restituisce JSON con errors[] invece di DioException.
+    _dio.options.validateStatus = (status) => status != null && status < 500;
     _dio.options.headers['Accept'] = 'application/json';
-    _dio.options.headers['Content-Type'] = 'application/json';
     _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
     _applyUserHeader();
@@ -77,5 +78,26 @@ class XenforoApi {
       return first.toString();
     }
     return null;
+  }
+
+  /// Messaggio leggibile per errori di rete (timeout, DNS, certificato, ecc.).
+  static String connectionMessage(DioException error) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final apiMsg = firstErrorMessage(data);
+      if (apiMsg != null && apiMsg.isNotEmpty) return apiMsg;
+    }
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Connessione lenta o assente. Riprova.';
+      case DioExceptionType.connectionError:
+        return 'Impossibile raggiungere il server. Controlla la rete.';
+      case DioExceptionType.badCertificate:
+        return 'Certificato del server non valido.';
+      default:
+        return 'Errore di connessione. Riprova.';
+    }
   }
 }
