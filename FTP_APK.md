@@ -12,7 +12,7 @@ Repo: https://github.com/Kairete/KaireteApp
 | `FTP_HOST` | `ftp.kairete.it` | Host FTP (senza `ftp://`) |
 | `FTP_USER` | `vostro_utente` | Username FTP |
 | `FTP_PASSWORD` | *(solo nel secret)* | Password FTP |
-| `FTP_DIR` | `/public_html/download/app/` | Cartella che avete creato (inizia con `/`, finisce con `/`) |
+| `FTP_DIR` | `/home/francesco/public_html/cursor/` | Cartella APK sul server |
 
 ## 2. Caricamento automatico
 
@@ -22,7 +22,7 @@ Dopo ogni build verde, l’APK viene copiato in:
 
 Esempio URL pubblico (se la cartella è web):
 
-`https://www.kairete.it/download/app/Kairete-debug.apk`
+`https://www.kairete.it/cursor/Kairete-debug.apk` (se la cartella è pubblica sul web)
 
 ## 3. Caricamento manuale adesso (senza secret)
 
