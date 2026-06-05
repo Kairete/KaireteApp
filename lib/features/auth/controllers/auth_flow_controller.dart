@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
@@ -14,18 +16,38 @@ class AuthFlowController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final user = await _auth.restoreSession();
+      final user = await _auth.restoreSession().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () => throw TimeoutException('timeout'),
+      );
       if (user == null) {
-        Get.offAllNamed(AppRoutes.login);
+        _openLogin();
         return;
       }
       currentUser.value = user;
       _goAfterAuth(user);
-    } catch (e) {
+    } on TimeoutException {
       await _auth.logout();
-      Get.offAllNamed(AppRoutes.login);
+      _openLogin(
+        message: 'Connessione lenta. Accedi di nuovo.',
+      );
+    } catch (_) {
+      await _auth.logout();
+      _openLogin();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void skipToLogin() {
+    _auth.logout();
+    _openLogin();
+  }
+
+  void _openLogin({String? message}) {
+    if (message != null) errorMessage.value = message;
+    if (Get.currentRoute != AppRoutes.login) {
+      Get.offAllNamed(AppRoutes.login);
     }
   }
 

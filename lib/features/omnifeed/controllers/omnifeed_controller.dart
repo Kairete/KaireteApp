@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
@@ -21,8 +23,14 @@ class OmnifeedController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final feed = await _service.fetchFeed();
+      final feed = await _service.fetchFeed().timeout(
+        const Duration(seconds: 25),
+        onTimeout: () => throw TimeoutException('feed'),
+      );
       items.value = feed.items;
+    } on TimeoutException {
+      errorMessage.value =
+          'Il feed impiega troppo tempo. Controlla la rete e riprova.';
     } on OmnifeedException catch (e) {
       errorMessage.value = e.message;
     } catch (_) {

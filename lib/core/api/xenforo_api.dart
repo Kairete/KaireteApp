@@ -4,6 +4,9 @@ import 'package:kairete/config/app_config.dart';
 class XenforoApi {
   XenforoApi() {
     _dio.options.baseUrl = AppConfig.apiBaseUrl;
+    _dio.options.connectTimeout = const Duration(seconds: 15);
+    _dio.options.receiveTimeout = const Duration(seconds: 20);
+    _dio.options.sendTimeout = const Duration(seconds: 20);
     _dio.options.headers['Accept'] = 'application/json';
     _dio.options.headers['Content-Type'] = 'application/json';
     _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;

@@ -21,11 +21,17 @@ class UserAccount {
       });
     }
     return UserAccount(
-      userId: user['user_id'] as int,
+      userId: _parseUserId(user['user_id']),
       username: user['username']?.toString() ?? '',
       email: user['email']?.toString(),
       customFields: fields,
     );
+  }
+
+  static int _parseUserId(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is String) return int.parse(raw);
+    throw FormatException('user_id mancante nella risposta API');
   }
 
   bool get needsProfileFields {

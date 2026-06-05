@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 
 class SplashPage extends StatefulWidget {
@@ -20,8 +21,35 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    final auth = Get.find<AuthFlowController>();
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 24),
+              const Text(
+                'Connessione a Kairete…',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppConfig.apiBaseUrl,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              TextButton(
+                onPressed: auth.skipToLogin,
+                child: const Text('Vai al login'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
