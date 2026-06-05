@@ -39,16 +39,18 @@ class AuthFlowController extends GetxController {
     }
   }
 
-  void skipToLogin() {
-    _auth.logout();
+  Future<void> skipToLogin() async {
+    await _auth.logout();
     _openLogin();
   }
 
   void _openLogin({String? message}) {
     if (message != null) errorMessage.value = message;
-    if (Get.currentRoute != AppRoutes.login) {
-      Get.offAllNamed(AppRoutes.login);
-    }
+    Future.microtask(() {
+      if (Get.currentRoute != AppRoutes.login) {
+        Get.offAllNamed(AppRoutes.login);
+      }
+    });
   }
 
   Future<void> login(String login, String password) async {

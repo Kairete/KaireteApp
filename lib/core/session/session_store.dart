@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SessionStore {
@@ -7,12 +9,20 @@ class SessionStore {
   static const _keyUserId = 'kairete_user_id';
   static const _keyUsername = 'kairete_username';
 
-  final _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
 
   Future<int?> get userId async {
-    final raw = await _storage.read(key: _keyUserId);
-    if (raw == null || raw.isEmpty) return null;
-    return int.tryParse(raw);
+    try {
+      final raw = await _storage
+          .read(key: _keyUserId)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+      if (raw == null || raw.isEmpty) return null;
+      return int.tryParse(raw);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<String?> get username async => _storage.read(key: _keyUsername);
