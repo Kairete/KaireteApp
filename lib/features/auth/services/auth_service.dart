@@ -62,7 +62,7 @@ class AuthService {
   Future<UserAccount?> restoreSession() async {
     final userId = await SessionStore.instance.userId;
     if (userId == null) return null;
-    await AppApi.instance.applySession();
+    await AppApi.instance.applySession(userId: userId);
     return fetchMe();
   }
 
@@ -79,7 +79,8 @@ class AuthService {
     required int userId,
     required Map<String, String> customFields,
   }) async {
-    await AppApi.instance.applySession();
+    // XenForo richiede XF-Api-User = utente loggato (non 0/guest).
+    await AppApi.instance.applySession(userId: userId);
     final body = <String, dynamic>{};
     customFields.forEach((key, value) {
       body['custom_fields[$key]'] = value;
@@ -104,7 +105,7 @@ class AuthService {
       userId: account.userId,
       username: account.username,
     );
-    await AppApi.instance.applySession();
+    await AppApi.instance.applySession(userId: account.userId);
   }
 }
 

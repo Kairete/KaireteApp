@@ -1,5 +1,12 @@
 import 'package:intl/intl.dart';
 
+/// Data in stile web OmniFeed (header card).
+String formatOmnifeedHeaderDate(int? unixSeconds) {
+  if (unixSeconds == null || unixSeconds <= 0) return '';
+  final date = DateTime.fromMillisecondsSinceEpoch(unixSeconds * 1000);
+  return DateFormat('d MMM yyyy, HH:mm').format(date);
+}
+
 String formatOmnifeedDate(int? unixSeconds) {
   if (unixSeconds == null || unixSeconds <= 0) return '';
   final date = DateTime.fromMillisecondsSinceEpoch(unixSeconds * 1000);

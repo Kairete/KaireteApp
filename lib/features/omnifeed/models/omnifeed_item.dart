@@ -40,6 +40,24 @@ class OmnifeedItem {
   final String? categoryLabel;
   final String? viewUrl;
 
+  /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
+  bool get isPlainFeedPost => contentType == 'profile_post';
+
+  /// Thread, blog, gruppo, articolo, ecc.: titolo nel body sotto l'header.
+  bool get showsModuleTitle =>
+      !isPlainFeedPost && (contentTitle?.trim().isNotEmpty ?? false);
+
+  String get moduleTitle => contentTitle?.trim() ?? '';
+
+  /// Forum, blog, gruppo, ecc. accanto al nickname nell'header (stile web).
+  String? get headerModuleLabel {
+    if (isPlainFeedPost) return null;
+    final category = categoryLabel?.trim();
+    if (category != null && category.isNotEmpty) return category;
+    final label = typeLabel.trim();
+    return label.isNotEmpty ? label : null;
+  }
+
   String get displayTitle =>
       contentTitle?.trim().isNotEmpty == true
           ? contentTitle!

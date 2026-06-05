@@ -33,13 +33,14 @@ class OmnifeedPage extends StatelessWidget {
                 ],
               )
             : ListView.builder(
-                padding: const EdgeInsets.only(top: 8, bottom: 88),
+                padding: const EdgeInsets.only(bottom: 88),
                 itemCount: c.items.length,
                 itemBuilder: (_, i) {
                   final item = c.items[i];
                   return OmnifeedCard(
                     item: item,
-                    onTap: () => c.openDetail(item),
+                    onOpen: () => c.openDetail(item),
+                    onComment: () => c.openDetail(item),
                     onReact: () => c.react(item),
                   );
                 },

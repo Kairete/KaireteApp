@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
@@ -33,6 +35,8 @@ class OmnifeedController extends GetxController {
           'Il feed impiega troppo tempo. Controlla la rete e riprova.';
     } on OmnifeedException catch (e) {
       errorMessage.value = e.message;
+    } on DioException catch (e) {
+      errorMessage.value = XenforoApi.connectionMessage(e);
     } catch (_) {
       errorMessage.value = 'Impossibile caricare il feed.';
     } finally {

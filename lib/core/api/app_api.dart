@@ -8,8 +8,8 @@ class AppApi {
 
   final XenforoApi xenforo = XenforoApi();
 
-  Future<void> applySession() async {
-    final id = await SessionStore.instance.userId;
+  Future<void> applySession({int? userId}) async {
+    final id = userId ?? await SessionStore.instance.userId;
     xenforo.setUserId(id);
   }
 }
