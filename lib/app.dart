@@ -17,7 +17,7 @@ class KaireteApp extends StatelessWidget {
       initialBinding: BindingsBuilder(
         () => Get.put(AuthFlowController(), permanent: true),
       ),
-      initialRoute: AppRoutes.splash,
+      initialRoute: AppRoutes.login,
       getPages: AppPages.routes,
     );
   }

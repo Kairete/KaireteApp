@@ -9,8 +9,29 @@ class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
 
   final isLoading = false.obs;
+  final isRestoringSession = false.obs;
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
+
+  /// All'avvio: prova sessione salvata (max 8s), altrimenti resta su login.
+  Future<void> tryRestoreSession() async {
+    isRestoringSession.value = true;
+    errorMessage.value = '';
+    try {
+      final user = await _auth.restoreSession().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => null,
+      );
+      if (user != null) {
+        currentUser.value = user;
+        _goAfterAuth(user);
+      }
+    } catch (_) {
+      await _auth.logout();
+    } finally {
+      isRestoringSession.value = false;
+    }
+  }
 
   Future<void> bootstrap() async {
     isLoading.value = true;

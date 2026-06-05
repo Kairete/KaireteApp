@@ -11,7 +11,7 @@ class AppPages {
 
   static final routes = [
     GetPage(name: AppRoutes.splash, page: () => const SplashPage()),
-    GetPage(name: AppRoutes.login, page: () => LoginPage()),
+    GetPage(name: AppRoutes.login, page: () => const LoginPage()),
     GetPage(name: AppRoutes.register, page: () => const RegisterPage()),
     GetPage(
       name: AppRoutes.profileFields,
