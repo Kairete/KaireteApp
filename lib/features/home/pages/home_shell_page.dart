@@ -28,93 +28,10 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
-      appBar: AppBar(
-        backgroundColor: AppTheme.feedFooterBg,
-        foregroundColor: AppTheme.textPrimary,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        toolbarHeight: 44,
-        titleSpacing: 0,
-        shape: const Border(
-          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu, size: 20),
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, size: 20),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.search, size: 20),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-            onPressed: () {},
-          ),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, size: 20),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.badgeRed,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: CircleAvatar(
-              radius: 13,
-              backgroundColor: AppTheme.cardBorder,
-              child: Obx(() {
-                final name = _auth.currentUser.value?.username ?? '';
-                return Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                );
-              }),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Esci',
-            icon: const Icon(Icons.logout, size: 18),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-            onPressed: _auth.logout,
-          ),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _HomeTopBar(auth: _auth),
           OmnifeedFeedTabs(
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
@@ -133,5 +50,127 @@ class _HomeShellPageState extends State<HomeShellPage> {
         ],
       ),
     );
+  }
+}
+
+class _HomeTopBar extends StatelessWidget {
+  const _HomeTopBar({required this.auth});
+
+  final AuthFlowController auth;
+
+  static const _barHeight = 36.0;
+  static const _iconSize = 18.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppTheme.feedFooterBg,
+      child: SafeArea(
+        bottom: false,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+            ),
+          ),
+          child: SizedBox(
+            height: _barHeight,
+            child: Row(
+              children: [
+                _HeaderIconButton(
+                  icon: Icons.menu,
+                  onPressed: () {},
+                ),
+                const Spacer(),
+                _HeaderIconButton(
+                  icon: Icons.chat_bubble_outline,
+                  onPressed: () {},
+                ),
+                _HeaderIconButton(
+                  icon: Icons.search,
+                  onPressed: () {},
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _HeaderIconButton(
+                      icon: Icons.notifications_none,
+                      onPressed: () {},
+                    ),
+                    Positioned(
+                      right: 7,
+                      top: 6,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.badgeRed,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: CircleAvatar(
+                    radius: 11,
+                    backgroundColor: AppTheme.cardBorder,
+                    child: Obx(() {
+                      final name = auth.currentUser.value?.username ?? '';
+                      return Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                _HeaderIconButton(
+                  icon: Icons.logout,
+                  tooltip: 'Esci',
+                  onPressed: auth.logout,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = InkWell(
+      onTap: onPressed,
+      child: SizedBox(
+        width: 34,
+        height: _HomeTopBar._barHeight,
+        child: Center(
+          child: Icon(
+            icon,
+            size: _HomeTopBar._iconSize,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null) return button;
+    return Tooltip(message: tooltip!, child: button);
   }
 }
