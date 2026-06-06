@@ -1,5 +1,12 @@
 import 'package:intl/intl.dart';
 
+/// Data card feed (stile app legacy: "Mar 25, 2026 - 04:30 PM").
+String formatOmnifeedCardDate(int? unixSeconds) {
+  if (unixSeconds == null || unixSeconds <= 0) return '';
+  final date = DateTime.fromMillisecondsSinceEpoch(unixSeconds * 1000);
+  return DateFormat('MMM d, yyyy - hh:mm a').format(date);
+}
+
 /// Data in stile web OmniFeed (header card).
 String formatOmnifeedHeaderDate(int? unixSeconds) {
   if (unixSeconds == null || unixSeconds <= 0) return '';

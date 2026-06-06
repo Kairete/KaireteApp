@@ -1,9 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
-/// Card feed in stile web: header grigio, body bianco, footer grigio.
+/// Card feed in stile app legacy (screenshot Kairete).
 class OmnifeedCard extends StatelessWidget {
   const OmnifeedCard({
     super.key,
@@ -20,164 +21,199 @@ class OmnifeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nickname = item.author?.username ?? item.author?.label ?? '';
+    final author = item.author;
+    final nickname = author?.username ?? author?.label ?? '';
 
-    return Material(
+    return Container(
       color: Colors.white,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            InkWell(
-              onTap: onOpen,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(
-                    nickname: nickname,
-                    date: formatOmnifeedHeaderDate(item.itemDate),
-                    moduleLabel: item.headerModuleLabel,
-                  ),
-                  _Body(item: item),
-                ],
-              ),
-            ),
-            _Footer(
-              commentCount: item.commentCount,
-              reactionScore: item.reactionScore,
-              onComment: onComment ?? onOpen,
-              onReact: onReact,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.nickname,
-    required this.date,
-    this.moduleLabel,
-  });
-
-  final String nickname;
-  final String date;
-  final String? moduleLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppTheme.headerBg,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (nickname.isNotEmpty || (moduleLabel?.isNotEmpty ?? false))
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                runSpacing: 2,
-                children: [
-                  if (nickname.isNotEmpty)
-                    Text(
-                      nickname,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: AppTheme.textPrimary,
-                        height: 1.25,
-                      ),
-                    ),
-                  if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
-                    const Text(
-                      '›',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: AppTheme.textSecondary,
-                        height: 1.25,
-                      ),
-                    ),
-                    Text(
-                      moduleLabel!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 15,
-                        color: AppTheme.textPrimary,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            if (date.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                  height: 1.25,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Body extends StatelessWidget {
-  const _Body({required this.item});
-
-  final OmnifeedItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = item.displayBody;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      margin: const EdgeInsets.only(bottom: 1),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (item.showsModuleTitle) ...[
-            Text(
-              item.moduleTitle,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                color: Colors.black,
-                height: 1.3,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Avatar(url: author?.avatarUrl, name: author?.label),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _AuthorLine(
+                        nickname: nickname,
+                        moduleLabel: item.headerModuleLabel,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        formatOmnifeedCardDate(item.itemDate),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _MenuButton(),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: onOpen,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.showsModuleTitle) ...[
+                    Text(
+                      item.moduleTitle,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.accent,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    item.displayBody,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      color: Colors.black,
+                      height: 1.35,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: onOpen,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.linkBlue,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Vedi dettaglio',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            if (body.isNotEmpty) const SizedBox(height: 10),
-          ],
-          if (body.isNotEmpty)
-            Text(
-              body,
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppTheme.textPrimary,
-                height: 1.45,
-              ),
-            ),
+          ),
+          _ActionBar(
+            commentCount: item.commentCount,
+            reactionScore: item.reactionScore,
+            onComment: onComment ?? onOpen,
+            onReact: onReact,
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 }
 
-class _Footer extends StatelessWidget {
-  const _Footer({
+class _AuthorLine extends StatelessWidget {
+  const _AuthorLine({required this.nickname, this.moduleLabel});
+
+  final String nickname;
+  final String? moduleLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 16, height: 1.25),
+        children: [
+          TextSpan(
+            text: nickname,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.authorName,
+            ),
+          ),
+          if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
+            const WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2),
+                child: Icon(
+                  Icons.play_arrow,
+                  size: 18,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+            TextSpan(
+              text: moduleLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({this.url, this.name});
+
+  final String? url;
+  final String? name;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = (name?.isNotEmpty == true) ? name![0].toUpperCase() : '?';
+    if (url != null && url!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundImage: CachedNetworkImageProvider(url!),
+      );
+    }
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: AppTheme.primary.withOpacity(0.12),
+      child: Text(initial, style: const TextStyle(color: AppTheme.primary)),
+    );
+  }
+}
+
+class _MenuButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.cardBorder),
+        borderRadius: BorderRadius.circular(4),
+        color: AppTheme.feedFooterBg,
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.more_horiz, size: 18, color: AppTheme.textPrimary),
+          Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.textPrimary),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({
     required this.commentCount,
     required this.reactionScore,
     this.onComment,
@@ -191,56 +227,80 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasReactions = reactionScore > 0;
-
-    return ColoredBox(
-      color: AppTheme.footerBg,
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            TextButton.icon(
-              onPressed: onComment,
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.textPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                minimumSize: const Size(0, 48),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              icon: const Icon(Icons.chat_bubble_outline, size: 18),
-              label: Text(
-                commentCount > 0 ? 'Commenti ($commentCount)' : 'Commenti',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppTheme.feedFooterBg,
+        border: Border.all(color: Colors.grey.shade400, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _FeedActionButton(
+              icon: Icons.reply,
+              label: '$commentCount Risposte',
+              onTap: onComment,
             ),
-            Expanded(
-              child: Center(
-                child: TextButton.icon(
-                  onPressed: onReact,
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        hasReactions ? AppTheme.primary : AppTheme.textPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    minimumSize: const Size(0, 48),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  icon: Icon(
-                    hasReactions ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    hasReactions ? 'Mi piace ($reactionScore)' : 'Mi piace',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: hasReactions ? AppTheme.primary : AppTheme.textPrimary,
-                    ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FeedActionButton(
+              icon: Icons.thumb_up_outlined,
+              label: reactionScore > 0 ? '$reactionScore Mi piace' : 'Mi piace',
+              onTap: onReact,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedActionButton extends StatelessWidget {
+  const _FeedActionButton({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.primary,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF0F4A35)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
