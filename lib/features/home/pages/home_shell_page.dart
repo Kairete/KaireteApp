@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
@@ -103,7 +104,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
           Expanded(
             child: _tabIndex == 0
                 ? OmnifeedPage()
-                : Center(
+                : _tabIndex == 1
+                    ? BlogListPage()
+                    : Center(
                     child: Text(
                       'Prossimamente',
                       style: TextStyle(color: AppTheme.textSecondary),

@@ -12,4 +12,9 @@ class ApiPaths {
   static const newsfeedCommentReplies = 'api/newsfeed-comments/';
   static const profilePosts = 'api/profile-posts';
   static const attachmentsNewKey = 'api/attachments/new-key';
+
+  // Kairete Blog (XenForo REST)
+  static const blogEntries = 'api/blog-entries';
+  static const blogCategories = 'api/blog-categories';
+  static const blogs = 'api/blogs/';
 }
