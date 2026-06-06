@@ -11,7 +11,9 @@ class AppTheme {
   static const Color textPrimary = Color(0xFF101840);
   static const Color textSecondary = Color(0xFF696F8C);
   static const Color composeBg = Color(0xFFEEF6FD);
-  static const Color feedFooterBg = Color(0xFFE8EAED);
+  static const Color feedFooterBg = Color(0xFFF5F5F5);
+  /// Fascia grigia header/footer di ogni card nel feed (legacy: grey.shade200 / #F5F5F5).
+  static const Color feedItemChromeBg = Color(0xFFEEEEEE);
   static const Color linkBlue = Color(0xFF4A90E2);
   static const Color badgeRed = Color(0xFFE53935);
   static const Color authorName = Color(0xFF1A237E);
