@@ -39,35 +39,38 @@ class OmnifeedCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Avatar(url: author?.avatarUrl, name: author?.label),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _AuthorLine(
-                        nickname: nickname,
-                        moduleLabel: item.headerModuleLabel,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        formatOmnifeedCardDate(item.itemDate),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary,
+          ColoredBox(
+            color: AppTheme.feedFooterBg,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _Avatar(url: author?.avatarUrl, name: author?.label),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AuthorLine(
+                          nickname: nickname,
+                          moduleLabel: item.headerModuleLabel,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          formatOmnifeedCardDate(item.itemDate),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _MenuButton(),
-              ],
+                  _MenuButton(),
+                ],
+              ),
             ),
           ),
           _divider,
@@ -142,7 +145,7 @@ class _AuthorLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 16, height: 1.25),
+        style: const TextStyle(fontSize: 14, height: 1.2),
         children: [
           TextSpan(
             text: nickname,
@@ -158,7 +161,7 @@ class _AuthorLine extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 2),
                 child: Icon(
                   Icons.play_arrow,
-                  size: 18,
+                  size: 15,
                   color: AppTheme.primary,
                 ),
               ),
@@ -188,12 +191,12 @@ class _Avatar extends StatelessWidget {
     final initial = (name?.isNotEmpty == true) ? name![0].toUpperCase() : '?';
     if (url != null && url!.isNotEmpty) {
       return CircleAvatar(
-        radius: 18,
+        radius: 14,
         backgroundImage: CachedNetworkImageProvider(url!),
       );
     }
     return CircleAvatar(
-      radius: 18,
+      radius: 14,
       backgroundColor: AppTheme.primary.withOpacity(0.12),
       child: Text(initial, style: const TextStyle(color: AppTheme.primary)),
     );
@@ -204,17 +207,17 @@ class _MenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.cardBorder),
         borderRadius: BorderRadius.circular(4),
-        color: AppTheme.feedFooterBg,
+        color: Colors.white,
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.more_horiz, size: 18, color: AppTheme.textPrimary),
-          Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.textPrimary),
+          Icon(Icons.more_horiz, size: 16, color: AppTheme.textPrimary),
+          Icon(Icons.arrow_drop_down, size: 16, color: AppTheme.textPrimary),
         ],
       ),
     );
@@ -236,7 +239,7 @@ class _ActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.feedFooterBg,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: [
           Expanded(
