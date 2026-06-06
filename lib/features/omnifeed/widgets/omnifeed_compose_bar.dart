@@ -8,8 +8,13 @@ class OmnifeedComposeBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppTheme.composeBg,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppTheme.composeBg,
+        border: Border(
+          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+        ),
+      ),
       child: Column(
         children: [
           InkWell(

@@ -19,19 +19,28 @@ class OmnifeedCard extends StatelessWidget {
   final VoidCallback? onComment;
   final VoidCallback? onReact;
 
+  static const _divider = Divider(
+    height: 1,
+    thickness: 1,
+    color: AppTheme.cardBorder,
+  );
+
   @override
   Widget build(BuildContext context) {
     final author = item.author;
     final nickname = author?.username ?? author?.label ?? '';
 
     return Container(
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 1),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppTheme.cardBorder, width: 1),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -61,10 +70,11 @@ class OmnifeedCard extends StatelessWidget {
               ],
             ),
           ),
+          _divider,
           InkWell(
             onTap: onOpen,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -110,13 +120,12 @@ class OmnifeedCard extends StatelessWidget {
               ),
             ),
           ),
+          _divider,
           _ActionBar(
             commentCount: item.commentCount,
-            reactionScore: item.reactionScore,
             onComment: onComment ?? onOpen,
             onReact: onReact,
           ),
-          const SizedBox(height: 12),
         ],
       ),
     );
@@ -215,40 +224,49 @@ class _MenuButton extends StatelessWidget {
 class _ActionBar extends StatelessWidget {
   const _ActionBar({
     required this.commentCount,
-    required this.reactionScore,
     this.onComment,
     this.onReact,
   });
 
   final int commentCount;
-  final int reactionScore;
   final VoidCallback? onComment;
   final VoidCallback? onReact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppTheme.feedFooterBg,
-        border: Border.all(color: Colors.grey.shade400, width: 0.5),
-      ),
+      color: AppTheme.feedFooterBg,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
       child: Row(
         children: [
           Expanded(
             child: _FeedActionButton(
-              icon: Icons.reply,
-              label: '$commentCount Risposte',
               onTap: onComment,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.reply, color: Colors.white, size: 18),
+                  if (commentCount > 0) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '$commentCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: _FeedActionButton(
-              icon: Icons.thumb_up_outlined,
-              label: reactionScore > 0 ? '$reactionScore Mi piace' : 'Mi piace',
               onTap: onReact,
+              child: const Icon(Icons.thumb_up_outlined, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -259,13 +277,11 @@ class _ActionBar extends StatelessWidget {
 
 class _FeedActionButton extends StatelessWidget {
   const _FeedActionButton({
-    required this.icon,
-    required this.label,
+    required this.child,
     this.onTap,
   });
 
-  final IconData icon;
-  final String label;
+  final Widget child;
   final VoidCallback? onTap;
 
   @override
@@ -282,25 +298,7 @@ class _FeedActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: const Color(0xFF0F4A35)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 18),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: Center(child: child),
         ),
       ),
     );

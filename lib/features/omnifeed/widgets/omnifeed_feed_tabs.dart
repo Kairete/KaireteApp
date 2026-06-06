@@ -20,8 +20,13 @@ class OmnifeedFeedTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Colors.white,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+        ),
+      ),
       child: Row(
         children: List.generate(_tabs.length, (i) {
           final tab = _tabs[i];

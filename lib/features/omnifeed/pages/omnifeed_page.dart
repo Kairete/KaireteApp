@@ -33,7 +33,7 @@ class OmnifeedPage extends StatelessWidget {
                 ],
               )
             : ListView.builder(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.only(bottom: 16),
                 itemCount: c.items.length,
                 itemBuilder: (_, i) {
                   final item = c.items[i];

@@ -29,9 +29,13 @@ class _HomeShellPageState extends State<HomeShellPage> {
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
       appBar: AppBar(
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.headerBg,
+        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: const Border(
+          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () {},
@@ -64,12 +68,16 @@ class _HomeShellPageState extends State<HomeShellPage> {
             padding: const EdgeInsets.only(right: 4),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.white24,
+              backgroundColor: AppTheme.cardBorder,
               child: Obx(() {
                 final name = _auth.currentUser.value?.username ?? '';
                 return Text(
                   name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 );
               }),
             ),
