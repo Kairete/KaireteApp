@@ -1,35 +1,32 @@
-# APK sul vostro server FTP
+# APK su kairete.it (FTP automatico)
 
-**Non inviate password FTP in chat** (né a Cursor né ad altri). Usate i Secret di GitHub.
+Dopo ogni build riuscita su GitHub Actions, l’APK viene caricato in:
 
-## 1. Configurate i secret (una volta)
+| | |
+|---|---|
+| **FTP** | `/public_html/Kairete-debug.apk` |
+| **URL pubblico** | https://www.kairete.it/Kairete-debug.apk |
+
+Host e percorso sono già nel workflow CI. Servono solo **2 secret** su GitHub.
+
+## Secret da configurare (una volta)
 
 Repo: https://github.com/Kairete/KaireteApp  
 **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
-| Nome secret | Esempio | Cosa mettere |
-|-------------|---------|----------------|
-| `FTP_HOST` | `ftp.kairete.it` | Host FTP (senza `ftp://`) |
-| `FTP_USER` | `vostro_utente` | Username FTP |
-| `FTP_PASSWORD` | *(solo nel secret)* | Password FTP |
-| `FTP_DIR` | `/home/francesco/public_html/cursor/` | Cartella APK sul server |
+| Nome secret | Valore |
+|-------------|--------|
+| `FTP_USER` | `admin@kairete.it` |
+| `FTP_PASSWORD` | *(password FTP — non in chat)* |
 
-## 2. Caricamento automatico
+I vecchi secret `FTP_HOST` e `FTP_DIR` **non servono più** (host e cartella sono fissi nel workflow).
 
-Dopo ogni build verde, l’APK viene copiato in:
+## Quando parte l’upload
 
-`FTP_DIR` + `Kairete-debug.apk`
+- **Automatico** ad ogni push su `main` / `master`
+- **Manuale**: Actions → Build APK (debug) → Run workflow (upload FTP spuntato)
 
-Esempio URL pubblico (se la cartella è web):
+## Caricamento manuale (fallback)
 
-`https://www.kairete.it/cursor/Kairete-debug.apk` (se la cartella è pubblica sul web)
-
-## 3. Caricamento manuale adesso (senza secret)
-
-1. Scaricate: https://github.com/Kairete/KaireteApp/releases/latest  
-2. FileZilla → cartella che avete creato → caricate `Kairete-debug.apk`
-
-## 4. Forzare upload FTP da GitHub
-
-**Actions** → **Build APK (debug)** → **Run workflow**  
-(spuntate upload FTP se compare l’opzione)
+1. Scaricate da https://github.com/Kairete/KaireteApp/releases/latest  
+2. Caricate `Kairete-debug.apk` in `/public_html/` via FileZilla / WinSCP

@@ -17,19 +17,16 @@ Avviare una build: **Actions** → **Build APK (debug)** → **Run workflow**.
 
 Serve un push del codice aggiornato su branch `main` (o avvio manuale del workflow).
 
-### 2) FTP su kairete.it (opzionale)
+### 2) FTP su kairete.it (automatico)
 
-Se volete il file sul vostro sito (es. `https://www.kairete.it/download/Kairete-debug.apk`):
+Dopo ogni build, l’APK finisce su **https://www.kairete.it/Kairete-debug.apk**
 
-1. GitHub repo → **Settings** → **Secrets and variables** → **Actions**
-2. Aggiungete (solo voi vedete le password):
-   - `FTP_HOST` — es. `ftp.kairete.it`
-   - `FTP_USER`
-   - `FTP_PASSWORD`
-   - `FTP_DIR` — cartella sul server, es. `/public_html/download/`
-3. Rilanciate il workflow: l’APK viene caricato in automatico.
+Configurate solo 2 secret su GitHub → **Settings** → **Secrets and variables** → **Actions**:
 
-Non inviate password FTP in chat con l’AI.
+- `FTP_USER` — es. `admin@kairete.it`
+- `FTP_PASSWORD` — password FTP (solo lì, non in chat)
+
+Dettagli: [FTP_APK.md](FTP_APK.md)
 
 ## Sul telefono
 

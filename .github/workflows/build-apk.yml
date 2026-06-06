@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+env:
+  FTP_HOST: 178.132.0.4
+  FTP_REMOTE_PATH: /public_html/Kairete-debug.apk
+  APK_PUBLIC_URL: https://www.kairete.it/Kairete-debug.apk
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -67,18 +72,16 @@ jobs:
 
       - name: Upload APK to FTP server
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
-        continue-on-error: true
         run: |
-          HOST="${{ secrets.FTP_HOST }}"
-          HOST="${HOST#ftp://}"
-          HOST="${HOST%/}"
-          if [ -z "$HOST" ]; then
-            echo "::error::Secret FTP_HOST mancante o vuoto"
+          if [ -z "${{ secrets.FTP_USER }}" ] || [ -z "${{ secrets.FTP_PASSWORD }}" ]; then
+            echo "::error::Configurate i secret FTP_USER e FTP_PASSWORD su GitHub (Settings → Secrets → Actions)"
             exit 1
           fi
+          echo "Upload → ftp://${FTP_HOST}${FTP_REMOTE_PATH}"
           curl -v --fail --show-error \
             -T Kairete-debug.apk \
             --ftp-create-dirs \
             --ftp-pasv \
             -u "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}" \
-            "ftp://${HOST}${{ secrets.FTP_DIR }}/Kairete-debug.apk"
+            "ftp://${FTP_HOST}${FTP_REMOTE_PATH}"
+          echo "APK pubblicato: ${APK_PUBLIC_URL}"
