@@ -91,7 +91,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
           OmnifeedComposeBar(onTapCompose: feed.openCompose),
           Expanded(
             child: _tabIndex == 0
-                ? const OmnifeedPage()
+                ? OmnifeedPage()
                 : Center(
                     child: Text(
                       'Prossimamente',
