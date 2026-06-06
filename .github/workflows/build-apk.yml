@@ -67,8 +67,18 @@ jobs:
 
       - name: Upload APK to FTP server
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
+        continue-on-error: true
         run: |
-          curl -T Kairete-debug.apk \
+          HOST="${{ secrets.FTP_HOST }}"
+          HOST="${HOST#ftp://}"
+          HOST="${HOST%/}"
+          if [ -z "$HOST" ]; then
+            echo "::error::Secret FTP_HOST mancante o vuoto"
+            exit 1
+          fi
+          curl -v --fail --show-error \
+            -T Kairete-debug.apk \
             --ftp-create-dirs \
+            --ftp-pasv \
             -u "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}" \
-            "ftp://${{ secrets.FTP_HOST }}${{ secrets.FTP_DIR }}/Kairete-debug.apk"
+            "ftp://${HOST}${{ secrets.FTP_DIR }}/Kairete-debug.apk"
