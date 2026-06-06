@@ -29,33 +29,53 @@ class _HomeShellPageState extends State<HomeShellPage> {
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
       appBar: AppBar(
-        backgroundColor: AppTheme.headerBg,
+        backgroundColor: AppTheme.feedFooterBg,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
+        toolbarHeight: 44,
+        titleSpacing: 0,
         shape: const Border(
           bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.menu),
+          icon: const Icon(Icons.menu, size: 20),
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           onPressed: () {},
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.chat_bubble_outline), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, size: 20),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.search, size: 20),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
+            onPressed: () {},
+          ),
           Stack(
             clipBehavior: Clip.none,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_none),
+                icon: const Icon(Icons.notifications_none, size: 20),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
                 onPressed: () {},
               ),
               Positioned(
-                right: 10,
-                top: 10,
+                right: 8,
+                top: 8,
                 child: Container(
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   decoration: const BoxDecoration(
                     color: AppTheme.badgeRed,
                     shape: BoxShape.circle,
@@ -65,9 +85,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 2),
             child: CircleAvatar(
-              radius: 16,
+              radius: 13,
               backgroundColor: AppTheme.cardBorder,
               child: Obx(() {
                 final name = _auth.currentUser.value?.username ?? '';
@@ -75,7 +95,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
                   name.isNotEmpty ? name[0].toUpperCase() : '?',
                   style: const TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 );
@@ -84,7 +104,10 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
           IconButton(
             tooltip: 'Esci',
-            icon: const Icon(Icons.logout, size: 20),
+            icon: const Icon(Icons.logout, size: 18),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
             onPressed: _auth.logout,
           ),
         ],

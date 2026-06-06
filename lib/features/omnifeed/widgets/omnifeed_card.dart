@@ -246,7 +246,7 @@ class _ActionBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.reply, color: Colors.white, size: 18),
+                  const Icon(Icons.mode_comment_outlined, color: Colors.white, size: 18),
                   if (commentCount > 0) ...[
                     const SizedBox(width: 6),
                     Text(

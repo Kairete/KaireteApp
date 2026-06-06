@@ -37,14 +37,14 @@ class OmnifeedFeedTabs extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
                       Icon(
                         tab.icon,
                         color: AppTheme.primary,
-                        size: 22,
+                        size: 20,
                       ),
                       if (tab.badge > 0)
                         Positioned(
@@ -73,19 +73,19 @@ class OmnifeedFeedTabs extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     tab.label,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: active ? FontWeight.w600 : FontWeight.w500,
                       color: AppTheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 5),
                   Container(
                     height: 3,
                     color: active ? AppTheme.primary : Colors.transparent,
