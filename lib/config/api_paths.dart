@@ -4,6 +4,7 @@ class ApiPaths {
   static const auth = 'api/auth';
   static const users = 'api/users';
   static const me = 'api/me';
+  static const alerts = 'api/alerts/';
 
   // OmniFeed / newsfeed (XenForo add-on API)
   static const newsfeed = 'api/newsfeed';

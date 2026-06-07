@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
+import 'package:kairete/features/alerts/pages/alerts_page.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/forum/pages/forum_list_page.dart';
@@ -28,6 +30,17 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
+    if (!Get.isRegistered<AlertsBadgeController>()) {
+      Get.put(AlertsBadgeController(), permanent: true);
+    }
+  }
+
+  void _openAlerts() {
+    Get.to(() => const AlertsPage())?.then((_) {
+      if (Get.isRegistered<AlertsBadgeController>()) {
+        Get.find<AlertsBadgeController>().refresh();
+      }
+    });
   }
 
   @override
@@ -120,27 +133,45 @@ class _HomeShellPageState extends State<HomeShellPage> {
             icon: const Icon(Icons.search),
             onPressed: () {},
           ),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.badgeRed,
-                    shape: BoxShape.circle,
-                  ),
+          Obx(() {
+            final badge = Get.isRegistered<AlertsBadgeController>()
+                ? Get.find<AlertsBadgeController>().unreadCount.value
+                : 0;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_none),
+                  onPressed: _openAlerts,
                 ),
-              ),
-            ],
-          ),
+                if (badge > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 18),
+                      decoration: BoxDecoration(
+                        color: AppTheme.badgeRed,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        badge > 99 ? '99+' : '$badge',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: CircleAvatar(
