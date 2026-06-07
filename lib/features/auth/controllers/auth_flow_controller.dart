@@ -28,7 +28,9 @@ class AuthFlowController extends GetxController {
       if (user != null) {
         currentUser.value = user;
         AppApi.instance.bindSession(user.userId);
+        isRestoringSession.value = false;
         _goAfterAuth(user);
+        return;
       }
     } catch (_) {
       await _auth.logout();
@@ -51,7 +53,9 @@ class AuthFlowController extends GetxController {
       }
       currentUser.value = user;
       AppApi.instance.bindSession(user.userId);
+      isLoading.value = false;
       _goAfterAuth(user);
+      return;
     } on TimeoutException {
       await _auth.logout();
       _openLogin(
@@ -86,6 +90,7 @@ class AuthFlowController extends GetxController {
       final user = await _auth.login(login: login, password: password);
       currentUser.value = user;
       AppApi.instance.bindSession(user.userId);
+      isLoading.value = false;
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
@@ -94,7 +99,9 @@ class AuthFlowController extends GetxController {
     } catch (_) {
       errorMessage.value = 'Errore di connessione. Riprova.';
     } finally {
-      isLoading.value = false;
+      if (Get.currentRoute == AppRoutes.login) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -115,6 +122,7 @@ class AuthFlowController extends GetxController {
       );
       currentUser.value = user;
       AppApi.instance.bindSession(user.userId);
+      isLoading.value = false;
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
@@ -123,7 +131,9 @@ class AuthFlowController extends GetxController {
     } catch (_) {
       errorMessage.value = 'Errore di connessione. Riprova.';
     } finally {
-      isLoading.value = false;
+      if (Get.currentRoute == AppRoutes.register) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -138,13 +148,16 @@ class AuthFlowController extends GetxController {
         customFields: fields,
       );
       currentUser.value = updated;
-      Get.offAllNamed(AppRoutes.home);
+      isLoading.value = false;
+      _goHome();
     } on AuthException catch (e) {
       errorMessage.value = e.message;
     } catch (_) {
       errorMessage.value = 'Salvataggio non riuscito.';
     } finally {
-      isLoading.value = false;
+      if (Get.currentRoute == AppRoutes.profileFields) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -155,10 +168,18 @@ class AuthFlowController extends GetxController {
   }
 
   void _goAfterAuth(UserAccount user) {
-    if (user.needsProfileFields) {
-      Get.offAllNamed(AppRoutes.profileFields);
-    } else {
-      Get.offAllNamed(AppRoutes.home);
-    }
+    final route =
+        user.needsProfileFields ? AppRoutes.profileFields : AppRoutes.home;
+    _navigateTo(route);
+  }
+
+  void _goHome() => _navigateTo(AppRoutes.home);
+
+  void _navigateTo(String route) {
+    Future.microtask(() {
+      if (Get.currentRoute != route) {
+        Get.offAllNamed(route);
+      }
+    });
   }
 }

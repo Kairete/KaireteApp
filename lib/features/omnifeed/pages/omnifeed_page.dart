@@ -5,11 +5,7 @@ import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 
 class OmnifeedPage extends StatelessWidget {
-  OmnifeedPage({super.key}) {
-    if (!Get.isRegistered<OmnifeedController>()) {
-      Get.put(OmnifeedController());
-    }
-  }
+  const OmnifeedPage({super.key});
 
   @override
   Widget build(BuildContext context) {

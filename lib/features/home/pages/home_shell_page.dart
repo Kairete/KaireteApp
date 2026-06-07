@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
@@ -30,9 +31,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
-    if (!Get.isRegistered<AlertsBadgeController>()) {
-      Get.put(AlertsBadgeController(), permanent: true);
-    }
+    HomeBinding().dependencies();
   }
 
   void _openAlerts() {
@@ -45,9 +44,6 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<OmnifeedController>()) {
-      Get.put(OmnifeedController());
-    }
     final feed = Get.find<OmnifeedController>();
 
     return Scaffold(
@@ -203,7 +199,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
           OmnifeedComposeBar(onRefresh: feed.loadFeed),
           Expanded(
             child: _tabIndex == 0
-                ? OmnifeedPage()
+                ? const OmnifeedPage()
                 : _tabIndex == 1
                     ? BlogListPage()
                     : Center(

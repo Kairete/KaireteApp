@@ -83,7 +83,9 @@ class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
                           if (user != null) {
                             AppApi.instance.bindSession(user.userId);
                           }
-                          Get.offAllNamed(AppRoutes.home);
+                          Future.microtask(
+                            () => Get.offAllNamed(AppRoutes.home),
+                          );
                         },
                   child: const Text('Salta per ora'),
                 ),
