@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
@@ -26,6 +27,7 @@ class AuthFlowController extends GetxController {
       );
       if (user != null) {
         currentUser.value = user;
+        AppApi.instance.bindSession(user.userId);
         _goAfterAuth(user);
       }
     } catch (_) {
@@ -48,6 +50,7 @@ class AuthFlowController extends GetxController {
         return;
       }
       currentUser.value = user;
+      AppApi.instance.bindSession(user.userId);
       _goAfterAuth(user);
     } on TimeoutException {
       await _auth.logout();
@@ -82,6 +85,7 @@ class AuthFlowController extends GetxController {
     try {
       final user = await _auth.login(login: login, password: password);
       currentUser.value = user;
+      AppApi.instance.bindSession(user.userId);
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
@@ -110,6 +114,7 @@ class AuthFlowController extends GetxController {
         dateOfBirth: dob,
       );
       currentUser.value = user;
+      AppApi.instance.bindSession(user.userId);
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;

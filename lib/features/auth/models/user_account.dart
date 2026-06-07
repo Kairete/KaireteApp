@@ -12,7 +12,9 @@ class UserAccount {
   final Map<String, String> customFields;
 
   factory UserAccount.fromApi(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>? ?? json;
+    final user = json['user'] as Map<String, dynamic>? ??
+        json['me'] as Map<String, dynamic>? ??
+        json;
     final rawFields = user['custom_fields'];
     final fields = <String, String>{};
     if (rawFields is Map) {

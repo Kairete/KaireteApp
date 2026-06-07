@@ -12,12 +12,14 @@ class OmnifeedCard extends StatelessWidget {
     this.onOpen,
     this.onComment,
     this.onReact,
+    this.comments = const [],
   });
 
   final OmnifeedItem item;
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
-  final VoidCallback? onReact;
+  final Future<void> Function(int reactionId)? onReact;
+  final List<Widget> comments;
 
   @override
   Widget build(BuildContext context) {
@@ -89,9 +91,12 @@ class OmnifeedCard extends StatelessWidget {
       ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
+        likeCount: item.reactionScore,
+        visitorReactionId: item.visitorReactionId,
         onComment: onComment ?? onOpen,
         onReact: onReact,
       ),
+      comments: comments,
     );
   }
 }

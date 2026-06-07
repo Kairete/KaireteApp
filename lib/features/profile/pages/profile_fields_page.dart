@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/api/app_api.dart';
+import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 
 /// Nome e cognome (custom_fields XenForo). Altri campi profilo verranno aggiunti dopo.
@@ -73,6 +75,19 @@ class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
                   ),
                 ],
                 const Spacer(),
+                TextButton(
+                  onPressed: _auth.isLoading.value
+                      ? null
+                      : () {
+                          final user = _auth.currentUser.value;
+                          if (user != null) {
+                            AppApi.instance.bindSession(user.userId);
+                          }
+                          Get.offAllNamed(AppRoutes.home);
+                        },
+                  child: const Text('Salta per ora'),
+                ),
+                const SizedBox(height: 8),
                 FilledButton(
                   onPressed: _auth.isLoading.value ? null : _save,
                   child: Text(

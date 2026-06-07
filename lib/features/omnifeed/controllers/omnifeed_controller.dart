@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/blog/pages/blog_detail_page.dart';
+import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
@@ -44,16 +47,52 @@ class OmnifeedController extends GetxController {
     }
   }
 
-  Future<void> react(OmnifeedItem item) async {
+  Future<void> react(OmnifeedItem item, {int reactionId = 1}) async {
     try {
-      await _service.reactToItem(itemId: item.itemId);
+      final action = await _service.reactToItem(item: item, reactionId: reactionId);
+      _bumpScore(item.itemId, action);
+      AppToast.success(
+        action == 'delete' ? 'Reazione rimossa.' : 'Reazione inviata.',
+      );
       await loadFeed();
     } on OmnifeedException catch (e) {
-      Get.snackbar('Errore', e.message);
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
     }
   }
 
+  void _bumpScore(int itemId, String action) {
+    final index = items.indexWhere((entry) => entry.itemId == itemId);
+    if (index < 0) return;
+    final delta = action == 'delete' ? -1 : 1;
+    final current = items[index];
+    final next = current.reactionScore + delta;
+    items[index] = current.copyWith(reactionScore: next < 0 ? 0 : next);
+    items.refresh();
+  }
+
   void openDetail(OmnifeedItem item) {
+    final contentId = item.contentId;
+    switch (item.contentType) {
+      case 'thread':
+        if (contentId != null && contentId > 0) {
+          Get.to(
+            () => ThreadDetailPage(
+              threadId: contentId,
+              forumTitle: item.categoryLabel ?? item.moduleTitle,
+            ),
+          );
+          return;
+        }
+        break;
+      case 'ubs_blog_entry':
+        if (contentId != null && contentId > 0) {
+          Get.to(() => BlogDetailPage(entryId: contentId));
+          return;
+        }
+        break;
+    }
     Get.to(() => OmnifeedDetailPage(item: item));
   }
 

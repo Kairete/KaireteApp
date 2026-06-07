@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_detail_controller.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 
 class OmnifeedDetailPage extends StatefulWidget {
@@ -46,7 +48,23 @@ class _OmnifeedDetailPageState extends State<OmnifeedDetailPage> {
                 children: [
                   OmnifeedCard(
                     item: item,
-                    onReact: c.react,
+                    onReact: (reactionId) => c.react(reactionId: reactionId),
+                    comments: c.comments
+                        .map(
+                          (comment) => FeedCommentTile(
+                            authorName: comment.author?.label ??
+                                comment.author?.username ??
+                                '',
+                            avatarUrl: comment.author?.avatarUrl,
+                            dateLabel:
+                                formatOmnifeedCardDate(comment.commentDate),
+                            message: comment.messagePlainText,
+                            likeCount: comment.reactionScore,
+                            visitorReactionId: comment.visitorReactionId,
+                            showCommentButton: false,
+                          ),
+                        )
+                        .toList(),
                   ),
                   if (c.errorMessage.value.isNotEmpty)
                     Padding(
@@ -56,23 +74,6 @@ class _OmnifeedDetailPageState extends State<OmnifeedDetailPage> {
                         style: const TextStyle(color: Colors.red),
                       ),
                     ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-                    child: Text(
-                      'Commenti',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  ...c.comments.map(
-                    (comment) => ListTile(
-                      title: Text(comment.author?.label ?? ''),
-                      subtitle: Text(comment.messagePlainText),
-                      trailing: Text('${comment.reactionScore}'),
-                    ),
-                  ),
                 ],
               ),
             ),

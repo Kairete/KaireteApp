@@ -1,12 +1,14 @@
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/core/session/session_store.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 
 class OmnifeedService {
   XenforoApi get _api => AppApi.instance.xenforo;
+  final ReactionService _reactions = ReactionService();
 
   Future<OmnifeedFeed> fetchFeed() async {
     await AppApi.instance.applySession();
@@ -55,16 +57,15 @@ class OmnifeedService {
     _throwIfError(json);
   }
 
-  Future<void> reactToItem({
-    required int itemId,
+  Future<String> reactToItem({
+    required OmnifeedItem item,
     int reactionId = 1,
   }) async {
-    await AppApi.instance.applySession();
-    final json = await _api.post(
-      '${ApiPaths.newsfeedItems}$itemId/react',
-      body: {'reaction_id': reactionId},
-    );
-    _throwIfError(json);
+    try {
+      return await _reactions.reactOmnifeedItem(item, reactionId: reactionId);
+    } on ReactionException catch (e) {
+      throw OmnifeedException(e.message);
+    }
   }
 
   void _throwIfError(Map<String, dynamic> json) {

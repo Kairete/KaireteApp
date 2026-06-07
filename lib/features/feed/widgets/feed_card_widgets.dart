@@ -1,6 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/core/widgets/feed_reaction_icon.dart';
+import 'package:kairete/core/widgets/reaction_picker.dart';
 
 const feedCardDivider = Divider(
   height: 1,
@@ -14,11 +17,13 @@ class FeedCardShell extends StatelessWidget {
     required this.header,
     required this.body,
     required this.footer,
+    this.comments = const [],
   });
 
   final Widget header;
   final Widget body;
   final Widget footer;
+  final List<Widget> comments;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,10 @@ class FeedCardShell extends StatelessWidget {
           ColoredBox(color: Colors.white, child: body),
           feedCardDivider,
           footer,
+          for (final comment in comments) ...[
+            feedCardDivider,
+            ColoredBox(color: Colors.white, child: comment),
+          ],
         ],
       ),
     );
@@ -114,13 +123,17 @@ class FeedCardActionBar extends StatelessWidget {
   const FeedCardActionBar({
     super.key,
     required this.commentCount,
+    this.likeCount = 0,
+    this.visitorReactionId,
     this.onComment,
     this.onReact,
   });
 
   final int commentCount;
+  final int likeCount;
+  final int? visitorReactionId;
   final VoidCallback? onComment;
-  final VoidCallback? onReact;
+  final Future<void> Function(int reactionId)? onReact;
 
   @override
   Widget build(BuildContext context) {
@@ -160,11 +173,29 @@ class FeedCardActionBar extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(
               child: _FeedActionButton(
-                onTap: onReact,
-                child: const Icon(
-                  Icons.thumb_up_outlined,
-                  color: Colors.white,
-                  size: 16,
+                onTap: onReact == null
+                    ? null
+                    : () => pickReactionAndApply(context, onReact!),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FeedReactionIcon(
+                      visitorReactionId: visitorReactionId,
+                      size: 16,
+                    ),
+                    if (likeCount > 0) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '$likeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -224,6 +255,246 @@ class _FeedActionButton extends StatelessWidget {
             border: Border.all(color: const Color(0xFF0F4A35)),
           ),
           child: Center(child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// Commento/risposta sotto il footer della card feed (stile web OmniFeed).
+class FeedCommentTile extends StatelessWidget {
+  const FeedCommentTile({
+    super.key,
+    required this.authorName,
+    this.avatarUrl,
+    this.dateLabel,
+    required this.message,
+    this.messageHtml,
+    this.likeCount = 0,
+    this.commentCount = 0,
+    this.visitorReactionId,
+    this.showCommentButton = true,
+    this.onLike,
+    this.onComment,
+  });
+
+  final String authorName;
+  final String? avatarUrl;
+  final String? dateLabel;
+  final String message;
+  final String? messageHtml;
+  final int likeCount;
+  final int commentCount;
+  final int? visitorReactionId;
+  final bool showCommentButton;
+  final Future<void> Function(int reactionId)? onLike;
+  final VoidCallback? onComment;
+
+  @override
+  Widget build(BuildContext context) {
+    final useHtml =
+        message.trim().isEmpty && messageHtml?.trim().isNotEmpty == true;
+    final body = useHtml
+        ? Html(
+            data: messageHtml!,
+            style: {
+              'body': Style(
+                margin: Margins.zero,
+                padding: HtmlPaddings.zero,
+                fontSize: FontSize(14),
+                lineHeight: LineHeight(1.35),
+                color: Colors.black,
+              ),
+              'p': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
+            },
+          )
+        : Text(
+            message,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.35,
+              color: Colors.black,
+            ),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FeedCardAvatar(url: avatarUrl, name: authorName),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _AuthorDateLine(
+                  authorName: authorName,
+                  dateLabel: dateLabel,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(child: body),
+                    const SizedBox(width: 8),
+                    _FeedCommentActions(
+                      likeCount: likeCount,
+                      commentCount: commentCount,
+                      visitorReactionId: visitorReactionId,
+                      showCommentButton: showCommentButton,
+                      onLike: onLike,
+                      onComment: onComment,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthorDateLine extends StatelessWidget {
+  const _AuthorDateLine({
+    required this.authorName,
+    this.dateLabel,
+  });
+
+  final String authorName;
+  final String? dateLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 14, height: 1.15),
+        children: [
+          TextSpan(
+            text: authorName,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.authorName,
+            ),
+          ),
+          if (dateLabel != null && dateLabel!.isNotEmpty) ...[
+            const TextSpan(
+              text: ' · ',
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            TextSpan(
+              text: dateLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedCommentActions extends StatelessWidget {
+  const _FeedCommentActions({
+    required this.likeCount,
+    required this.commentCount,
+    required this.showCommentButton,
+    this.visitorReactionId,
+    this.onLike,
+    this.onComment,
+  });
+
+  final int likeCount;
+  final int commentCount;
+  final bool showCommentButton;
+  final int? visitorReactionId;
+  final Future<void> Function(int reactionId)? onLike;
+  final VoidCallback? onComment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showCommentButton) ...[
+          _FeedCommentIconButton(
+            icon: Icons.mode_comment_outlined,
+            count: commentCount,
+            onTap: onComment,
+          ),
+          const SizedBox(width: 4),
+        ],
+        _FeedCommentIconButton(
+          icon: Icons.thumb_up_outlined,
+          count: likeCount,
+          visitorReactionId: visitorReactionId,
+          onTap: onLike == null
+              ? null
+              : () => pickReactionAndApply(context, onLike!),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeedCommentIconButton extends StatelessWidget {
+  const _FeedCommentIconButton({
+    required this.icon,
+    required this.count,
+    this.visitorReactionId,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final int count;
+  final int? visitorReactionId;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.primary,
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: const Color(0xFF0F4A35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon == Icons.thumb_up_outlined)
+                FeedReactionIcon(
+                  visitorReactionId: visitorReactionId,
+                  size: 14,
+                )
+              else
+                Icon(icon, size: 14, color: Colors.white),
+              if (count > 0) ...[
+                const SizedBox(width: 3),
+                Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

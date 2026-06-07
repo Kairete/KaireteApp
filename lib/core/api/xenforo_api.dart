@@ -35,7 +35,7 @@ class XenforoApi {
     final response = await _dio.post<Map<String, dynamic>>(
       path,
       data: FormData.fromMap(body ?? {}),
-      queryParameters: _withLimit(query),
+      queryParameters: query,
     );
     return response.data ?? {};
   }

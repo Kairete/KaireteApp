@@ -19,7 +19,7 @@ class BlogFeedCard extends StatelessWidget {
   final BlogEntry entry;
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
-  final VoidCallback? onReact;
+  final Future<void> Function(int reactionId)? onReact;
   final VoidCallback? onBlogTap;
   final VoidCallback? onCategoryTap;
 
@@ -81,6 +81,8 @@ class BlogFeedCard extends StatelessWidget {
       ),
       footer: FeedCardActionBar(
         commentCount: entry.commentCount,
+        likeCount: entry.reactionScore,
+        visitorReactionId: entry.visitorReactionId,
         onComment: onComment ?? onOpen,
         onReact: onReact,
       ),

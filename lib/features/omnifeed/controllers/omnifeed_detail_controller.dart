@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
@@ -56,18 +57,25 @@ class OmnifeedDetailController extends GetxController {
       commentCtrl.clear();
       await _load();
     } on OmnifeedException catch (e) {
-      Get.snackbar('Errore', e.message);
+      AppToast.error(e.message);
     } finally {
       isSending.value = false;
     }
   }
 
-  Future<void> react() async {
+  Future<void> react({int reactionId = 1}) async {
+    final current = item.value ?? initialItem;
     try {
-      await _service.reactToItem(itemId: initialItem.itemId);
+      final action = await _service.reactToItem(item: current, reactionId: reactionId);
+      final delta = action == 'delete' ? -1 : 1;
+      final score = current.reactionScore + delta;
+      item.value = current.copyWith(reactionScore: score < 0 ? 0 : score);
+      AppToast.success(
+        action == 'delete' ? 'Reazione rimossa.' : 'Reazione inviata.',
+      );
       await _load();
     } on OmnifeedException catch (e) {
-      Get.snackbar('Errore', e.message);
+      AppToast.error(AppToast.mapApiError(e.message));
     }
   }
 }

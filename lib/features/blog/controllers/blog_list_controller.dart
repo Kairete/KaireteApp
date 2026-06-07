@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
@@ -21,11 +22,51 @@ class BlogListController extends GetxController {
   final items = <BlogEntry>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final isWatched = false.obs;
+  final canWatch = true.obs;
+  final watchLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadEntries();
+    if (filterBlogId != null) {
+      loadWatchState();
+    }
+  }
+
+  Future<void> loadWatchState() async {
+    final blogId = filterBlogId;
+    if (blogId == null) return;
+    try {
+      final state = await _service
+          .fetchBlogWatchState(blogId)
+          .timeout(const Duration(seconds: 15));
+      isWatched.value = state.isWatched;
+      canWatch.value = state.canWatch;
+    } catch (_) {
+      canWatch.value = false;
+    }
+  }
+
+  Future<void> toggleWatch() async {
+    final blogId = filterBlogId;
+    if (blogId == null || !canWatch.value || watchLoading.value) return;
+    watchLoading.value = true;
+    final stop = isWatched.value;
+    try {
+      final watched = await _service.watchBlog(blogId, stop: stop);
+      isWatched.value = watched;
+      AppToast.success(watched ? 'Blog seguito.' : 'Watch rimosso.');
+    } on BlogException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile aggiornare il watch.');
+    } finally {
+      watchLoading.value = false;
+    }
   }
 
   Future<void> loadEntries() async {
@@ -53,13 +94,31 @@ class BlogListController extends GetxController {
     }
   }
 
-  Future<void> react(BlogEntry entry) async {
+  Future<void> react(BlogEntry entry, {int reactionId = 1}) async {
     try {
-      await _service.react(blogEntryId: entry.blogEntryId);
+      final action = await _service.react(
+        blogEntryId: entry.blogEntryId,
+        authorUserId: entry.author?.userId,
+        reactionId: reactionId,
+      );
+      _bumpScore(entry.blogEntryId, action);
+      AppToast.success(
+        action == 'delete' ? 'Reazione rimossa.' : 'Reazione inviata.',
+      );
       await loadEntries();
     } on BlogException catch (e) {
-      Get.snackbar('Errore', e.message);
+      AppToast.error(AppToast.mapApiError(e.message));
     }
+  }
+
+  void _bumpScore(int entryId, String action) {
+    final index = items.indexWhere((entry) => entry.blogEntryId == entryId);
+    if (index < 0) return;
+    final delta = action == 'delete' ? -1 : 1;
+    final current = items[index];
+    final next = current.reactionScore + delta;
+    items[index] = current.copyWith(reactionScore: next < 0 ? 0 : next);
+    items.refresh();
   }
 
   void openDetail(BlogEntry entry) {

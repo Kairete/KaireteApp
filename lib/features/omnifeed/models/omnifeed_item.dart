@@ -17,12 +17,14 @@ class OmnifeedItem {
   OmnifeedItem({
     required this.itemId,
     this.contentType,
+    this.contentId,
     this.contentTitle,
     this.messagePlainText,
     this.messageParsed,
     this.itemDate,
     this.commentCount = 0,
     this.reactionScore = 0,
+    this.visitorReactionId,
     this.author,
     this.categoryLabel,
     this.viewUrl,
@@ -30,12 +32,14 @@ class OmnifeedItem {
 
   final int itemId;
   final String? contentType;
+  final int? contentId;
   final String? contentTitle;
   final String? messagePlainText;
   final String? messageParsed;
   final int? itemDate;
   final int commentCount;
   final int reactionScore;
+  final int? visitorReactionId;
   final OmnifeedAuthor? author;
   final String? categoryLabel;
   final String? viewUrl;
@@ -107,17 +111,37 @@ class OmnifeedItem {
     return OmnifeedItem(
       itemId: json['item_id'] as int? ?? 0,
       contentType: json['content_type']?.toString(),
+      contentId: json['content_id'] as int?,
       contentTitle: json['ContentTitle']?.toString(),
       messagePlainText: json['message_plain_text']?.toString(),
       messageParsed: json['message_parsed']?.toString(),
       itemDate: json['item_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map
           ? OmnifeedAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : null,
       categoryLabel: category,
       viewUrl: json['view_url']?.toString(),
+    );
+  }
+
+  OmnifeedItem copyWith({int? reactionScore, int? visitorReactionId}) {
+    return OmnifeedItem(
+      itemId: itemId,
+      contentType: contentType,
+      contentId: contentId,
+      contentTitle: contentTitle,
+      messagePlainText: messagePlainText,
+      messageParsed: messageParsed,
+      itemDate: itemDate,
+      commentCount: commentCount,
+      reactionScore: reactionScore ?? this.reactionScore,
+      visitorReactionId: visitorReactionId ?? this.visitorReactionId,
+      author: author,
+      categoryLabel: categoryLabel,
+      viewUrl: viewUrl,
     );
   }
 }

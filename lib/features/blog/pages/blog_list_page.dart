@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/blog/controllers/blog_list_controller.dart';
 import 'package:kairete/features/blog/widgets/blog_feed_card.dart';
+import 'package:kairete/features/feed/widgets/content_watch_bar.dart';
 
 class BlogListPage extends StatelessWidget {
   BlogListPage({
@@ -43,20 +44,53 @@ class BlogListPage extends StatelessWidget {
         );
       }
       if (controller.items.isEmpty) {
-        return const Center(child: Text('Nessun articolo del blog.'));
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (filterBlogId != null)
+              Obx(
+                () => ContentWatchBar(
+                  isWatched: controller.isWatched.value,
+                  isLoading: controller.watchLoading.value,
+                  visible: controller.canWatch.value,
+                  onTap: controller.toggleWatch,
+                ),
+              ),
+            const Expanded(
+              child: Center(child: Text('Nessun articolo del blog.')),
+            ),
+          ],
+        );
       }
       return RefreshIndicator(
-        onRefresh: controller.loadEntries,
+        onRefresh: () async {
+          await Future.wait([
+            controller.loadEntries(),
+            if (filterBlogId != null) controller.loadWatchState(),
+          ]);
+        },
         child: ListView.builder(
           padding: const EdgeInsets.only(bottom: 16),
-          itemCount: controller.items.length,
+          itemCount: controller.items.length + (filterBlogId != null ? 1 : 0),
           itemBuilder: (_, i) {
-            final entry = controller.items[i];
+            if (filterBlogId != null && i == 0) {
+              return Obx(
+                () => ContentWatchBar(
+                  isWatched: controller.isWatched.value,
+                  isLoading: controller.watchLoading.value,
+                  visible: controller.canWatch.value,
+                  onTap: controller.toggleWatch,
+                ),
+              );
+            }
+            final index = filterBlogId != null ? i - 1 : i;
+            final entry = controller.items[index];
             return BlogFeedCard(
               entry: entry,
               onOpen: () => controller.openDetail(entry),
               onComment: () => controller.openDetail(entry),
-              onReact: () => controller.react(entry),
+              onReact: (reactionId) =>
+                  controller.react(entry, reactionId: reactionId),
               onBlogTap: () => controller.openBlogFilter(entry),
               onCategoryTap: () => controller.openCategoryFilter(entry),
             );

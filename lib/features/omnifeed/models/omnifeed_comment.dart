@@ -21,12 +21,16 @@ class OmnifeedComment {
     required this.messagePlainText,
     this.author,
     this.reactionScore = 0,
+    this.commentDate,
+    this.visitorReactionId,
   });
 
   final int commentId;
   final String messagePlainText;
   final OmnifeedAuthor? author;
   final int reactionScore;
+  final int? commentDate;
+  final int? visitorReactionId;
 
   factory OmnifeedComment.fromJson(Map<String, dynamic> json) {
     return OmnifeedComment(
@@ -38,6 +42,8 @@ class OmnifeedComment {
           ? OmnifeedAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : null,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      commentDate: json['comment_date'] as int?,
+      visitorReactionId: json['visitor_reaction_id'] as int?,
     );
   }
 }

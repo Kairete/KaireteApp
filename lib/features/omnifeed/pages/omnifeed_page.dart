@@ -41,7 +41,7 @@ class OmnifeedPage extends StatelessWidget {
                     item: item,
                     onOpen: () => c.openDetail(item),
                     onComment: () => c.openDetail(item),
-                    onReact: () => c.react(item),
+                    onReact: (reactionId) => c.react(item, reactionId: reactionId),
                   );
                 },
               ),

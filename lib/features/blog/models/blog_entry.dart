@@ -91,6 +91,8 @@ class BlogEntry {
     this.commentCount = 0,
     this.reactionScore = 0,
     this.canReact = true,
+    this.canComment = false,
+    this.visitorReactionId,
     this.author,
     this.blog,
     this.category,
@@ -107,6 +109,8 @@ class BlogEntry {
   final int commentCount;
   final int reactionScore;
   final bool canReact;
+  final bool canComment;
+  final int? visitorReactionId;
   final BlogAuthor? author;
   final BlogInfo? blog;
   final BlogCategory? category;
@@ -180,6 +184,8 @@ class BlogEntry {
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
       canReact: json['can_react'] as bool? ?? true,
+      canComment: json['can_comment'] as bool? ?? false,
+      visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map<String, dynamic>
           ? BlogAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : null,
@@ -192,6 +198,25 @@ class BlogEntry {
       coverImage: cover,
       attachments: attachments,
       viewUrl: json['view_url']?.toString(),
+    );
+  }
+
+  BlogEntry copyWith({int? reactionScore}) {
+    return BlogEntry(
+      blogEntryId: blogEntryId,
+      title: title,
+      messagePlainText: messagePlainText,
+      messageParsed: messageParsed,
+      postDate: postDate,
+      commentCount: commentCount,
+      reactionScore: reactionScore ?? this.reactionScore,
+      canReact: canReact,
+      author: author,
+      blog: blog,
+      category: category,
+      coverImage: coverImage,
+      attachments: attachments,
+      viewUrl: viewUrl,
     );
   }
 }

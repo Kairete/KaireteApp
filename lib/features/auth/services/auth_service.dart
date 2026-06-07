@@ -79,15 +79,20 @@ class AuthService {
     required int userId,
     required Map<String, String> customFields,
   }) async {
-    // XenForo richiede XF-Api-User = utente loggato (non 0/guest).
     await AppApi.instance.applySession(userId: userId);
     final body = <String, dynamic>{};
     customFields.forEach((key, value) {
       body['custom_fields[$key]'] = value;
     });
 
-    final json = await _api.post('${ApiPaths.users}/$userId/', body: body);
-    final err = XenforoApi.firstErrorMessage(json);
+    var json = await _api.post(ApiPaths.me, body: body);
+    var err = XenforoApi.firstErrorMessage(json);
+    if (err == null) {
+      return fetchMe();
+    }
+
+    json = await _api.post('${ApiPaths.users}/$userId/', body: body);
+    err = XenforoApi.firstErrorMessage(json);
     if (err != null) throw AuthException(err);
 
     final account = UserAccount.fromApi(json);
@@ -97,7 +102,7 @@ class AuthService {
 
   Future<void> logout() async {
     await SessionStore.instance.clear();
-    await AppApi.instance.applySession();
+    AppApi.instance.clearSession();
   }
 
   Future<void> _persist(UserAccount account) async {
@@ -105,7 +110,7 @@ class AuthService {
       userId: account.userId,
       username: account.username,
     );
-    await AppApi.instance.applySession(userId: account.userId);
+    AppApi.instance.bindSession(account.userId);
   }
 }
 

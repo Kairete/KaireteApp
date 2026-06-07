@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
-import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
+import 'package:kairete/features/forum/pages/forum_list_page.dart';
+import 'package:kairete/features/groups/pages/groups_list_page.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
@@ -17,8 +20,15 @@ class HomeShellPage extends StatefulWidget {
 
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
+
+  @override
+  void initState() {
+    super.initState();
+    ReactionCatalog.instance.ensureLoaded();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +38,66 @@ class _HomeShellPageState extends State<HomeShellPage> {
     final feed = Get.find<OmnifeedController>();
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
+      drawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(color: AppTheme.primary),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Obx(() {
+                    final name = _auth.currentUser.value?.username ?? 'Utente';
+                    return Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home_outlined),
+                title: const Text('News feed'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _tabIndex = 0);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('Blog'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _tabIndex = 1);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.forum_outlined),
+                title: const Text('Forum'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.to(() => ForumListPage());
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.groups_outlined),
+                title: const Text('Gruppi'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.to(() => const GroupsListPage());
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
@@ -40,7 +109,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
-          onPressed: () {},
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
           IconButton(
