@@ -45,17 +45,18 @@ class ThreadFeedCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
-              Text(
-                thread.listPreviewBody,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.black,
-                  height: 1.3,
+              if (thread.listPreviewBody.isNotEmpty)
+                Text(
+                  thread.listPreviewBody,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
                 ),
-              ),
               FeedCardDetailLink(
                 onTap: onOpen,
-                visible: thread.previewHasMore || thread.previewBody.isEmpty,
+                visible: thread.listPreviewNeedsDetailLink,
               ),
             ],
           ),

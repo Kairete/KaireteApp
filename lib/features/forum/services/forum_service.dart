@@ -20,7 +20,12 @@ class ForumService {
     await AppApi.instance.applySession();
     final json = await _api.get(
       '${ApiPaths.forums}$forumId/threads',
-      query: {'limit': 50, 'order': 'last_post_date', 'direction': 'desc'},
+      query: {
+        'limit': 50,
+        'order': 'last_post_date',
+        'direction': 'desc',
+        'with': 'FirstPost',
+      },
     );
     _throwIfError(json);
     return ForumThreadsPage.fromJson(json).threads;

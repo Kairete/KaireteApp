@@ -49,14 +49,13 @@ class ForumThread {
 
   String get listPreviewBody {
     final body = previewBody;
-    if (body.isEmpty) {
-      return replyCount > 0
-          ? '$replyCount ${replyCount == 1 ? 'risposta' : 'risposte'} · $viewCount visualizzazioni'
-          : '$viewCount visualizzazioni';
-    }
+    if (body.isEmpty) return '';
     if (body.length <= 280) return body;
     return '${body.substring(0, 277).trimRight()}…';
   }
+
+  bool get listPreviewNeedsDetailLink =>
+      previewBody.isEmpty || previewHasMore;
 
   static String _stripHtml(String? html) {
     if (html == null) return '';
@@ -66,6 +65,34 @@ class ForumThread {
         .replaceAll(RegExp(r'<[^>]*>'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  static int? _firstPostIdFromJson(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw['post_id'] as int?;
+    }
+    return null;
+  }
+
+  static int _firstPostReactionScoreFromJson(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw['reaction_score'] as int? ?? 0;
+    }
+    return 0;
+  }
+
+  static String? _firstPostMessageFromJson(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw['message']?.toString();
+    }
+    return null;
+  }
+
+  static String? _firstPostParsedFromJson(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw['message_parsed']?.toString();
+    }
+    return null;
   }
 
   factory ForumThread.fromJson(Map<String, dynamic> json) {
@@ -82,10 +109,14 @@ class ForumThread {
       postDate: json['post_date'] as int? ?? json['last_post_date'] as int?,
       replyCount: json['reply_count'] as int? ?? 0,
       viewCount: json['view_count'] as int? ?? 0,
-      firstPostId: json['first_post_id'] as int?,
-      firstPostReactionScore: json['first_post_reaction_score'] as int? ?? 0,
-      messagePlainText: json['message']?.toString(),
-      messageParsed: json['message_parsed']?.toString(),
+      firstPostId: json['first_post_id'] as int? ??
+          _firstPostIdFromJson(json['FirstPost']),
+      firstPostReactionScore: json['first_post_reaction_score'] as int? ??
+          _firstPostReactionScoreFromJson(json['FirstPost']),
+      messagePlainText: json['message']?.toString() ??
+          _firstPostMessageFromJson(json['FirstPost']),
+      messageParsed: json['message_parsed']?.toString() ??
+          _firstPostParsedFromJson(json['FirstPost']),
       author: json['User'] is Map<String, dynamic>
           ? ForumAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : ForumAuthor(

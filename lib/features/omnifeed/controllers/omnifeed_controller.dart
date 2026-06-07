@@ -10,6 +10,7 @@ import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
+import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 
 class OmnifeedController extends GetxController {
   final OmnifeedService _service = OmnifeedService();
@@ -17,6 +18,13 @@ class OmnifeedController extends GetxController {
   final items = <OmnifeedItem>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final feedModeIndex = 0.obs;
+  final sortByLastComment = false.obs;
+
+  String get _feedMode =>
+      OmnifeedContentFilters.modes[feedModeIndex.value.clamp(0, 3)];
+
+  String get _feedSort => sortByLastComment.value ? 'last_activity' : 'post_date';
 
   @override
   void onInit() {
@@ -24,11 +32,25 @@ class OmnifeedController extends GetxController {
     loadFeed();
   }
 
+  void setFeedModeIndex(int index) {
+    if (feedModeIndex.value == index) return;
+    feedModeIndex.value = index;
+    loadFeed();
+  }
+
+  void setSortByLastComment(bool value) {
+    if (sortByLastComment.value == value) return;
+    sortByLastComment.value = value;
+    loadFeed();
+  }
+
   Future<void> loadFeed() async {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final feed = await _service.fetchFeed().timeout(
+      final feed = await _service
+          .fetchFeed(mode: _feedMode, sort: _feedSort)
+          .timeout(
         const Duration(seconds: 25),
         onTimeout: () => throw TimeoutException('feed'),
       );

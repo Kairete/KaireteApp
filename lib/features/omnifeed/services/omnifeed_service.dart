@@ -10,9 +10,20 @@ class OmnifeedService {
   XenforoApi get _api => AppApi.instance.xenforo;
   final ReactionService _reactions = ReactionService();
 
-  Future<OmnifeedFeed> fetchFeed() async {
+  Future<OmnifeedFeed> fetchFeed({
+    String mode = 'network',
+    String sort = 'post_date',
+    int page = 1,
+  }) async {
     await AppApi.instance.applySession();
-    final json = await _api.get(ApiPaths.newsfeed);
+    final json = await _api.get(
+      ApiPaths.newsfeed,
+      query: {
+        'mode': mode,
+        'sort': sort,
+        'page': page,
+      },
+    );
     _throwIfError(json);
     return OmnifeedFeed.fromJson(json);
   }
