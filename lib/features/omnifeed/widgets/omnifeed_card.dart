@@ -74,17 +74,21 @@ class OmnifeedCard extends StatelessWidget {
                     color: AppTheme.accent,
                   ),
                 ),
-                const SizedBox(height: 6),
+                if (item.listPreviewBody.isNotEmpty) const SizedBox(height: 6),
               ],
-              Text(
-                item.displayBody,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.black,
-                  height: 1.3,
+              if (item.listPreviewBody.isNotEmpty)
+                Text(
+                  item.listPreviewBody,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
                 ),
+              FeedCardDetailLink(
+                onTap: onOpen,
+                visible: item.listPreviewNeedsDetailLink,
               ),
-              FeedCardDetailLink(onTap: onOpen),
             ],
           ),
         ),

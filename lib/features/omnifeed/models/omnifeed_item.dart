@@ -72,8 +72,24 @@ class OmnifeedItem {
     if (plain != null && plain.isNotEmpty) return plain;
     final parsed = messageParsed?.replaceAll(RegExp(r'<[^>]*>'), ' ').trim();
     if (parsed != null && parsed.isNotEmpty) return parsed;
-    return contentTitle ?? '';
+    return '';
   }
+
+  String get listPreviewBody {
+    final body = displayBody;
+    if (body.isEmpty) return '';
+    if (body.length <= 280) return body;
+    return '${body.substring(0, 277).trimRight()}…';
+  }
+
+  bool get previewHasMore {
+    final body = displayBody;
+    if (body.isEmpty) return true;
+    return body.length > 280;
+  }
+
+  bool get listPreviewNeedsDetailLink =>
+      displayBody.isEmpty || previewHasMore;
 
   String get typeLabel {
     switch (contentType) {

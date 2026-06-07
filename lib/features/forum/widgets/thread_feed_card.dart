@@ -27,38 +27,43 @@ class ThreadFeedCard extends StatelessWidget {
         thread: thread,
         forumTitle: forumTitle,
       ),
-      body: InkWell(
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (thread.title?.trim().isNotEmpty == true) ...[
-                Text(
-                  thread.title!,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.accent,
+      body: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (thread.title?.trim().isNotEmpty == true)
+                  Text(
+                    thread.title!,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.accent,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
+                if (thread.listPreviewBody.isNotEmpty) ...[
+                  if (thread.title?.trim().isNotEmpty == true)
+                    const SizedBox(height: 8),
+                  Text(
+                    thread.listPreviewBody,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+                if (thread.listPreviewNeedsDetailLink)
+                  FeedCardDetailLink(
+                    onTap: onOpen,
+                    visible: true,
+                  ),
               ],
-              if (thread.listPreviewBody.isNotEmpty)
-                Text(
-                  thread.listPreviewBody,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black,
-                    height: 1.3,
-                  ),
-                ),
-              FeedCardDetailLink(
-                onTap: onOpen,
-                visible: thread.listPreviewNeedsDetailLink,
-              ),
-            ],
+            ),
           ),
         ),
       ),
