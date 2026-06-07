@@ -2,7 +2,6 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
-import 'package:kairete/core/session/session_store.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 
@@ -45,14 +44,32 @@ class OmnifeedService {
 
   Future<void> createProfilePost({required String message}) async {
     await AppApi.instance.applySession();
-    final userId = await SessionStore.instance.userId;
     final json = await _api.post(
-      ApiPaths.profilePosts,
-      body: {
-        'user_id': userId,
-        'message': message,
-      },
+      ApiPaths.newsfeedPost,
+      body: {'message': message.trim()},
     );
+    _throwIfError(json);
+  }
+
+  Future<void> createBlogPost({
+    required int blogId,
+    required String title,
+    required String message,
+    int categoryId = 0,
+    String tags = '',
+    String attachmentHash = '',
+  }) async {
+    await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'blog_id': blogId,
+      'title': title.trim(),
+      'message': message.trim(),
+    };
+    if (categoryId > 0) body['category_id'] = categoryId;
+    if (tags.trim().isNotEmpty) body['tags'] = tags.trim();
+    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+
+    final json = await _api.post(ApiPaths.newsfeedBlogPost, body: body);
     _throwIfError(json);
   }
 

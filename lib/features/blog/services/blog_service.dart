@@ -3,6 +3,7 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/features/blog/models/blog_comment.dart';
+import 'package:kairete/features/blog/models/blog_compose_options.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 
 class BlogService {
@@ -127,6 +128,61 @@ class BlogService {
       return json['is_watched'] as bool;
     }
     return !stop;
+  }
+
+  Future<List<WritableBlog>> fetchWritableBlogs() async {
+    await AppApi.instance.applySession();
+    final json = await _api.get(ApiPaths.blogs);
+    _throwIfError(json);
+    final raw = json['blogs'];
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(WritableBlog.fromJson)
+        .where((blog) => blog.blogId > 0)
+        .toList();
+  }
+
+  Future<List<BlogCategoryOption>> fetchCategories() async {
+    await AppApi.instance.applySession();
+    final json = await _api.get(ApiPaths.blogCategories);
+    _throwIfError(json);
+    final raw = json['categories'];
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(BlogCategoryOption.fromJson)
+        .where((cat) => cat.categoryId > 0)
+        .toList();
+  }
+
+  Future<BlogEntry> createEntry({
+    required int blogId,
+    required String title,
+    required String message,
+    int categoryId = 0,
+    String tags = '',
+    String attachmentHash = '',
+  }) async {
+    await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'blog_id': blogId,
+      'title': title,
+      'message': message,
+    };
+    if (categoryId > 0) body['category_id'] = categoryId;
+    if (tags.isNotEmpty) body['tags'] = tags;
+    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+
+    final json = await _api.post('${ApiPaths.blogEntries}/', body: body);
+    _throwIfError(json);
+
+    final direct = json['blogEntry'];
+    if (direct is Map<String, dynamic>) {
+      return BlogEntry.fromJson(direct);
+    }
+
+    throw BlogException('Articolo creato ma risposta non valida.');
   }
 
   void _throwIfError(Map<String, dynamic> json) {

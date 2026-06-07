@@ -200,7 +200,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
           ),
-          OmnifeedComposeBar(onTapCompose: feed.openCompose),
+          OmnifeedComposeBar(onRefresh: feed.loadFeed),
           Expanded(
             child: _tabIndex == 0
                 ? OmnifeedPage()

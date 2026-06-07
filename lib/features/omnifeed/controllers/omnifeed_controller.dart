@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
@@ -121,5 +122,14 @@ class OmnifeedController extends GetxController {
   Future<void> openCompose() async {
     final created = await Get.to<bool>(() => const OmnifeedComposePage());
     if (created == true) await loadFeed();
+  }
+
+  Future<bool> openBlogCompose() async {
+    final created = await Get.to<bool>(() => const BlogComposePage());
+    if (created == true) {
+      await loadFeed();
+      return true;
+    }
+    return false;
   }
 }

@@ -8,6 +8,8 @@ class ApiPaths {
 
   // OmniFeed / newsfeed (XenForo add-on API)
   static const newsfeed = 'api/newsfeed';
+  static const newsfeedPost = 'api/newsfeed/post';
+  static const newsfeedBlogPost = 'api/newsfeed/blog-post';
   static const newsfeedItems = 'api/newsfeed-items/';
   static const newsfeedComments = 'api/newsfeed-items/';
   static const newsfeedCommentReplies = 'api/newsfeed-comments/';
