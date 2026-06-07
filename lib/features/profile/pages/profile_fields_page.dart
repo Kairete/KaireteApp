@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/core/api/app_api.dart';
-import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 
 /// Nome e cognome (custom_fields XenForo). Altri campi profilo verranno aggiunti dopo.
@@ -47,58 +45,53 @@ class _ProfileFieldsPageState extends State<ProfileFieldsPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Obx(() {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Inserisci nome e cognome.',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _firstName,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Nome'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _lastName,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Cognome'),
-                ),
-                if (_auth.errorMessage.value.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Inserisci nome e cognome.',
+                style: TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _firstName,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Nome'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _lastName,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Cognome'),
+              ),
+              Obx(() {
+                if (_auth.errorMessage.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
                     _auth.errorMessage.value,
                     style: const TextStyle(color: Colors.red),
                   ),
-                ],
-                const Spacer(),
-                TextButton(
-                  onPressed: _auth.isLoading.value
-                      ? null
-                      : () {
-                          final user = _auth.currentUser.value;
-                          if (user != null) {
-                            AppApi.instance.bindSession(user.userId);
-                          }
-                          Future.microtask(
-                            () => Get.offAllNamed(AppRoutes.home),
-                          );
-                        },
-                  child: const Text('Salta per ora'),
-                ),
-                const SizedBox(height: 8),
-                FilledButton(
+                );
+              }),
+              const Spacer(),
+              TextButton(
+                onPressed: _auth.skipProfileFields,
+                child: const Text('Salta per ora'),
+              ),
+              const SizedBox(height: 8),
+              Obx(
+                () => FilledButton(
                   onPressed: _auth.isLoading.value ? null : _save,
                   child: Text(
                     _auth.isLoading.value ? 'Salvataggio...' : 'Continua',
                   ),
                 ),
-              ],
-            );
-          }),
+              ),
+            ],
+          ),
         ),
       ),
     );

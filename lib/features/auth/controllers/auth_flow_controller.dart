@@ -7,6 +7,8 @@ import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
+import 'package:kairete/features/home/bindings/home_binding.dart';
+import 'package:kairete/features/home/pages/home_shell_page.dart';
 
 class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
@@ -167,19 +169,40 @@ class AuthFlowController extends GetxController {
     Get.offAllNamed(AppRoutes.login);
   }
 
-  void _goAfterAuth(UserAccount user) {
-    final route =
-        user.needsProfileFields ? AppRoutes.profileFields : AppRoutes.home;
-    _navigateTo(route);
+  /// Salta nome/cognome e apre la home con binding feed già pronto.
+  void skipProfileFields() {
+    final user = currentUser.value;
+    if (user != null) {
+      AppApi.instance.bindSession(user.userId);
+    }
+    isLoading.value = false;
+    _openHome();
   }
 
-  void _goHome() => _navigateTo(AppRoutes.home);
+  void _goAfterAuth(UserAccount user) {
+    if (user.needsProfileFields) {
+      _navigateTo(AppRoutes.profileFields);
+    } else {
+      _openHome();
+    }
+  }
+
+  void _goHome() => _openHome();
+
+  void _openHome() {
+    HomeBinding().dependencies();
+    Future.microtask(() {
+      Get.offAll(
+        () => const HomeShellPage(),
+        binding: HomeBinding(),
+      );
+    });
+  }
 
   void _navigateTo(String route) {
     Future.microtask(() {
-      if (Get.currentRoute != route) {
-        Get.offAllNamed(route);
-      }
+      if (Get.currentRoute == route) return;
+      Get.offAllNamed(route);
     });
   }
 }
