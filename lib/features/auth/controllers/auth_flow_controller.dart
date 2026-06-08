@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
+import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
-import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/home/pages/home_shell_page.dart';
 
@@ -174,6 +175,11 @@ class AuthFlowController extends GetxController {
     currentUser.value = null;
     _homeNavigationLock = false;
     _disposeHomeControllers();
+    final navigator = Get.key.currentState;
+    if (navigator != null) {
+      navigator.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
+      return;
+    }
     Get.offAllNamed(AppRoutes.login);
   }
 
@@ -215,6 +221,22 @@ class AuthFlowController extends GetxController {
     }
 
     HomeBinding().dependencies();
+
+    final navigator = Get.key.currentState;
+    if (navigator != null) {
+      navigator.pushAndRemoveUntil(
+        PageRouteBuilder<void>(
+          settings: const RouteSettings(name: AppRoutes.home),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const HomeShellPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+        (_) => false,
+      );
+      return;
+    }
+
     Get.offAll(
       () => const HomeShellPage(),
       binding: HomeBinding(),

@@ -2,5 +2,5 @@
 class AppBuild {
   AppBuild._();
 
-  static const label = 'b9';
+  static const label = 'b10';
 }

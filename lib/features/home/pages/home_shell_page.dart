@@ -13,7 +13,6 @@ import 'package:kairete/features/groups/pages/groups_list_page.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
-import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
 
 class HomeShellPage extends StatefulWidget {
   const HomeShellPage({super.key});
@@ -24,7 +23,6 @@ class HomeShellPage extends StatefulWidget {
 
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final OmnifeedController _feed;
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
@@ -32,29 +30,22 @@ class _HomeShellPageState extends State<HomeShellPage> {
   @override
   void initState() {
     super.initState();
-    ReactionCatalog.instance.ensureLoaded();
     HomeBinding().dependencies();
+    ReactionCatalog.instance.ensureLoaded();
     _feed = OmnifeedController();
-    _feed.onInit();
-    if (Get.isRegistered<AlertsBadgeController>()) {
-      Get.find<AlertsBadgeController>().refresh();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _feed.onInit();
+      if (Get.isRegistered<AlertsBadgeController>()) {
+        Get.find<AlertsBadgeController>().refresh();
+      }
+    });
   }
 
   @override
   void dispose() {
     _feed.onClose();
     super.dispose();
-  }
-
-  void _openDrawer() {
-    final scaffold = _scaffoldKey.currentState;
-    if (scaffold == null) return;
-    if (scaffold.isDrawerOpen) {
-      scaffold.closeDrawer();
-    } else {
-      scaffold.openDrawer();
-    }
   }
 
   void _openAlerts() {
@@ -65,6 +56,10 @@ class _HomeShellPageState extends State<HomeShellPage> {
     });
   }
 
+  void _openForum() {
+    Get.to(() => ForumListPage());
+  }
+
   @override
   Widget build(BuildContext context) {
     final username = _auth.currentUser.value?.username ?? '';
@@ -73,103 +68,27 @@ class _HomeShellPageState extends State<HomeShellPage> {
         : 0;
 
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(color: AppTheme.primary),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    username.isEmpty ? 'Utente' : username,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home_outlined),
-                title: const Text('News feed'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 0);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('Blog'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 1);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.forum_outlined),
-                title: const Text('Forum'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => ForumListPage());
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.groups_outlined),
-                title: const Text('Gruppi'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => const GroupsListPage());
-                },
-              ),
-              const Divider(),
-              ListTile(
-                dense: true,
-                title: Text(
-                  'Build ${AppBuild.label}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
         title: Text(
           'Kairete · ${AppBuild.label}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-        shape: const Border(
-          bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          tooltip: 'Menu',
-          onPressed: _openDrawer,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
+            tooltip: 'Forum',
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: _openForum,
           ),
           Stack(
             clipBehavior: Clip.none,
             children: [
               IconButton(
+                tooltip: 'Notifiche',
                 icon: const Icon(Icons.notifications_none),
                 onPressed: _openAlerts,
               ),
@@ -200,46 +119,66 @@ class _HomeShellPageState extends State<HomeShellPage> {
                 ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white24,
-              child: Text(
-                username.isNotEmpty ? username[0].toUpperCase() : '?',
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ),
           IconButton(
             tooltip: 'Esci',
-            icon: const Icon(Icons.logout, size: 20),
+            icon: const Icon(Icons.logout, size: 22),
             onPressed: _auth.logout,
           ),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: ColoredBox(
-          color: AppTheme.feedFooterBg,
-          child: Column(
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: Colors.white,
+        indicatorColor: AppTheme.primary.withOpacity(0.15),
+        selectedIndex: _tabIndex,
+        onDestinationSelected: (index) => setState(() => _tabIndex = index),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Feed',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Blog',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: 'Gruppi',
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _tabIndex,
+        children: [
+          Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              OmnifeedFeedTabs(
-                selectedIndex: _tabIndex,
-                onSelected: (i) => setState(() => _tabIndex = i),
-              ),
+              if (username.isNotEmpty)
+                Material(
+                  color: const Color(0xFFE8F5E9),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      'Ciao, $username',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
               OmnifeedComposeBar(onRefresh: _feed.loadFeed),
-              Expanded(
-                child: _tabIndex == 0
-                    ? OmnifeedPage(controller: _feed)
-                    : _tabIndex == 1
-                        ? BlogListPage()
-                        : const GroupsListPage(),
-              ),
+              Expanded(child: OmnifeedPage(controller: _feed)),
             ],
           ),
-        ),
+          BlogListPage(),
+          const GroupsListPage(),
+        ],
       ),
     );
   }
