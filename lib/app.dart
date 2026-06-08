@@ -17,8 +17,6 @@ class KaireteApp extends StatelessWidget {
       initialBinding: AuthBinding(),
       initialRoute: AppRoutes.login,
       getPages: AppPages.routes,
-      defaultTransition: Transition.noTransition,
-      navigatorKey: Get.key,
     );
   }
 }

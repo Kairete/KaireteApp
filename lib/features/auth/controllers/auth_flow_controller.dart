@@ -1,18 +1,14 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
-import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
-import 'package:kairete/features/auth/pages/login_page.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/home/pages/home_shell_page.dart';
-import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
@@ -22,8 +18,8 @@ class AuthFlowController extends GetxController {
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
 
+  /// All'avvio: prova sessione salvata (max 8s), altrimenti resta su login.
   Future<void> tryRestoreSession() async {
-    if (isLoading.value) return;
     isRestoringSession.value = true;
     errorMessage.value = '';
     try {
@@ -82,24 +78,14 @@ class AuthFlowController extends GetxController {
 
   void _openLogin({String? message}) {
     if (message != null) errorMessage.value = message;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final nav = Get.key.currentState;
-      if (nav == null) {
+    Future.microtask(() {
+      if (Get.currentRoute != AppRoutes.login) {
         Get.offAllNamed(AppRoutes.login);
-        return;
       }
-      nav.pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          settings: const RouteSettings(name: AppRoutes.login),
-          builder: (_) => const LoginPage(),
-        ),
-        (_) => false,
-      );
     });
   }
 
   Future<void> login(String login, String password) async {
-    isRestoringSession.value = false;
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -165,7 +151,7 @@ class AuthFlowController extends GetxController {
       );
       currentUser.value = updated;
       isLoading.value = false;
-      _openHome();
+      _goHome();
     } on AuthException catch (e) {
       errorMessage.value = e.message;
     } catch (_) {
@@ -180,15 +166,10 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
-    if (Get.isRegistered<OmnifeedController>()) {
-      Get.delete<OmnifeedController>(force: true);
-    }
-    if (Get.isRegistered<AlertsBadgeController>()) {
-      Get.delete<AlertsBadgeController>(force: true);
-    }
-    _openLogin();
+    Get.offAllNamed(AppRoutes.login);
   }
 
+  /// Salta nome/cognome e apre la home con binding feed gi├á pronto.
   void skipProfileFields() {
     final user = currentUser.value;
     if (user != null) {
@@ -206,29 +187,21 @@ class AuthFlowController extends GetxController {
     }
   }
 
-  /// Navigazione Flutter pura: evita overlay GetX che bloccano i tap.
+  void _goHome() => _openHome();
+
   void _openHome() {
     HomeBinding().dependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final nav = Get.key.currentState;
-      if (nav == null) {
-        Get.offAllNamed(AppRoutes.home);
-        return;
-      }
-      nav.pushAndRemoveUntil(
-        PageRouteBuilder<void>(
-          settings: const RouteSettings(name: AppRoutes.home),
-          pageBuilder: (_, __, ___) => const HomeShellPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-        (_) => false,
+    Future.microtask(() {
+      Get.offAll(
+        () => const HomeShellPage(),
+        binding: HomeBinding(),
       );
     });
   }
 
   void _navigateTo(String route) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.microtask(() {
+      if (Get.currentRoute == route) return;
       Get.offAllNamed(route);
     });
   }
