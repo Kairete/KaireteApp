@@ -11,7 +11,7 @@ class OmnifeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<OmnifeedController>();
+    final c = OmnifeedController.ensure();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

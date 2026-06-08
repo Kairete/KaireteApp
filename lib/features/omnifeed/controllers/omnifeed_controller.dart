@@ -18,6 +18,14 @@ import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart'
 class OmnifeedController extends GetxController {
   final OmnifeedService _service = OmnifeedService();
 
+  /// Garantisce che il controller esista (GetX a volte lo rimuove navigando).
+  static OmnifeedController ensure() {
+    if (!Get.isRegistered<OmnifeedController>()) {
+      Get.put(OmnifeedController(), permanent: true);
+    }
+    return Get.find<OmnifeedController>();
+  }
+
   final items = <OmnifeedItem>[].obs;
   final commentsByItemId = <int, List<OmnifeedComment>>{}.obs;
   final isLoading = false.obs;

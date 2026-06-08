@@ -8,7 +8,7 @@ class HomeBinding extends Bindings {
   void dependencies() {
     AuthBinding().dependencies();
     if (!Get.isRegistered<OmnifeedController>()) {
-      Get.put(OmnifeedController(), permanent: true);
+      OmnifeedController.ensure();
     }
     if (!Get.isRegistered<AlertsBadgeController>()) {
       Get.put(AlertsBadgeController(), permanent: true);
