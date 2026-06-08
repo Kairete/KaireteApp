@@ -22,7 +22,7 @@ class HomeShellPage extends StatefulWidget {
   State<HomeShellPage> createState() => _HomeShellPageState();
 }
 
-class _HomeShellPageState extends State<HomeShellPage> {
+class _HomeShellPageState extends State<HomeShellPage> with WidgetsBindingObserver {
   int _tabIndex = 0;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -31,11 +31,25 @@ class _HomeShellPageState extends State<HomeShellPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     ReactionCatalog.instance.ensureLoaded();
     HomeBinding().dependencies();
     OmnifeedController.ensure();
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      OmnifeedController.ensure().loadFeed();
     }
   }
 

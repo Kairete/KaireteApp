@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
+import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
-import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
@@ -177,7 +177,7 @@ class AuthFlowController extends GetxController {
     Get.offAllNamed(AppRoutes.login);
   }
 
-  /// Salta nome/cognome e apre la home con binding feed gi├á pronto.
+  /// Salta nome/cognome e apre la home con binding feed già pronto.
   void skipProfileFields() {
     final user = currentUser.value;
     if (user != null) {

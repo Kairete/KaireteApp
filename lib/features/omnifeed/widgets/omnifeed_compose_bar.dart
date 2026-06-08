@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
@@ -197,8 +197,8 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: isBlog
-                        ? 'Testo articoloÔÇª'
-                        : 'Scrivi qualcosaÔÇª',
+                        ? 'Testo articolo…'
+                        : 'Scrivi qualcosa…',
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -232,7 +232,7 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
                             items: [
                               const DropdownMenuItem<int?>(
                                 value: null,
-                                child: Text('ÔÇö Nessuna ÔÇö'),
+                                child: Text('— Nessuna —'),
                               ),
                               ..._categories.map(
                                 (cat) => DropdownMenuItem<int?>(
