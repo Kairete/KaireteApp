@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
+import 'package:kairete/features/auth/pages/login_page.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
+import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
@@ -19,9 +22,8 @@ class AuthFlowController extends GetxController {
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
 
-  bool _homeOpened = false;
-
   Future<void> tryRestoreSession() async {
+    if (isLoading.value) return;
     isRestoringSession.value = true;
     errorMessage.value = '';
     try {
@@ -80,10 +82,19 @@ class AuthFlowController extends GetxController {
 
   void _openLogin({String? message}) {
     if (message != null) errorMessage.value = message;
-    Future.microtask(() {
-      if (Get.currentRoute != AppRoutes.login) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = Get.key.currentState;
+      if (nav == null) {
         Get.offAllNamed(AppRoutes.login);
+        return;
       }
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: AppRoutes.login),
+          builder: (_) => const LoginPage(),
+        ),
+        (_) => false,
+      );
     });
   }
 
@@ -169,14 +180,13 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
-    _homeOpened = false;
     if (Get.isRegistered<OmnifeedController>()) {
       Get.delete<OmnifeedController>(force: true);
     }
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.delete<AlertsBadgeController>(force: true);
     }
-    Get.offAllNamed(AppRoutes.login);
+    _openLogin();
   }
 
   void skipProfileFields() {
@@ -196,19 +206,29 @@ class AuthFlowController extends GetxController {
     }
   }
 
+  /// Navigazione Flutter pura: evita overlay GetX che bloccano i tap.
   void _openHome() {
-    if (_homeOpened) return;
-    _homeOpened = true;
     HomeBinding().dependencies();
-    Future.microtask(() {
-      if (Get.currentRoute == AppRoutes.home) return;
-      Get.offAllNamed(AppRoutes.home);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = Get.key.currentState;
+      if (nav == null) {
+        Get.offAllNamed(AppRoutes.home);
+        return;
+      }
+      nav.pushAndRemoveUntil(
+        PageRouteBuilder<void>(
+          settings: const RouteSettings(name: AppRoutes.home),
+          pageBuilder: (_, __, ___) => const HomeShellPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+        (_) => false,
+      );
     });
   }
 
   void _navigateTo(String route) {
-    Future.microtask(() {
-      if (Get.currentRoute == route) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.offAllNamed(route);
     });
   }

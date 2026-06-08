@@ -15,6 +15,7 @@ import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
 
+/// Home senza drawer (evita barriera modale che blocca tutti i tap).
 class HomeShellPage extends StatefulWidget {
   const HomeShellPage({super.key});
 
@@ -24,7 +25,6 @@ class HomeShellPage extends StatefulWidget {
 
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final OmnifeedController _feed;
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
@@ -41,77 +41,25 @@ class _HomeShellPageState extends State<HomeShellPage> {
   }
 
   void _openAlerts() {
-    Get.to(() => const AlertsPage())?.then((_) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const AlertsPage()),
+    ).then((_) {
       if (Get.isRegistered<AlertsBadgeController>()) {
         Get.find<AlertsBadgeController>().refresh();
       }
     });
   }
 
+  void _openForum() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => ForumListPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
-      drawerEnableOpenDragGesture: false,
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(color: AppTheme.primary),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Obx(() {
-                    final name = _auth.currentUser.value?.username ?? 'Utente';
-                    return Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home_outlined),
-                title: const Text('News feed'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 0);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('Blog'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 1);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.forum_outlined),
-                title: const Text('Forum'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => ForumListPage());
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.groups_outlined),
-                title: const Text('Gruppi'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 2);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
@@ -122,18 +70,11 @@ class _HomeShellPageState extends State<HomeShellPage> {
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
+            tooltip: 'Forum',
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: _openForum,
           ),
           Obx(() {
             final badge = Get.isRegistered<AlertsBadgeController>()
@@ -143,6 +84,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
               clipBehavior: Clip.none,
               children: [
                 IconButton(
+                  tooltip: 'Notifiche',
                   icon: const Icon(Icons.notifications_none),
                   onPressed: _openAlerts,
                 ),
@@ -207,11 +149,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
             onTapBlog: _feed.openBlogCompose,
           ),
           Expanded(
-            child: _tabIndex == 0
-                ? const OmnifeedPage()
-                : _tabIndex == 1
-                    ? BlogListPage()
-                    : const GroupsListPage(),
+            child: ColoredBox(
+              color: AppTheme.feedFooterBg,
+              child: _tabIndex == 0
+                  ? const OmnifeedPage()
+                  : _tabIndex == 1
+                      ? BlogListPage()
+                      : const GroupsListPage(),
+            ),
           ),
         ],
       ),
