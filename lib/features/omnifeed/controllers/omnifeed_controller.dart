@@ -7,6 +7,8 @@ import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
+import 'package:kairete/features/groups/pages/group_detail_page.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
@@ -17,6 +19,7 @@ class OmnifeedController extends GetxController {
   final OmnifeedService _service = OmnifeedService();
 
   final items = <OmnifeedItem>[].obs;
+  final commentsByItemId = <int, List<OmnifeedComment>>{}.obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
   final feedModeIndex = 0.obs;
@@ -56,6 +59,7 @@ class OmnifeedController extends GetxController {
         onTimeout: () => throw TimeoutException('feed'),
       );
       items.value = feed.items;
+      await _loadInlineComments(feed.items);
     } on TimeoutException {
       errorMessage.value =
           'Il feed impiega troppo tempo. Controlla la rete e riprova.';
@@ -95,9 +99,43 @@ class OmnifeedController extends GetxController {
     items.refresh();
   }
 
+  Future<void> _loadInlineComments(List<OmnifeedItem> feedItems) async {
+    final targets = feedItems
+        .where(
+          (item) =>
+              item.contentType == 'profile_post' && item.commentCount > 0,
+        )
+        .toList();
+    if (targets.isEmpty) {
+      commentsByItemId.clear();
+      return;
+    }
+
+    final loaded = <int, List<OmnifeedComment>>{};
+    await Future.wait(
+      targets.map((item) async {
+        try {
+          final page = await _service.fetchComments(item.itemId);
+          loaded[item.itemId] = page.comments;
+        } catch (_) {
+          loaded[item.itemId] = const [];
+        }
+      }),
+    );
+    commentsByItemId.value = loaded;
+  }
+
   void openDetail(OmnifeedItem item) {
     final contentId = item.contentId;
     switch (item.contentType) {
+      case 'tl_group_post':
+      case 'ksg_group_post':
+        final groupId = item.groupId ?? _groupIdFromViewUrl(item.viewUrl);
+        if (groupId != null && groupId > 0) {
+          Get.to(() => GroupDetailPage(groupId: groupId));
+          return;
+        }
+        break;
       case 'thread':
         if (contentId != null && contentId > 0) {
           Get.to(
@@ -117,6 +155,13 @@ class OmnifeedController extends GetxController {
         break;
     }
     Get.to(() => OmnifeedDetailPage(item: item));
+  }
+
+  int? _groupIdFromViewUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    final match = RegExp(r'social-groups/[^./]+\.(\d+)').firstMatch(url);
+    if (match == null) return null;
+    return int.tryParse(match.group(1)!);
   }
 
   Future<void> openCompose() async {

@@ -36,6 +36,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
     _feed = Get.isRegistered<OmnifeedController>()
         ? Get.find<OmnifeedController>()
         : null;
+    if (Get.isRegistered<AlertsBadgeController>()) {
+      Get.find<AlertsBadgeController>().refresh();
+    }
   }
 
   void _openAlerts() {
@@ -213,12 +216,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
                         ? const OmnifeedPage()
                         : _tabIndex == 1
                             ? BlogListPage()
-                            : Center(
-                                child: Text(
-                                  'Prossimamente',
-                                  style: TextStyle(color: AppTheme.textSecondary),
-                                ),
-                              ),
+                            : const GroupsListPage(),
                   ),
                 ],
               ),

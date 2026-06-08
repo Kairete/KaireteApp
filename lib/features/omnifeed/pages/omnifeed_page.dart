@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 
@@ -46,12 +48,31 @@ class OmnifeedPage extends StatelessWidget {
                       itemCount: c.items.length,
                       itemBuilder: (_, i) {
                         final item = c.items[i];
+                        final inlineComments =
+                            c.commentsByItemId[item.itemId] ?? const [];
                         return OmnifeedCard(
                           item: item,
                           onOpen: () => c.openDetail(item),
                           onComment: () => c.openDetail(item),
                           onReact: (reactionId) =>
                               c.react(item, reactionId: reactionId),
+                          comments: inlineComments
+                              .map(
+                                (comment) => FeedCommentTile(
+                                  authorName: comment.author?.label ??
+                                      comment.author?.username ??
+                                      '',
+                                  avatarUrl: comment.author?.avatarUrl,
+                                  dateLabel: formatOmnifeedCardDate(
+                                    comment.commentDate,
+                                  ),
+                                  message: comment.messagePlainText,
+                                  likeCount: comment.reactionScore,
+                                  visitorReactionId: comment.visitorReactionId,
+                                  showCommentButton: false,
+                                ),
+                              )
+                              .toList(),
                         );
                       },
                     ),

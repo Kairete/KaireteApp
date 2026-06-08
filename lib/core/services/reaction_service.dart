@@ -19,6 +19,17 @@ class ReactionService {
     int reactionId = 1,
   }) async {
     await _ensureLoggedIn(authorUserId: item.author?.userId);
+    if (item.itemId > 0) {
+      try {
+        return await _postReact(
+          '${ApiPaths.newsfeedItems}${item.itemId}/react',
+          reactionId,
+        );
+      } on ReactionException catch (e) {
+        if (!_isRouteMissing(e.message)) rethrow;
+      }
+    }
+
     final contentId = item.contentId;
     if (contentId == null || contentId <= 0) {
       throw ReactionException('Contenuto non disponibile.');

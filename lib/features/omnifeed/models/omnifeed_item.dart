@@ -28,6 +28,7 @@ class OmnifeedItem {
     this.author,
     this.categoryLabel,
     this.viewUrl,
+    this.groupId,
   });
 
   final int itemId;
@@ -43,6 +44,7 @@ class OmnifeedItem {
   final OmnifeedAuthor? author;
   final String? categoryLabel;
   final String? viewUrl;
+  final int? groupId;
 
   /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
   bool get isPlainFeedPost => contentType == 'profile_post';
@@ -115,6 +117,11 @@ class OmnifeedItem {
     final profile = json['ProfilePost'] as Map<String, dynamic>?;
     final group = json['GroupPost'] as Map<String, dynamic>?;
 
+    int? groupId = json['group_id'] as int?;
+    if (groupId == null && group?['Group'] is Map) {
+      groupId = (group!['Group'] as Map)['group_id'] as int?;
+    }
+
     String? category;
     if (content?['Category'] is Map) {
       category = (content!['Category'] as Map)['title']?.toString();
@@ -140,6 +147,7 @@ class OmnifeedItem {
           : null,
       categoryLabel: category,
       viewUrl: json['view_url']?.toString(),
+      groupId: groupId,
     );
   }
 
@@ -158,6 +166,7 @@ class OmnifeedItem {
       author: author,
       categoryLabel: categoryLabel,
       viewUrl: viewUrl,
+      groupId: groupId,
     );
   }
 }
