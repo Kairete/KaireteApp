@@ -349,6 +349,7 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
           ),
         ),
       ),
+    ),
     );
   }
 }
