@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
@@ -349,6 +349,7 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
           ),
         ),
       ),
+    ),
     );
   }
 }

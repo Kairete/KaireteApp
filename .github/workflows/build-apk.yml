@@ -68,18 +68,18 @@ jobs:
           name: kairete-debug-apk-${{ env.BUILD_LABEL }}
           path: Kairete-debug.apk
 
-      - name: Publish GitHub Release (SCARICA QUESTO)
+      - name: Publish GitHub Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: kairete-apk
+          tag_name: latest
           name: Kairete · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
           body: |
             ## Installazione
             1. **Disinstalla** la versione precedente di Kairete
             2. Scarica `Kairete-debug.apk` qui sotto
-            3. Verifica in app: titolo **Kairete · ${{ env.BUILD_LABEL }}**
+            3. Verifica in app: titolo **Kairete · ${{ env.BUILD_LABEL }}** (non `b16`)
 
-            Link fisso: https://github.com/Kairete/KaireteApp/releases/download/kairete-apk/Kairete-debug.apk
+            Link diretto: https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-debug.apk
 
             Commit: ${{ github.sha }}
           make_latest: true
@@ -95,6 +95,7 @@ jobs:
 
       - name: Upload APK to FTP server
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
+        continue-on-error: true
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -109,5 +110,6 @@ jobs:
             --ftp-create-dirs \
             --ftp-pasv \
             -u "${FTP_USER}:${FTP_PASSWORD}" \
-            "ftp://${FTP_HOST}${FTP_REMOTE_PATH}"
+            "ftp://${FTP_HOST}${FTP_REMOTE_PATH}" \
+            || echo "::warning::Upload FTP fallito, APK resta su GitHub Releases."
           echo "APK pubblicato: ${APK_PUBLIC_URL}"
