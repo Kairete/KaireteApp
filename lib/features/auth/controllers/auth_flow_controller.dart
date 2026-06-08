@@ -8,7 +8,6 @@ import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
-import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
@@ -19,7 +18,6 @@ class AuthFlowController extends GetxController {
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
 
-  /// All'avvio: prova sessione salvata (max 8s), altrimenti resta su login.
   Future<void> tryRestoreSession() async {
     isRestoringSession.value = true;
     errorMessage.value = '';
@@ -153,7 +151,7 @@ class AuthFlowController extends GetxController {
       );
       currentUser.value = updated;
       isLoading.value = false;
-      _goHome();
+      Get.offAllNamed(AppRoutes.home);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
     } catch (_) {
@@ -168,17 +166,13 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
-    _resetHomeControllers();
-    Get.offAllNamed(AppRoutes.login);
-  }
-
-  void _resetHomeControllers() {
     if (Get.isRegistered<OmnifeedController>()) {
       Get.delete<OmnifeedController>(force: true);
     }
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.delete<AlertsBadgeController>(force: true);
     }
+    Get.offAllNamed(AppRoutes.login);
   }
 
   void skipProfileFields() {
@@ -187,32 +181,14 @@ class AuthFlowController extends GetxController {
       AppApi.instance.bindSession(user.userId);
     }
     isLoading.value = false;
-    _openHome();
+    Get.offAllNamed(AppRoutes.home);
   }
 
   void _goAfterAuth(UserAccount user) {
     if (user.needsProfileFields) {
-      _navigateTo(AppRoutes.profileFields);
+      Get.offAllNamed(AppRoutes.profileFields);
     } else {
-      _openHome();
+      Get.offAllNamed(AppRoutes.home);
     }
-  }
-
-  void _goHome() => _openHome();
-
-  void _openHome() {
-    isRestoringSession.value = false;
-    isLoading.value = false;
-    Get.closeAllSnackbars();
-    _resetHomeControllers();
-    HomeBinding().dependencies();
-    Get.offAllNamed(AppRoutes.home);
-  }
-
-  void _navigateTo(String route) {
-    Future.microtask(() {
-      if (Get.currentRoute == route) return;
-      Get.offAllNamed(route);
-    });
   }
 }

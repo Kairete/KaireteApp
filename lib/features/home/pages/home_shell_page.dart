@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
-import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
@@ -32,13 +31,12 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
-    HomeBinding().dependencies();
-    if (Get.isRegistered<AlertsBadgeController>()) {
+    if (!Get.isRegistered<AlertsBadgeController>()) {
+      Get.put(AlertsBadgeController());
+    } else {
       Get.find<AlertsBadgeController>().refresh();
     }
   }
-
-  OmnifeedController get _feed => Get.find<OmnifeedController>();
 
   void _openAlerts() {
     Get.to(() => const AlertsPage())?.then((_) {
@@ -50,12 +48,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final feed = _feed;
+    if (!Get.isRegistered<OmnifeedController>()) {
+      Get.put(OmnifeedController());
+    }
+    final feed = Get.find<OmnifeedController>();
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
-      drawerEnableOpenDragGesture: false,
       drawer: Drawer(
         child: SafeArea(
           child: ListView(
@@ -127,16 +127,12 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text(
-          'Kairete · ${AppBuild.label}',
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-        ),
+        title: Text('Kairete · ${AppBuild.label}'),
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
-          tooltip: 'Menu',
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
@@ -208,25 +204,22 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
         ],
       ),
-      body: Material(
-        color: AppTheme.feedFooterBg,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            OmnifeedFeedTabs(
-              selectedIndex: _tabIndex,
-              onSelected: (i) => setState(() => _tabIndex = i),
-            ),
-            OmnifeedComposeBar(onRefresh: feed.loadFeed),
-            Expanded(
-              child: _tabIndex == 0
-                  ? const OmnifeedPage()
-                  : _tabIndex == 1
-                      ? BlogListPage()
-                      : const GroupsListPage(),
-            ),
-          ],
-        ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          OmnifeedFeedTabs(
+            selectedIndex: _tabIndex,
+            onSelected: (i) => setState(() => _tabIndex = i),
+          ),
+          OmnifeedComposeBar(onRefresh: feed.loadFeed),
+          Expanded(
+            child: _tabIndex == 0
+                ? OmnifeedPage()
+                : _tabIndex == 1
+                    ? BlogListPage()
+                    : const GroupsListPage(),
+          ),
+        ],
       ),
     );
   }
