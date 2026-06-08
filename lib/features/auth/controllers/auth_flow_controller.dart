@@ -9,7 +9,6 @@ import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
-import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
@@ -19,6 +18,8 @@ class AuthFlowController extends GetxController {
   final isRestoringSession = false.obs;
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
+
+  bool _homeOpened = false;
 
   Future<void> tryRestoreSession() async {
     isRestoringSession.value = true;
@@ -168,6 +169,7 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
+    _homeOpened = false;
     if (Get.isRegistered<OmnifeedController>()) {
       Get.delete<OmnifeedController>(force: true);
     }
@@ -195,12 +197,12 @@ class AuthFlowController extends GetxController {
   }
 
   void _openHome() {
+    if (_homeOpened) return;
+    _homeOpened = true;
     HomeBinding().dependencies();
     Future.microtask(() {
-      Get.offAll(
-        () => const HomeShellPage(),
-        binding: HomeBinding(),
-      );
+      if (Get.currentRoute == AppRoutes.home) return;
+      Get.offAllNamed(AppRoutes.home);
     });
   }
 

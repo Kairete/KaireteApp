@@ -25,7 +25,7 @@ class HomeShellPage extends StatefulWidget {
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  OmnifeedController? _feed;
+  late final OmnifeedController _feed;
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
 
@@ -34,9 +34,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
     HomeBinding().dependencies();
-    _feed = Get.isRegistered<OmnifeedController>()
-        ? Get.find<OmnifeedController>()
-        : null;
+    _feed = Get.find<OmnifeedController>();
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
     }
@@ -52,11 +50,6 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final feed = _feed ??
-        (Get.isRegistered<OmnifeedController>()
-            ? Get.find<OmnifeedController>()
-            : null);
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
@@ -202,28 +195,26 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
         ],
       ),
-      body: feed == null
-          ? const Center(child: CircularProgressIndicator())
-          : Material(
-              color: AppTheme.feedFooterBg,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  OmnifeedFeedTabs(
-                    selectedIndex: _tabIndex,
-                    onSelected: (i) => setState(() => _tabIndex = i),
-                  ),
-                  OmnifeedComposeBar(onRefresh: feed.loadFeed),
-                  Expanded(
-                    child: _tabIndex == 0
-                        ? const OmnifeedPage()
-                        : _tabIndex == 1
-                            ? BlogListPage()
-                            : const GroupsListPage(),
-                  ),
-                ],
-              ),
-            ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          OmnifeedFeedTabs(
+            selectedIndex: _tabIndex,
+            onSelected: (i) => setState(() => _tabIndex = i),
+          ),
+          OmnifeedComposeBar(
+            onTapCompose: _feed.openCompose,
+            onTapBlog: _feed.openBlogCompose,
+          ),
+          Expanded(
+            child: _tabIndex == 0
+                ? const OmnifeedPage()
+                : _tabIndex == 1
+                    ? BlogListPage()
+                    : const GroupsListPage(),
+          ),
+        ],
+      ),
     );
   }
 }
