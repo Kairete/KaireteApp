@@ -1,6 +1,6 @@
-/// Identificativo build visibile in app (cambia ad ogni release di debug).
+/// Identificativo build visibile in app.
 class AppBuild {
   AppBuild._();
 
-  static const label = 'b10';
+  static const label = 'b11';
 }

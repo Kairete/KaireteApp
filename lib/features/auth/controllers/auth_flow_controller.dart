@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -10,7 +9,7 @@ import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
-import 'package:kairete/features/home/pages/home_shell_page.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
@@ -20,11 +19,8 @@ class AuthFlowController extends GetxController {
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
 
-  bool _homeNavigationLock = false;
-
   /// All'avvio: prova sessione salvata (max 8s), altrimenti resta su login.
   Future<void> tryRestoreSession() async {
-    if (_homeNavigationLock) return;
     isRestoringSession.value = true;
     errorMessage.value = '';
     try {
@@ -91,7 +87,6 @@ class AuthFlowController extends GetxController {
   }
 
   Future<void> login(String login, String password) async {
-    if (_homeNavigationLock) return;
     isRestoringSession.value = false;
     isLoading.value = true;
     errorMessage.value = '';
@@ -173,23 +168,19 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
-    _homeNavigationLock = false;
-    _disposeHomeControllers();
-    final navigator = Get.key.currentState;
-    if (navigator != null) {
-      navigator.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
-      return;
-    }
+    _resetHomeControllers();
     Get.offAllNamed(AppRoutes.login);
   }
 
-  void _disposeHomeControllers() {
+  void _resetHomeControllers() {
+    if (Get.isRegistered<OmnifeedController>()) {
+      Get.delete<OmnifeedController>(force: true);
+    }
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.delete<AlertsBadgeController>(force: true);
     }
   }
 
-  /// Salta nome/cognome e apre la home con binding feed già pronto.
   void skipProfileFields() {
     final user = currentUser.value;
     if (user != null) {
@@ -210,39 +201,12 @@ class AuthFlowController extends GetxController {
   void _goHome() => _openHome();
 
   void _openHome() {
-    if (_homeNavigationLock) return;
-    _homeNavigationLock = true;
     isRestoringSession.value = false;
     isLoading.value = false;
-
     Get.closeAllSnackbars();
-    if (Get.isDialogOpen == true) {
-      Get.back();
-    }
-
+    _resetHomeControllers();
     HomeBinding().dependencies();
-
-    final navigator = Get.key.currentState;
-    if (navigator != null) {
-      navigator.pushAndRemoveUntil(
-        PageRouteBuilder<void>(
-          settings: const RouteSettings(name: AppRoutes.home),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomeShellPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-        (_) => false,
-      );
-      return;
-    }
-
-    Get.offAll(
-      () => const HomeShellPage(),
-      binding: HomeBinding(),
-      transition: Transition.noTransition,
-      duration: Duration.zero,
-    );
+    Get.offAllNamed(AppRoutes.home);
   }
 
   void _navigateTo(String route) {

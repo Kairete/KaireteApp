@@ -7,13 +7,11 @@ import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 
 class OmnifeedPage extends StatelessWidget {
-  const OmnifeedPage({super.key, required this.controller});
-
-  final OmnifeedController controller;
+  const OmnifeedPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = controller;
+    final c = Get.find<OmnifeedController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
