@@ -7,8 +7,9 @@ import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
+import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
-import 'package:kairete/features/home/pages/home_shell_page.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
@@ -166,7 +167,17 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
+    _disposeHomeControllers();
     Get.offAllNamed(AppRoutes.login);
+  }
+
+  void _disposeHomeControllers() {
+    if (Get.isRegistered<OmnifeedController>()) {
+      Get.delete<OmnifeedController>(force: true);
+    }
+    if (Get.isRegistered<AlertsBadgeController>()) {
+      Get.delete<AlertsBadgeController>(force: true);
+    }
   }
 
   /// Salta nome/cognome e apre la home con binding feed già pronto.
@@ -192,10 +203,8 @@ class AuthFlowController extends GetxController {
   void _openHome() {
     HomeBinding().dependencies();
     Future.microtask(() {
-      Get.offAll(
-        () => const HomeShellPage(),
-        binding: HomeBinding(),
-      );
+      if (Get.currentRoute == AppRoutes.home) return;
+      Get.offAllNamed(AppRoutes.home);
     });
   }
 

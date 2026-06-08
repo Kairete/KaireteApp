@@ -59,7 +59,7 @@ class OmnifeedController extends GetxController {
         onTimeout: () => throw TimeoutException('feed'),
       );
       items.value = feed.items;
-      await _loadInlineComments(feed.items);
+      unawaited(_loadInlineComments(feed.items));
     } on TimeoutException {
       errorMessage.value =
           'Il feed impiega troppo tempo. Controlla la rete e riprova.';

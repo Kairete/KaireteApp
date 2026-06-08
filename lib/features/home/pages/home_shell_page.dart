@@ -24,7 +24,6 @@ class HomeShellPage extends StatefulWidget {
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  OmnifeedController? _feed;
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
 
@@ -32,13 +31,30 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
-    HomeBinding().dependencies();
-    _feed = Get.isRegistered<OmnifeedController>()
-        ? Get.find<OmnifeedController>()
-        : null;
+    _ensureControllers();
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
     }
+  }
+
+  void _ensureControllers() {
+    HomeBinding().dependencies();
+    if (!Get.isRegistered<OmnifeedController>()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        HomeBinding().dependencies();
+        setState(() {});
+      });
+    }
+  }
+
+  OmnifeedController? _feedController() {
+    if (!Get.isRegistered<OmnifeedController>()) {
+      HomeBinding().dependencies();
+    }
+    return Get.isRegistered<OmnifeedController>()
+        ? Get.find<OmnifeedController>()
+        : null;
   }
 
   void _openAlerts() {
@@ -51,10 +67,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final feed = _feed ??
-        (Get.isRegistered<OmnifeedController>()
-            ? Get.find<OmnifeedController>()
-            : null);
+    final feed = _feedController();
 
     return Scaffold(
       key: _scaffoldKey,
@@ -200,7 +213,10 @@ class _HomeShellPageState extends State<HomeShellPage> {
         ],
       ),
       body: feed == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Material(
+              color: AppTheme.feedFooterBg,
+              child: Center(child: CircularProgressIndicator()),
+            )
           : Material(
               color: AppTheme.feedFooterBg,
               child: Column(
