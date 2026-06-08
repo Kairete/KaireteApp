@@ -1,4 +1,4 @@
-﻿/// Ambiente API Kairete.
+/// Ambiente API Kairete.
 class AppConfig {
   AppConfig._();
 

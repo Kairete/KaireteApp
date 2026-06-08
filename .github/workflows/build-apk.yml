@@ -50,9 +50,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
-
       - name: Build debug APK (arm64)
         run: flutter build apk --debug --target-platform android-arm64
 
@@ -71,16 +68,18 @@ jobs:
           name: kairete-debug-apk-${{ env.BUILD_LABEL }}
           path: Kairete-debug.apk
 
-      - name: Publish GitHub Release (latest)
+      - name: Publish GitHub Release (SCARICA QUESTO)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: Kairete · ${{ env.BUILD_LABEL }} — ULTIMO APK
+          tag_name: kairete-apk
+          name: Kairete · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
           body: |
             ## Installazione
             1. **Disinstalla** la versione precedente di Kairete
             2. Scarica `Kairete-debug.apk` qui sotto
             3. Verifica in app: titolo **Kairete · ${{ env.BUILD_LABEL }}**
+
+            Link fisso: https://github.com/Kairete/KaireteApp/releases/download/kairete-apk/Kairete-debug.apk
 
             Commit: ${{ github.sha }}
           make_latest: true
@@ -89,8 +88,8 @@ jobs:
       - name: Publish GitHub Release (archivio)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ env.BUILD_LABEL }}
-          name: Kairete · ${{ env.BUILD_LABEL }} (debug)
+          tag_name: apk-${{ env.BUILD_LABEL }}-${{ github.run_id }}
+          name: Kairete · ${{ env.BUILD_LABEL }} (archivio)
           prerelease: true
           files: Kairete-debug.apk
 

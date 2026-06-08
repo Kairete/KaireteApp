@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
