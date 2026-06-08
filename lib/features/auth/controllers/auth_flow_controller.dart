@@ -1,12 +1,14 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
+import 'package:kairete/features/auth/pages/login_page.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/home/pages/home_shell_page.dart';
@@ -80,10 +82,19 @@ class AuthFlowController extends GetxController {
 
   void _openLogin({String? message}) {
     if (message != null) errorMessage.value = message;
-    Future.microtask(() {
-      if (Get.currentRoute != AppRoutes.login) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = Get.key.currentState;
+      if (nav == null) {
         Get.offAllNamed(AppRoutes.login);
+        return;
       }
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: AppRoutes.login),
+          builder: (_) => const LoginPage(),
+        ),
+        (_) => false,
+      );
     });
   }
 
@@ -174,7 +185,7 @@ class AuthFlowController extends GetxController {
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.delete<AlertsBadgeController>(force: true);
     }
-    Get.offAllNamed(AppRoutes.login);
+    _openLogin();
   }
 
   /// Salta nome/cognome e apre la home con binding feed già pronto.
@@ -197,19 +208,29 @@ class AuthFlowController extends GetxController {
 
   void _goHome() => _openHome();
 
+  /// Navigazione Flutter pura: evita overlay GetX che bloccano i tap.
   void _openHome() {
     HomeBinding().dependencies();
-    Future.microtask(() {
-      Get.offAll(
-        () => const HomeShellPage(),
-        binding: HomeBinding(),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = Get.key.currentState;
+      if (nav == null) {
+        Get.offAllNamed(AppRoutes.home);
+        return;
+      }
+      nav.pushAndRemoveUntil(
+        PageRouteBuilder<void>(
+          settings: const RouteSettings(name: AppRoutes.home),
+          pageBuilder: (_, __, ___) => const HomeShellPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+        (_) => false,
       );
     });
   }
 
   void _navigateTo(String route) {
-    Future.microtask(() {
-      if (Get.currentRoute == route) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.offAllNamed(route);
     });
   }

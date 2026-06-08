@@ -2,5 +2,5 @@
 class AppBuild {
   AppBuild._();
 
-  static const label = 'live';
+  static const label = 'fix1';
 }
