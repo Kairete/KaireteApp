@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -151,7 +152,7 @@ class AuthFlowController extends GetxController {
       );
       currentUser.value = updated;
       isLoading.value = false;
-      Get.offAllNamed(AppRoutes.home);
+      _openHome();
     } on AuthException catch (e) {
       errorMessage.value = e.message;
     } catch (_) {
@@ -181,14 +182,20 @@ class AuthFlowController extends GetxController {
       AppApi.instance.bindSession(user.userId);
     }
     isLoading.value = false;
-    Get.offAllNamed(AppRoutes.home);
+    _openHome();
   }
 
   void _goAfterAuth(UserAccount user) {
-    if (user.needsProfileFields) {
-      Get.offAllNamed(AppRoutes.profileFields);
-    } else {
+    final route =
+        user.needsProfileFields ? AppRoutes.profileFields : AppRoutes.home;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Get.offAllNamed(route);
+    });
+  }
+
+  void _openHome() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
       Get.offAllNamed(AppRoutes.home);
-    }
+    });
   }
 }

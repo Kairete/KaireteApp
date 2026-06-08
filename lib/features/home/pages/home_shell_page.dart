@@ -23,9 +23,9 @@ class HomeShellPage extends StatefulWidget {
 
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
+  OmnifeedController get _feed => Get.find<OmnifeedController>();
 
   @override
   void initState() {
@@ -46,81 +46,27 @@ class _HomeShellPageState extends State<HomeShellPage> {
     });
   }
 
+  void _onMenuSelected(String value) {
+    switch (value) {
+      case 'feed':
+        setState(() => _tabIndex = 0);
+        break;
+      case 'blog':
+        setState(() => _tabIndex = 1);
+        break;
+      case 'forum':
+        Get.to(() => ForumListPage());
+        break;
+      case 'groups':
+        setState(() => _tabIndex = 2);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<OmnifeedController>()) {
-      Get.put(OmnifeedController());
-    }
-    final feed = Get.find<OmnifeedController>();
-
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(color: AppTheme.primary),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Obx(() {
-                    final name = _auth.currentUser.value?.username ?? 'Utente';
-                    return Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home_outlined),
-                title: const Text('News feed'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 0);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: const Text('Blog'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 1);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.forum_outlined),
-                title: const Text('Forum'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => ForumListPage());
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.groups_outlined),
-                title: const Text('Gruppi'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _tabIndex = 2);
-                },
-              ),
-              ListTile(
-                dense: true,
-                title: Text(
-                  'Build ${AppBuild.label}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
@@ -131,9 +77,55 @@ class _HomeShellPageState extends State<HomeShellPage> {
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
-        leading: IconButton(
+        leading: PopupMenuButton<String>(
           icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Menu',
+          onSelected: _onMenuSelected,
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'feed',
+              child: ListTile(
+                leading: Icon(Icons.home_outlined),
+                title: Text('News feed'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'blog',
+              child: ListTile(
+                leading: Icon(Icons.menu_book_outlined),
+                title: Text('Blog'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'forum',
+              child: ListTile(
+                leading: Icon(Icons.forum_outlined),
+                title: Text('Forum'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'groups',
+              child: ListTile(
+                leading: Icon(Icons.groups_outlined),
+                title: Text('Gruppi'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            PopupMenuItem(
+              enabled: false,
+              child: Text(
+                'Build ${AppBuild.label}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -204,22 +196,25 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          OmnifeedFeedTabs(
-            selectedIndex: _tabIndex,
-            onSelected: (i) => setState(() => _tabIndex = i),
-          ),
-          OmnifeedComposeBar(onRefresh: feed.loadFeed),
-          Expanded(
-            child: _tabIndex == 0
-                ? OmnifeedPage()
-                : _tabIndex == 1
-                    ? BlogListPage()
-                    : const GroupsListPage(),
-          ),
-        ],
+      body: ColoredBox(
+        color: AppTheme.feedFooterBg,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            OmnifeedFeedTabs(
+              selectedIndex: _tabIndex,
+              onSelected: (i) => setState(() => _tabIndex = i),
+            ),
+            OmnifeedComposeBar(onRefresh: _feed.loadFeed),
+            Expanded(
+              child: _tabIndex == 0
+                  ? const OmnifeedPage()
+                  : _tabIndex == 1
+                      ? BlogListPage()
+                      : const GroupsListPage(),
+            ),
+          ],
+        ),
       ),
     );
   }
