@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
@@ -32,13 +33,27 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
-    if (Get.isRegistered<OmnifeedController>()) {
-      Get.delete<OmnifeedController>(force: true);
-    }
     HomeBinding().dependencies();
-    _feed = Get.find<OmnifeedController>();
+    _feed = OmnifeedController();
+    _feed.onInit();
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    _feed.onClose();
+    super.dispose();
+  }
+
+  void _openDrawer() {
+    final scaffold = _scaffoldKey.currentState;
+    if (scaffold == null) return;
+    if (scaffold.isDrawerOpen) {
+      scaffold.closeDrawer();
+    } else {
+      scaffold.openDrawer();
     }
   }
 
@@ -52,6 +67,11 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final username = _auth.currentUser.value?.username ?? '';
+    final badge = Get.isRegistered<AlertsBadgeController>()
+        ? Get.find<AlertsBadgeController>().unreadCount.value
+        : 0;
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
@@ -64,17 +84,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
                 decoration: const BoxDecoration(color: AppTheme.primary),
                 child: Align(
                   alignment: Alignment.bottomLeft,
-                  child: Obx(() {
-                    final name = _auth.currentUser.value?.username ?? 'Utente';
-                    return Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  }),
+                  child: Text(
+                    username.isEmpty ? 'Utente' : username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
               ListTile(
@@ -110,11 +127,11 @@ class _HomeShellPageState extends State<HomeShellPage> {
                 },
               ),
               const Divider(),
-              const ListTile(
+              ListTile(
                 dense: true,
                 title: Text(
-                  'App v2.0.0',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  'Build ${AppBuild.label}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ),
             ],
@@ -127,12 +144,18 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        title: Text(
+          'Kairete · ${AppBuild.label}',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Menu',
+          onPressed: _openDrawer,
         ),
         actions: [
           IconButton(
@@ -143,57 +166,49 @@ class _HomeShellPageState extends State<HomeShellPage> {
             icon: const Icon(Icons.search),
             onPressed: () {},
           ),
-          Obx(() {
-            final badge = Get.isRegistered<AlertsBadgeController>()
-                ? Get.find<AlertsBadgeController>().unreadCount.value
-                : 0;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_none),
-                  onPressed: _openAlerts,
-                ),
-                if (badge > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 18),
-                      decoration: BoxDecoration(
-                        color: AppTheme.badgeRed,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        badge > 99 ? '99+' : '$badge',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none),
+                onPressed: _openAlerts,
+              ),
+              if (badge > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18),
+                    decoration: BoxDecoration(
+                      color: AppTheme.badgeRed,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      badge > 99 ? '99+' : '$badge',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-              ],
-            );
-          }),
+                ),
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: Colors.white24,
-              child: Obx(() {
-                final name = _auth.currentUser.value?.username ?? '';
-                return Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                );
-              }),
+              child: Text(
+                username.isNotEmpty ? username[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
             ),
           ),
           IconButton(
@@ -203,24 +218,27 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
         ],
       ),
-      body: ColoredBox(
-        color: AppTheme.feedFooterBg,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            OmnifeedFeedTabs(
-              selectedIndex: _tabIndex,
-              onSelected: (i) => setState(() => _tabIndex = i),
-            ),
-            OmnifeedComposeBar(onRefresh: _feed.loadFeed),
-            Expanded(
-              child: _tabIndex == 0
-                  ? OmnifeedPage(controller: _feed)
-                  : _tabIndex == 1
-                      ? BlogListPage()
-                      : const GroupsListPage(),
-            ),
-          ],
+      body: SafeArea(
+        top: false,
+        child: ColoredBox(
+          color: AppTheme.feedFooterBg,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OmnifeedFeedTabs(
+                selectedIndex: _tabIndex,
+                onSelected: (i) => setState(() => _tabIndex = i),
+              ),
+              OmnifeedComposeBar(onRefresh: _feed.loadFeed),
+              Expanded(
+                child: _tabIndex == 0
+                    ? OmnifeedPage(controller: _feed)
+                    : _tabIndex == 1
+                        ? BlogListPage()
+                        : const GroupsListPage(),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -36,6 +36,8 @@ class AppPages {
       name: AppRoutes.home,
       page: () => const HomeShellPage(),
       binding: HomeBinding(),
+      transition: Transition.noTransition,
+      transitionDuration: Duration.zero,
     ),
   ];
 }

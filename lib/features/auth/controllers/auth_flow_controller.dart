@@ -9,7 +9,7 @@ import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
-import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/home/pages/home_shell_page.dart';
 
 class AuthFlowController extends GetxController {
   final AuthService _auth = AuthService();
@@ -19,8 +19,11 @@ class AuthFlowController extends GetxController {
   final errorMessage = ''.obs;
   final currentUser = Rxn<UserAccount>();
 
+  bool _homeNavigationLock = false;
+
   /// All'avvio: prova sessione salvata (max 8s), altrimenti resta su login.
   Future<void> tryRestoreSession() async {
+    if (_homeNavigationLock) return;
     isRestoringSession.value = true;
     errorMessage.value = '';
     try {
@@ -87,6 +90,8 @@ class AuthFlowController extends GetxController {
   }
 
   Future<void> login(String login, String password) async {
+    if (_homeNavigationLock) return;
+    isRestoringSession.value = false;
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -167,14 +172,12 @@ class AuthFlowController extends GetxController {
   Future<void> logout() async {
     await _auth.logout();
     currentUser.value = null;
+    _homeNavigationLock = false;
     _disposeHomeControllers();
     Get.offAllNamed(AppRoutes.login);
   }
 
   void _disposeHomeControllers() {
-    if (Get.isRegistered<OmnifeedController>()) {
-      Get.delete<OmnifeedController>(force: true);
-    }
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.delete<AlertsBadgeController>(force: true);
     }
@@ -201,9 +204,23 @@ class AuthFlowController extends GetxController {
   void _goHome() => _openHome();
 
   void _openHome() {
+    if (_homeNavigationLock) return;
+    _homeNavigationLock = true;
+    isRestoringSession.value = false;
+    isLoading.value = false;
+
+    Get.closeAllSnackbars();
+    if (Get.isDialogOpen == true) {
+      Get.back();
+    }
+
     HomeBinding().dependencies();
-    if (Get.currentRoute == AppRoutes.home) return;
-    Get.offAllNamed(AppRoutes.home);
+    Get.offAll(
+      () => const HomeShellPage(),
+      binding: HomeBinding(),
+      transition: Transition.noTransition,
+      duration: Duration.zero,
+    );
   }
 
   void _navigateTo(String route) {
