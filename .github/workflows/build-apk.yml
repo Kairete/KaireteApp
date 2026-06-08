@@ -72,6 +72,7 @@ jobs:
 
       - name: Upload APK to FTP server
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
+        continue-on-error: true
         run: |
           if [ -z "${{ secrets.FTP_USER }}" ] || [ -z "${{ secrets.FTP_PASSWORD }}" ]; then
             echo "::error::Configurate i secret FTP_USER e FTP_PASSWORD su GitHub (Settings → Secrets → Actions)"

@@ -202,10 +202,8 @@ class AuthFlowController extends GetxController {
 
   void _openHome() {
     HomeBinding().dependencies();
-    Future.microtask(() {
-      if (Get.currentRoute == AppRoutes.home) return;
-      Get.offAllNamed(AppRoutes.home);
-    });
+    if (Get.currentRoute == AppRoutes.home) return;
+    Get.offAllNamed(AppRoutes.home);
   }
 
   void _navigateTo(String route) {

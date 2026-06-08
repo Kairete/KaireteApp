@@ -24,6 +24,7 @@ class HomeShellPage extends StatefulWidget {
 class _HomeShellPageState extends State<HomeShellPage> {
   int _tabIndex = 0;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  late final OmnifeedController _feed;
 
   AuthFlowController get _auth => Get.find<AuthFlowController>();
 
@@ -31,30 +32,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded();
-    _ensureControllers();
+    if (Get.isRegistered<OmnifeedController>()) {
+      Get.delete<OmnifeedController>(force: true);
+    }
+    HomeBinding().dependencies();
+    _feed = Get.find<OmnifeedController>();
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
     }
-  }
-
-  void _ensureControllers() {
-    HomeBinding().dependencies();
-    if (!Get.isRegistered<OmnifeedController>()) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        HomeBinding().dependencies();
-        setState(() {});
-      });
-    }
-  }
-
-  OmnifeedController? _feedController() {
-    if (!Get.isRegistered<OmnifeedController>()) {
-      HomeBinding().dependencies();
-    }
-    return Get.isRegistered<OmnifeedController>()
-        ? Get.find<OmnifeedController>()
-        : null;
   }
 
   void _openAlerts() {
@@ -67,8 +52,6 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final feed = _feedController();
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.feedFooterBg,
@@ -125,6 +108,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
                   Navigator.pop(context);
                   Get.to(() => const GroupsListPage());
                 },
+              ),
+              const Divider(),
+              const ListTile(
+                dense: true,
+                title: Text(
+                  'App v2.0.0',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ),
             ],
           ),
@@ -212,31 +203,26 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
         ],
       ),
-      body: feed == null
-          ? const Material(
-              color: AppTheme.feedFooterBg,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : Material(
-              color: AppTheme.feedFooterBg,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  OmnifeedFeedTabs(
-                    selectedIndex: _tabIndex,
-                    onSelected: (i) => setState(() => _tabIndex = i),
-                  ),
-                  OmnifeedComposeBar(onRefresh: feed.loadFeed),
-                  Expanded(
-                    child: _tabIndex == 0
-                        ? const OmnifeedPage()
-                        : _tabIndex == 1
-                            ? BlogListPage()
-                            : const GroupsListPage(),
-                  ),
-                ],
-              ),
+      body: ColoredBox(
+        color: AppTheme.feedFooterBg,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            OmnifeedFeedTabs(
+              selectedIndex: _tabIndex,
+              onSelected: (i) => setState(() => _tabIndex = i),
             ),
+            OmnifeedComposeBar(onRefresh: _feed.loadFeed),
+            Expanded(
+              child: _tabIndex == 0
+                  ? OmnifeedPage(controller: _feed)
+                  : _tabIndex == 1
+                      ? BlogListPage()
+                      : const GroupsListPage(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
