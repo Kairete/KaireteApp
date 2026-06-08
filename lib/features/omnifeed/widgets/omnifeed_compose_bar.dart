@@ -157,16 +157,18 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppTheme.cardBorder),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppTheme.cardBorder),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               if (isBlog) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
@@ -343,7 +345,8 @@ class _OmnifeedComposeBarState extends State<OmnifeedComposeBar> {
                   ],
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

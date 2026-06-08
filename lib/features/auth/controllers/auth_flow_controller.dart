@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -9,6 +8,8 @@ import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/services/auth_service.dart';
+import 'package:kairete/features/home/bindings/home_binding.dart';
+import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 
 class AuthFlowController extends GetxController {
@@ -186,16 +187,27 @@ class AuthFlowController extends GetxController {
   }
 
   void _goAfterAuth(UserAccount user) {
-    final route =
-        user.needsProfileFields ? AppRoutes.profileFields : AppRoutes.home;
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      Get.offAllNamed(route);
-    });
+    if (user.needsProfileFields) {
+      _navigateTo(AppRoutes.profileFields);
+    } else {
+      _openHome();
+    }
   }
 
   void _openHome() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      Get.offAllNamed(AppRoutes.home);
+    HomeBinding().dependencies();
+    Future.microtask(() {
+      Get.offAll(
+        () => const HomeShellPage(),
+        binding: HomeBinding(),
+      );
+    });
+  }
+
+  void _navigateTo(String route) {
+    Future.microtask(() {
+      if (Get.currentRoute == route) return;
+      Get.offAllNamed(route);
     });
   }
 }
