@@ -48,7 +48,7 @@ class ThreadFeedCard extends StatelessWidget {
         onModuleTap: onForumTap,
         trailing: showOwnerActions && (onEdit != null || onDelete != null)
             ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
-            : null,
+            : const FeedCardMenuButton(),
       ),
       body: Material(
         color: Colors.transparent,
