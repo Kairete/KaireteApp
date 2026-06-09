@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/forum/controllers/thread_detail_controller.dart';
-import 'package:kairete/features/forum/widgets/thread_feed_card.dart';
 import 'package:kairete/features/forum/widgets/thread_post_body.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
@@ -99,9 +98,13 @@ class _ThreadDetailPageState extends State<ThreadDetailPage> {
                   padding: const EdgeInsets.only(bottom: 8),
                   children: [
                     FeedCardShell(
-                      header: ThreadFeedHeader(
-                        thread: thread,
-                        forumTitle: forumLabel,
+                      header: FeedCardAuthorHeader(
+                        avatarUrl: thread.author?.avatarUrl,
+                        authorName:
+                            thread.author?.username ?? thread.author?.label,
+                        moduleLabel:
+                            forumLabel.isNotEmpty ? forumLabel : null,
+                        dateLabel: formatOmnifeedCardDate(thread.postDate),
                       ),
                       body: ThreadPostBody(thread: thread),
                       footer: FeedCardActionBar(

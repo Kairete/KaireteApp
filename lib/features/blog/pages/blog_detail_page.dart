@@ -11,7 +11,6 @@ import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
 import 'package:kairete/features/blog/widgets/blog_entry_body.dart';
-import 'package:kairete/features/blog/widgets/blog_feed_card.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
@@ -181,6 +180,13 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
+  String _blogMetaDateLine(BlogEntry entry) {
+    final date = formatOmnifeedCardDate(entry.postDate);
+    final category = entry.category?.title ?? '';
+    if (category.isEmpty) return date;
+    return '$date - $category';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,10 +227,13 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                               padding: const EdgeInsets.only(bottom: 8),
                               children: [
                                 FeedCardShell(
-                                  header: BlogFeedHeader(
-                                    entry: _entry!,
-                                    onBlogTap: _openBlogFilter,
-                                    onCategoryTap: _openCategoryFilter,
+                                  header: FeedCardAuthorHeader(
+                                    avatarUrl: _entry!.author?.avatarUrl,
+                                    authorName: _entry!.author?.username ??
+                                        _entry!.author?.label,
+                                    moduleLabel: _entry!.blog?.title,
+                                    dateLabel: _blogMetaDateLine(_entry!),
+                                    onModuleTap: _openBlogFilter,
                                   ),
                                   body: BlogEntryBody(entry: _entry!),
                                   footer: FeedCardActionBar(
