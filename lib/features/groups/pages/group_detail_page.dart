@@ -264,47 +264,16 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildPostCard(GroupPost post) {
     final comments = _commentsByPost[post.groupPostId] ?? const [];
-    final authorId = post.author?.userId;
-    void openAuthor() => OmnifeedNavigation.openUserProfile(authorId);
+    void openAuthor() =>
+        OmnifeedNavigation.openUserProfile(post.author?.userId);
 
     return FeedCardShell(
-      header: FeedCardHeaderBar(
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: openAuthor,
-              child: FeedCardAvatar(
-                url: post.author?.avatarUrl,
-                name: post.author?.username,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: openAuthor,
-                    child: Text(
-                      post.author?.username ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.authorName,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    formatOmnifeedCardDate(post.postDate),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      header: FeedCardAuthorHeader(
+        avatarUrl: post.author?.avatarUrl,
+        authorName: post.author?.username,
+        dateLabel: formatOmnifeedCardDate(post.postDate),
+        onAuthorTap: openAuthor,
+        trailing: const SizedBox.shrink(),
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -334,6 +303,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               likeCount: comment.reactionScore,
               visitorReactionId: comment.visitorReactionId,
               showCommentButton: false,
+              onAuthorTap: () =>
+                  OmnifeedNavigation.openUserProfile(comment.author?.userId),
               onLike: comment.canReact
                   ? (reactionId) => _reactToComment(
                         comment,

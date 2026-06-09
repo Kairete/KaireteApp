@@ -69,29 +69,187 @@ class FeedCardHeaderBar extends StatelessWidget {
 }
 
 class FeedCardAvatar extends StatelessWidget {
-  const FeedCardAvatar({this.url, this.name});
+  const FeedCardAvatar({this.url, this.name, this.onTap});
 
   final String? url;
   final String? name;
+  final VoidCallback? onTap;
 
   static const _size = 32.0;
 
   @override
   Widget build(BuildContext context) {
     final initial = (name?.isNotEmpty == true) ? name![0].toUpperCase() : '?';
+    Widget avatar;
     if (url != null && url!.isNotEmpty) {
-      return CircleAvatar(
+      avatar = CircleAvatar(
         radius: _size / 2,
         backgroundImage: CachedNetworkImageProvider(url!),
       );
+    } else {
+      avatar = CircleAvatar(
+        radius: _size / 2,
+        backgroundColor: AppTheme.primary.withOpacity(0.12),
+        child: Text(
+          initial,
+          style: const TextStyle(color: AppTheme.primary, fontSize: 13),
+        ),
+      );
     }
-    return CircleAvatar(
-      radius: _size / 2,
-      backgroundColor: AppTheme.primary.withOpacity(0.12),
-      child: Text(
-        initial,
-        style: const TextStyle(color: AppTheme.primary, fontSize: 13),
+    if (onTap == null) return avatar;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: avatar,
+    );
+  }
+}
+
+/// Riga autore cliccabile (nickname + modulo opzionale). Usa Row invece di
+/// RichText/WidgetSpan: i tap sui nickname erano spesso ignorati.
+class FeedCardAuthorLine extends StatelessWidget {
+  const FeedCardAuthorLine({
+    super.key,
+    required this.nickname,
+    this.moduleLabel,
+    this.onAuthorTap,
+    this.onModuleTap,
+  });
+
+  final String nickname;
+  final String? moduleLabel;
+  final VoidCallback? onAuthorTap;
+  final VoidCallback? onModuleTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Flexible(
+          child: _AuthorTapLabel(
+            label: nickname,
+            onTap: onAuthorTap,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.authorName,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 1),
+            child: Icon(
+              Icons.play_arrow,
+              size: 15,
+              color: AppTheme.primary,
+            ),
+          ),
+          Flexible(
+            child: _AuthorTapLabel(
+              label: moduleLabel!,
+              onTap: onModuleTap,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class FeedCardAuthorHeader extends StatelessWidget {
+  const FeedCardAuthorHeader({
+    super.key,
+    this.avatarUrl,
+    this.authorName,
+    this.moduleLabel,
+    this.dateLabel,
+    this.onAuthorTap,
+    this.onModuleTap,
+    this.trailing = const FeedCardMenuButton(),
+  });
+
+  final String? avatarUrl;
+  final String? authorName;
+  final String? moduleLabel;
+  final String? dateLabel;
+  final VoidCallback? onAuthorTap;
+  final VoidCallback? onModuleTap;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return FeedCardHeaderBar(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FeedCardAvatar(
+            url: avatarUrl,
+            name: authorName,
+            onTap: onAuthorTap,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FeedCardAuthorLine(
+                  nickname: authorName ?? '',
+                  moduleLabel: moduleLabel,
+                  onAuthorTap: onAuthorTap,
+                  onModuleTap: onModuleTap,
+                ),
+                if (dateLabel != null && dateLabel!.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    dateLabel!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          trailing,
+        ],
       ),
+    );
+  }
+}
+
+class _AuthorTapLabel extends StatelessWidget {
+  const _AuthorTapLabel({
+    required this.label,
+    required this.style,
+    this.onTap,
+  });
+
+  final String label;
+  final TextStyle style;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+    if (onTap == null) return text;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: text,
     );
   }
 }
@@ -274,6 +432,7 @@ class FeedCommentTile extends StatelessWidget {
     this.commentCount = 0,
     this.visitorReactionId,
     this.showCommentButton = true,
+    this.onAuthorTap,
     this.onLike,
     this.onComment,
   });
@@ -287,6 +446,7 @@ class FeedCommentTile extends StatelessWidget {
   final int commentCount;
   final int? visitorReactionId;
   final bool showCommentButton;
+  final VoidCallback? onAuthorTap;
   final Future<void> Function(int reactionId)? onLike;
   final VoidCallback? onComment;
 
@@ -322,7 +482,11 @@ class FeedCommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FeedCardAvatar(url: avatarUrl, name: authorName),
+          FeedCardAvatar(
+            url: avatarUrl,
+            name: authorName,
+            onTap: onAuthorTap,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -331,6 +495,7 @@ class FeedCommentTile extends StatelessWidget {
                 _AuthorDateLine(
                   authorName: authorName,
                   dateLabel: dateLabel,
+                  onAuthorTap: onAuthorTap,
                 ),
                 const SizedBox(height: 2),
                 Row(
@@ -361,43 +526,45 @@ class _AuthorDateLine extends StatelessWidget {
   const _AuthorDateLine({
     required this.authorName,
     this.dateLabel,
+    this.onAuthorTap,
   });
 
   final String authorName;
   final String? dateLabel;
+  final VoidCallback? onAuthorTap;
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14, height: 1.15),
-        children: [
-          TextSpan(
-            text: authorName,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppTheme.authorName,
+    return Row(
+      children: [
+        _AuthorTapLabel(
+          label: authorName,
+          onTap: onAuthorTap,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppTheme.authorName,
+            fontSize: 14,
+          ),
+        ),
+        if (dateLabel != null && dateLabel!.isNotEmpty) ...[
+          const Text(
+            ' · ',
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: AppTheme.textSecondary,
+              fontSize: 14,
             ),
           ),
-          if (dateLabel != null && dateLabel!.isNotEmpty) ...[
-            const TextSpan(
-              text: ' · ',
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                color: AppTheme.textSecondary,
-              ),
+          Text(
+            dateLabel!,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: AppTheme.textSecondary,
             ),
-            TextSpan(
-              text: dateLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

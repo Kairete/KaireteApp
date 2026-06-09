@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/forum/pages/forum_thread_list_page.dart';
@@ -6,7 +7,6 @@ import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/groups/pages/group_detail_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
-import 'package:kairete/features/profile/pages/user_profile_page.dart';
 
 class OmnifeedNavigation {
   OmnifeedNavigation._();
@@ -16,7 +16,7 @@ class OmnifeedNavigation {
 
   static void openUserProfile(int? userId) {
     if (userId == null || userId <= 0) return;
-    Get.to(() => UserProfilePage(userId: userId));
+    Get.toNamed(AppRoutes.profile.replaceFirst(':userId', '$userId'));
   }
 
   static void openBlog(OmnifeedItem item) {

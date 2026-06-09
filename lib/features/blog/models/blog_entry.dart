@@ -188,7 +188,7 @@ class BlogEntry {
       visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map<String, dynamic>
           ? BlogAuthor.fromJson(json['User'] as Map<String, dynamic>)
-          : null,
+          : _authorFromRoot(json),
       blog: json['Blog'] is Map<String, dynamic>
           ? BlogInfo.fromJson(json['Blog'] as Map<String, dynamic>)
           : null,
@@ -198,6 +198,15 @@ class BlogEntry {
       coverImage: cover,
       attachments: attachments,
       viewUrl: json['view_url']?.toString(),
+    );
+  }
+
+  static BlogAuthor? _authorFromRoot(Map<String, dynamic> json) {
+    final userId = json['user_id'] as int? ?? 0;
+    if (userId <= 0) return null;
+    return BlogAuthor(
+      userId: userId,
+      username: json['username']?.toString() ?? '',
     );
   }
 

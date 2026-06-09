@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
@@ -77,6 +78,8 @@ class OmnifeedPage extends StatelessWidget {
                                   likeCount: comment.reactionScore,
                                   visitorReactionId: comment.visitorReactionId,
                                   showCommentButton: false,
+                                  onAuthorTap: () => OmnifeedNavigation
+                                      .openUserProfile(comment.author?.userId),
                                 ),
                               )
                               .toList(),

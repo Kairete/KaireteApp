@@ -28,13 +28,16 @@ class BlogFeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumbnail = entry.thumbnailUrl;
+    final author = entry.author;
 
     return FeedCardShell(
-      header: BlogFeedHeader(
-        entry: entry,
+      header: FeedCardAuthorHeader(
+        avatarUrl: author?.avatarUrl,
+        authorName: author?.username ?? author?.label,
+        moduleLabel: entry.blog?.title,
+        dateLabel: _metaDateLine(entry),
         onAuthorTap: onAuthorTap,
-        onBlogTap: onBlogTap,
-        onCategoryTap: onCategoryTap,
+        onModuleTap: onBlogTap,
       ),
       body: InkWell(
         onTap: onOpen,
@@ -78,6 +81,21 @@ class BlogFeedCard extends StatelessWidget {
                 onTap: onOpen,
                 visible: entry.previewHasMore,
               ),
+              if (entry.category?.title?.isNotEmpty == true) ...[
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: onCategoryTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Text(
+                    entry.category!.title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -91,177 +109,11 @@ class BlogFeedCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class BlogFeedHeader extends StatelessWidget {
-  const BlogFeedHeader({
-    super.key,
-    required this.entry,
-    this.onAuthorTap,
-    this.onBlogTap,
-    this.onCategoryTap,
-  });
-
-  final BlogEntry entry;
-  final VoidCallback? onAuthorTap;
-  final VoidCallback? onBlogTap;
-  final VoidCallback? onCategoryTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final author = entry.author;
-    final nickname = author?.username ?? author?.label ?? '';
-    final blogTitle = entry.blog?.title ?? '';
-    final categoryTitle = entry.category?.title ?? '';
-
-    return FeedCardHeaderBar(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: onAuthorTap,
-            child: FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _BlogAuthorLine(
-                  nickname: nickname,
-                  blogTitle: blogTitle,
-                  onAuthorTap: onAuthorTap,
-                  onBlogTap: onBlogTap,
-                ),
-                const SizedBox(height: 3),
-                _BlogMetaLine(
-                  dateLabel: formatOmnifeedCardDate(entry.postDate),
-                  categoryTitle: categoryTitle,
-                  onCategoryTap: onCategoryTap,
-                ),
-              ],
-            ),
-          ),
-          const FeedCardMenuButton(),
-        ],
-      ),
-    );
-  }
-}
-
-class _BlogAuthorLine extends StatelessWidget {
-  const _BlogAuthorLine({
-    required this.nickname,
-    required this.blogTitle,
-    this.onAuthorTap,
-    this.onBlogTap,
-  });
-
-  final String nickname;
-  final String blogTitle;
-  final VoidCallback? onAuthorTap;
-  final VoidCallback? onBlogTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14, height: 1.15),
-        children: [
-          WidgetSpan(
-            alignment: PlaceholderAlignment.baseline,
-            baseline: TextBaseline.alphabetic,
-            child: GestureDetector(
-              onTap: onAuthorTap,
-              child: Text(
-                nickname,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.authorName,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-          if (blogTitle.isNotEmpty) ...[
-            const WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 1),
-                child: Icon(
-                  Icons.play_arrow,
-                  size: 15,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: GestureDetector(
-                onTap: onBlogTap,
-                child: Text(
-                  blogTitle,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _BlogMetaLine extends StatelessWidget {
-  const _BlogMetaLine({
-    required this.dateLabel,
-    required this.categoryTitle,
-    this.onCategoryTap,
-  });
-
-  final String dateLabel;
-  final String categoryTitle;
-  final VoidCallback? onCategoryTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.textSecondary,
-          height: 1.1,
-        ),
-        children: [
-          TextSpan(text: dateLabel),
-          if (categoryTitle.isNotEmpty) ...[
-            const TextSpan(text: ' - '),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: GestureDetector(
-                onTap: onCategoryTap,
-                child: Text(
-                  categoryTitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+  String _metaDateLine(BlogEntry entry) {
+    final date = formatOmnifeedCardDate(entry.postDate);
+    final category = entry.category?.title ?? '';
+    if (category.isEmpty) return date;
+    return '$date - $category';
   }
 }

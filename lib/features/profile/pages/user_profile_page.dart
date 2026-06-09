@@ -7,15 +7,39 @@ import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/profile/controllers/user_profile_controller.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
-class UserProfilePage extends StatelessWidget {
+class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key, required this.userId});
 
   final int userId;
 
   @override
+  State<UserProfilePage> createState() => _UserProfilePageState();
+}
+
+class _UserProfilePageState extends State<UserProfilePage> {
+  late final String _tag;
+  late final UserProfileController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _tag = 'profile_${widget.userId}';
+    Get.delete<UserProfileController>(tag: _tag, force: true);
+    _controller = Get.put(
+      UserProfileController(userId: widget.userId),
+      tag: _tag,
+    );
+  }
+
+  @override
+  void dispose() {
+    Get.delete<UserProfileController>(tag: _tag);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final tag = 'profile_$userId';
-    final c = Get.put(UserProfileController(userId: userId), tag: tag);
+    final c = _controller;
 
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
@@ -44,7 +68,9 @@ class UserProfilePage extends StatelessWidget {
                 foregroundColor: Colors.white,
                 title: Text(profile.username),
               ),
-              SliverToBoxAdapter(child: _ProfileHeader(controller: c, profile: profile)),
+              SliverToBoxAdapter(
+                child: _ProfileHeader(controller: c, profile: profile),
+              ),
               if (c.isCurrentUser)
                 SliverToBoxAdapter(child: _ComposePrompt(onTap: c.openCompose)),
               if (c.isFeedLoading.value && c.items.isEmpty)

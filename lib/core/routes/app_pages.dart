@@ -7,6 +7,7 @@ import 'package:kairete/features/auth/pages/splash_page.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/profile/pages/profile_fields_page.dart';
+import 'package:kairete/features/profile/pages/user_profile_page.dart';
 
 class AppPages {
   AppPages._();
@@ -36,6 +37,12 @@ class AppPages {
       name: AppRoutes.home,
       page: () => const HomeShellPage(),
       binding: HomeBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => UserProfilePage(
+        userId: int.parse(Get.parameters['userId'] ?? '0'),
+      ),
     ),
   ];
 }

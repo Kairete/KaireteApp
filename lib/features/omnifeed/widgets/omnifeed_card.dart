@@ -30,44 +30,15 @@ class OmnifeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final author = item.author;
-    final nickname = author?.username ?? author?.label ?? '';
 
     return FeedCardShell(
-      header: FeedCardHeaderBar(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: onAuthorTap,
-              child: FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _AuthorLine(
-                    nickname: nickname,
-                    moduleLabel: item.headerModuleLabel,
-                    onAuthorTap: onAuthorTap,
-                    onModuleTap: _moduleTap(),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    formatOmnifeedCardDate(item.itemDate),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                      height: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const FeedCardMenuButton(),
-          ],
-        ),
+      header: FeedCardAuthorHeader(
+        avatarUrl: author?.avatarUrl,
+        authorName: author?.username ?? author?.label,
+        moduleLabel: item.headerModuleLabel,
+        dateLabel: formatOmnifeedCardDate(item.itemDate),
+        onAuthorTap: onAuthorTap,
+        onModuleTap: _moduleTap(),
       ),
       body: InkWell(
         onTap: onOpen,
@@ -119,75 +90,5 @@ class OmnifeedCard extends StatelessWidget {
     if (item.contentType == 'ubs_blog_entry') return onBlogTap;
     if (item.contentType == 'thread') return onForumTap;
     return null;
-  }
-}
-
-class _AuthorLine extends StatelessWidget {
-  const _AuthorLine({
-    required this.nickname,
-    this.moduleLabel,
-    this.onAuthorTap,
-    this.onModuleTap,
-  });
-
-  final String nickname;
-  final String? moduleLabel;
-  final VoidCallback? onAuthorTap;
-  final VoidCallback? onModuleTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14, height: 1.15),
-        children: [
-          WidgetSpan(
-            alignment: PlaceholderAlignment.baseline,
-            baseline: TextBaseline.alphabetic,
-            child: GestureDetector(
-              onTap: onAuthorTap,
-              child: Text(
-                nickname,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.authorName,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-          if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
-            const WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 1),
-                child: Icon(
-                  Icons.play_arrow,
-                  size: 15,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: GestureDetector(
-                onTap: onModuleTap,
-                child: Text(
-                  moduleLabel!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 }

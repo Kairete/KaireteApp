@@ -6,4 +6,5 @@ class AppRoutes {
   static const register = '/register';
   static const profileFields = '/profile-fields';
   static const home = '/home';
+  static const profile = '/profile/:userId';
 }

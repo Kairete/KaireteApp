@@ -26,12 +26,16 @@ class ThreadFeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final author = thread.author;
+
     return FeedCardShell(
-      header: ThreadFeedHeader(
-        thread: thread,
-        forumTitle: forumTitle,
+      header: FeedCardAuthorHeader(
+        avatarUrl: author?.avatarUrl,
+        authorName: author?.username ?? author?.label,
+        moduleLabel: forumTitle,
+        dateLabel: formatOmnifeedCardDate(thread.postDate),
         onAuthorTap: onAuthorTap,
-        onForumTap: onForumTap,
+        onModuleTap: onForumTap,
       ),
       body: Material(
         color: Colors.transparent,
@@ -78,109 +82,6 @@ class ThreadFeedCard extends StatelessWidget {
         likeCount: thread.firstPostReactionScore,
         onComment: onComment ?? onOpen,
         onReact: onReact,
-      ),
-    );
-  }
-}
-
-class ThreadFeedHeader extends StatelessWidget {
-  const ThreadFeedHeader({
-    super.key,
-    required this.thread,
-    required this.forumTitle,
-    this.onAuthorTap,
-    this.onForumTap,
-  });
-
-  final ForumThread thread;
-  final String forumTitle;
-  final VoidCallback? onAuthorTap;
-  final VoidCallback? onForumTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final author = thread.author;
-    final nickname = author?.username ?? author?.label ?? '';
-
-    return FeedCardHeaderBar(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: onAuthorTap,
-            child: FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 14, height: 1.15),
-                    children: [
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: GestureDetector(
-                          onTap: onAuthorTap,
-                          child: Text(
-                            nickname,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.authorName,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (forumTitle.isNotEmpty) ...[
-                        const WidgetSpan(
-                          alignment: PlaceholderAlignment.middle,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 1),
-                            child: Icon(
-                              Icons.play_arrow,
-                              size: 15,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                        ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: onForumTap,
-                            child: Text(
-                              forumTitle,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  formatOmnifeedCardDate(thread.postDate),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const FeedCardMenuButton(),
-        ],
       ),
     );
   }

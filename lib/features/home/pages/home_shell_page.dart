@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
+import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
@@ -13,7 +14,8 @@ import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
-import 'package:kairete/features/profile/pages/user_profile_page.dart';
+import 'package:kairete/features/home/pages/home_shell_page.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
 /// Home senza drawer: il drawer GetX lasciava una barriera modale che
 /// bloccava tutto il body (schermo bianco / tap morti).
@@ -67,7 +69,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Kairete'),
+        title: Text('Kairete · ${AppBuild.label}'),
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
@@ -125,7 +127,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
               return InkWell(
                 onTap: user == null
                     ? null
-                    : () => Get.to(() => UserProfilePage(userId: user.userId)),
+                    : () => OmnifeedNavigation.openUserProfile(user.userId),
                 customBorder: const CircleBorder(),
                 child: CircleAvatar(
                   radius: 16,
