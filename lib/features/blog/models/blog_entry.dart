@@ -136,9 +136,9 @@ class BlogEntry {
 
   bool get previewHasMore {
     final plain = messagePlainText?.trim() ?? '';
-    if (plain.length > 280) return true;
+    if (plain.length >= 280) return true;
     final parsed = _stripHtml(messageParsed);
-    return parsed.length > 280;
+    return parsed.length >= 280;
   }
 
   String get listPreviewBody {

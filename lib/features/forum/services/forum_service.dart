@@ -28,7 +28,35 @@ class ForumService {
       },
     );
     _throwIfError(json);
-    return ForumThreadsPage.fromJson(json).threads;
+    final threads = ForumThreadsPage.fromJson(json).threads;
+    return _hydrateFirstPostPreviews(threads);
+  }
+
+  Future<List<ForumThread>> _hydrateFirstPostPreviews(
+    List<ForumThread> threads,
+  ) async {
+    final results = await Future.wait(
+      threads.map((thread) async {
+        if (thread.previewBody.isNotEmpty) return thread;
+        final postId = thread.firstPostId;
+        if (postId == null || postId <= 0) return thread;
+
+        try {
+          final json = await _api.get('${ApiPaths.posts}$postId');
+          if (XenforoApi.firstErrorMessage(json) != null) return thread;
+          final post = json['post'] as Map<String, dynamic>? ?? json;
+          return thread.copyWith(
+            messagePlainText: post['message']?.toString(),
+            messageParsed: post['message_parsed']?.toString(),
+            firstPostReactionScore:
+                post['reaction_score'] as int? ?? thread.firstPostReactionScore,
+          );
+        } catch (_) {
+          return thread;
+        }
+      }),
+    );
+    return results;
   }
 
   Future<ForumThread> fetchThread(

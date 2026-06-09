@@ -226,7 +226,7 @@ class FeedCardDetailLink extends StatelessWidget {
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: const Text(
-          'Vedi dettaglio',
+          'Mostra più dettagli',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),

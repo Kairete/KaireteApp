@@ -20,17 +20,48 @@ class ProfileService {
     String sort = 'post_date',
   }) async {
     await AppApi.instance.applySession();
+
+    try {
+      final json = await _api.get(
+        ApiPaths.newsfeedUserFeed,
+        query: {
+          'id': userId,
+          'page': page,
+          'limit': 20,
+          'sort': sort,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        final feed = OmnifeedFeed.fromJson(json);
+        if (feed.items.isNotEmpty) {
+          return feed;
+        }
+      }
+    } catch (_) {}
+
+    return _fetchUserFeedFromProfilePosts(userId, page: page);
+  }
+
+  Future<OmnifeedFeed> _fetchUserFeedFromProfilePosts(
+    int userId, {
+    int page = 1,
+  }) async {
     final json = await _api.get(
-      ApiPaths.newsfeedUserFeed,
+      '${ApiPaths.users}/$userId/profile-posts',
       query: {
-        'id': userId,
         'page': page,
         'limit': 20,
-        'sort': sort,
       },
     );
     _throwIfError(json);
-    return OmnifeedFeed.fromJson(json);
+
+    final raw = json['profile_posts'] as List<dynamic>? ?? [];
+    final items = raw
+        .whereType<Map<String, dynamic>>()
+        .map(OmnifeedItem.fromProfilePostApi)
+        .toList();
+
+    return OmnifeedFeed(items: items);
   }
 
   Future<bool> followUser(int userId, {required bool stop}) async {

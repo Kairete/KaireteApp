@@ -44,7 +44,7 @@ class ForumThread {
   bool get previewHasMore {
     final body = previewBody;
     if (body.isEmpty) return true;
-    return body.length > 280;
+    return body.length >= 280;
   }
 
   String get listPreviewBody {

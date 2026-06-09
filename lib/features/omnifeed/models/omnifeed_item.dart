@@ -97,7 +97,7 @@ class OmnifeedItem {
   bool get previewHasMore {
     final body = displayBody;
     if (body.isEmpty) return true;
-    return body.length > 280;
+    return body.length >= 280;
   }
 
   bool get listPreviewNeedsDetailLink =>
@@ -120,6 +120,28 @@ class OmnifeedItem {
       default:
         return contentType ?? 'Contenuto';
     }
+  }
+
+  factory OmnifeedItem.fromProfilePostApi(Map<String, dynamic> json) {
+    final postId = json['profile_post_id'] as int? ?? 0;
+    final user = json['User'];
+    return OmnifeedItem(
+      itemId: 1000000000 + postId,
+      contentType: 'profile_post',
+      contentId: postId,
+      messagePlainText: json['message']?.toString(),
+      messageParsed: json['message_parsed']?.toString(),
+      itemDate: json['post_date'] as int?,
+      commentCount: json['comment_count'] as int? ?? 0,
+      reactionScore: json['reaction_score'] as int? ?? 0,
+      author: user is Map<String, dynamic>
+          ? OmnifeedAuthor.fromJson(user)
+          : OmnifeedAuthor(
+              userId: json['user_id'] as int? ?? 0,
+              username: json['username']?.toString() ?? '',
+            ),
+      viewUrl: json['view_url']?.toString(),
+    );
   }
 
   factory OmnifeedItem.fromJson(Map<String, dynamic> json) {
