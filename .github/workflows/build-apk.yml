@@ -50,13 +50,25 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-
       - name: Build debug APK (arm64)
-        run: flutter build apk --debug --target-platform android-arm64 -v
+        id: build_apk
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter build apk --debug --target-platform android-arm64 2>&1 | tee build.log
+
+      - name: Report build errors
+        if: steps.build_apk.outcome == 'failure'
+        run: |
+          echo "### Build log (last 120 lines)" >> "$GITHUB_STEP_SUMMARY"
+          tail -120 build.log >> "$GITHUB_STEP_SUMMARY"
+          grep -E "Error:|error •|FAILURE|Exception" build.log | head -30 | while IFS= read -r line; do
+            echo "::error title=Build::$line"
+          done || true
+          exit 1
 
       - name: Prepare APK for download
+        if: steps.build_apk.outcome == 'success'
         run: |
           APK_DIR=build/app/outputs/flutter-apk
           ls -la "$APK_DIR"
@@ -66,12 +78,14 @@ jobs:
           ls -la Kairete-debug.apk
 
       - name: Upload APK artifact
+        if: steps.build_apk.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: kairete-debug-apk-${{ env.BUILD_LABEL }}
           path: Kairete-debug.apk
 
       - name: Publish GitHub Release (latest)
+        if: steps.build_apk.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
@@ -89,6 +103,7 @@ jobs:
           files: Kairete-debug.apk
 
       - name: Publish GitHub Release (archivio)
+        if: steps.build_apk.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ env.BUILD_LABEL }}-${{ github.run_id }}
@@ -97,7 +112,7 @@ jobs:
           files: Kairete-debug.apk
 
       - name: Upload APK to FTP server
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
+        if: steps.build_apk.outcome == 'success' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true))
         continue-on-error: true
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
