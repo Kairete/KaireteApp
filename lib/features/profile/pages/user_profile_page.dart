@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
-import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/profile/controllers/user_profile_controller.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';

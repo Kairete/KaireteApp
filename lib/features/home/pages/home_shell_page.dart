@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/config/app_build.dart';
@@ -14,7 +14,6 @@ import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
-import 'package:kairete/features/home/pages/home_shell_page.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
 /// Home senza drawer: il drawer GetX lasciava una barriera modale che
