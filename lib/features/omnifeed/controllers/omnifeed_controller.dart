@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
-import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
@@ -24,7 +23,6 @@ class OmnifeedController extends GetxController {
   }
 
   final items = <OmnifeedItem>[].obs;
-  final commentsByItemId = <int, List<OmnifeedComment>>{}.obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
   final feedModeIndex = 0.obs;
@@ -64,7 +62,6 @@ class OmnifeedController extends GetxController {
         onTimeout: () => throw TimeoutException('feed'),
       );
       items.value = feed.items;
-      unawaited(_loadInlineComments(feed.items));
     } on TimeoutException {
       errorMessage.value =
           'Il feed impiega troppo tempo. Controlla la rete e riprova.';
@@ -102,32 +99,6 @@ class OmnifeedController extends GetxController {
     final next = current.reactionScore + delta;
     items[index] = current.copyWith(reactionScore: next < 0 ? 0 : next);
     items.refresh();
-  }
-
-  Future<void> _loadInlineComments(List<OmnifeedItem> feedItems) async {
-    final targets = feedItems
-        .where(
-          (item) =>
-              item.contentType == 'profile_post' && item.commentCount > 0,
-        )
-        .toList();
-    if (targets.isEmpty) {
-      commentsByItemId.clear();
-      return;
-    }
-
-    final loaded = <int, List<OmnifeedComment>>{};
-    await Future.wait(
-      targets.map((item) async {
-        try {
-          final page = await _service.fetchComments(item.itemId);
-          loaded[item.itemId] = page.comments;
-        } catch (_) {
-          loaded[item.itemId] = const [];
-        }
-      }),
-    );
-    commentsByItemId.value = loaded;
   }
 
   void openDetail(OmnifeedItem item) => OmnifeedNavigation.openDetail(item);

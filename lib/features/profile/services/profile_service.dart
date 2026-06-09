@@ -16,6 +16,7 @@ class ProfileService {
     return UserProfile.fromJson(json);
   }
 
+  /// Attività pubblicata da [userId]: post, blog, forum, gruppi (non il muro altrui).
   Future<OmnifeedFeed> fetchUserFeed({
     required int userId,
     int page = 1,
@@ -25,12 +26,12 @@ class ProfileService {
 
     final sources = await Future.wait([
       _fetchUserFeedFromApi(userId, page: page, sort: sort),
-      _fetchProfilePostsItems(userId, page: page),
+      _fetchAuthoredProfilePosts(userId, page: page),
       _fetchUserBlogItems(userId, page: page),
       _fetchUserThreadItems(userId, page: page),
     ]);
 
-    return OmnifeedFeed(items: _mergeFeedItems(sources));
+    return OmnifeedFeed(items: _mergeAuthoredItems(sources, userId));
   }
 
   Future<List<OmnifeedItem>> _fetchUserFeedFromApi(
@@ -55,7 +56,8 @@ class ProfileService {
     return [];
   }
 
-  Future<List<OmnifeedItem>> _fetchProfilePostsItems(
+  /// Post profilo scritti da [userId] (esclude messaggi lasciati da altri sul suo muro).
+  Future<List<OmnifeedItem>> _fetchAuthoredProfilePosts(
     int userId, {
     required int page,
   }) async {
@@ -72,6 +74,7 @@ class ProfileService {
       final raw = json['profile_posts'] as List<dynamic>? ?? [];
       return raw
           .whereType<Map<String, dynamic>>()
+          .where((post) => _profilePostAuthorId(post) == userId)
           .map(OmnifeedItem.fromProfilePostApi)
           .toList();
     } catch (_) {
@@ -98,6 +101,7 @@ class ProfileService {
       return raw
           .whereType<Map<String, dynamic>>()
           .map((entry) => OmnifeedItem.fromBlogEntry(BlogEntry.fromJson(entry)))
+          .where((item) => _isAuthoredBy(item, userId))
           .toList();
     } catch (_) {
       return [];
@@ -122,17 +126,34 @@ class ProfileService {
       return ForumThreadsPage.fromJson(json)
           .threads
           .map(OmnifeedItem.fromForumThread)
+          .where((item) => _isAuthoredBy(item, userId))
           .toList();
     } catch (_) {
       return [];
     }
   }
 
-  List<OmnifeedItem> _mergeFeedItems(List<List<OmnifeedItem>> sources) {
+  int _profilePostAuthorId(Map<String, dynamic> json) {
+    final user = json['User'];
+    if (user is Map<String, dynamic>) {
+      return user['user_id'] as int? ?? 0;
+    }
+    return json['user_id'] as int? ?? 0;
+  }
+
+  bool _isAuthoredBy(OmnifeedItem item, int userId) {
+    if (userId <= 0) return false;
+    return item.author?.userId == userId;
+  }
+
+  List<OmnifeedItem> _mergeAuthoredItems(
+    List<List<OmnifeedItem>> sources,
+    int userId,
+  ) {
     final byId = <int, OmnifeedItem>{};
     for (final list in sources) {
       for (final item in list) {
-        if (item.itemId <= 0) continue;
+        if (item.itemId <= 0 || !_isAuthoredBy(item, userId)) continue;
         byId.putIfAbsent(item.itemId, () => item);
       }
     }
