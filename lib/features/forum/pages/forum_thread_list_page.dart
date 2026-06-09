@@ -69,6 +69,7 @@ class ForumThreadListPage extends StatelessWidget {
                 () => ContentWatchBar(
                   isWatched: controller.isWatched.value,
                   isLoading: controller.watchLoading.value,
+                  visible: controller.canWatch.value,
                   onTap: controller.toggleWatch,
                 ),
               ),
@@ -111,6 +112,7 @@ class ForumThreadListPage extends StatelessWidget {
                   () => ContentWatchBar(
                     isWatched: controller.isWatched.value,
                     isLoading: controller.watchLoading.value,
+                    visible: controller.canWatch.value,
                     onTap: controller.toggleWatch,
                   ),
                 );

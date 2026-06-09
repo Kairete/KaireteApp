@@ -28,6 +28,8 @@ class OmnifeedItem {
     this.author,
     this.categoryLabel,
     this.blogLabel,
+    this.blogId,
+    this.forumId,
     this.viewUrl,
     this.groupId,
   });
@@ -45,6 +47,8 @@ class OmnifeedItem {
   final OmnifeedAuthor? author;
   final String? categoryLabel;
   final String? blogLabel;
+  final int? blogId;
+  final int? forumId;
   final String? viewUrl;
   final int? groupId;
 
@@ -138,6 +142,7 @@ class OmnifeedItem {
     }
 
     String? blogTitle;
+    int? blogId;
     for (final source in [
       json['Blog'],
       content?['Blog'],
@@ -147,9 +152,15 @@ class OmnifeedItem {
         final title = source['title']?.toString().trim();
         if (title != null && title.isNotEmpty) {
           blogTitle = title;
-          break;
         }
+        final id = source['blog_id'] as int?;
+        if (id != null && id > 0) blogId = id;
+        if (blogTitle != null && blogId != null) break;
       }
+    }
+    int? forumId;
+    if (content?['Category'] is Map) {
+      forumId = (content!['Category'] as Map)['node_id'] as int?;
     }
     if (category == null) {
       for (final source in [
@@ -185,6 +196,8 @@ class OmnifeedItem {
           : null,
       categoryLabel: category,
       blogLabel: blogTitle,
+      blogId: blogId,
+      forumId: forumId,
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
     );
@@ -205,6 +218,8 @@ class OmnifeedItem {
       author: author,
       categoryLabel: categoryLabel,
       blogLabel: blogLabel,
+      blogId: blogId,
+      forumId: forumId,
       viewUrl: viewUrl,
       groupId: groupId,
     );

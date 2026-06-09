@@ -25,6 +25,7 @@ class ForumThreadListController extends GetxController {
   final errorMessage = ''.obs;
   final reactingThreadId = Rxn<int>();
   final isWatched = false.obs;
+  final canWatch = true.obs;
   final watchLoading = false.obs;
 
   @override
@@ -40,13 +41,14 @@ class ForumThreadListController extends GetxController {
           .fetchForumWatchState(forumId)
           .timeout(const Duration(seconds: 15));
       isWatched.value = state.isWatched;
+      canWatch.value = state.canWatch;
     } catch (_) {
       // Watch is optional; list still works without it.
     }
   }
 
   Future<void> toggleWatch() async {
-    if (watchLoading.value) return;
+    if (!canWatch.value || watchLoading.value) return;
     watchLoading.value = true;
     final stop = isWatched.value;
     try {

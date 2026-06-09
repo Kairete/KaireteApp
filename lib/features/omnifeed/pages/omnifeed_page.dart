@@ -54,6 +54,13 @@ class OmnifeedPage extends StatelessWidget {
                           item: item,
                           onOpen: () => c.openDetail(item),
                           onComment: () => c.openDetail(item),
+                          onAuthorTap: () => c.openAuthor(item),
+                          onBlogTap: item.contentType == 'ubs_blog_entry'
+                              ? () => c.openBlog(item)
+                              : null,
+                          onForumTap: item.contentType == 'thread'
+                              ? () => c.openForum(item)
+                              : null,
                           onReact: (reactionId) =>
                               c.react(item, reactionId: reactionId),
                           comments: inlineComments

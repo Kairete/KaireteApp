@@ -10,6 +10,8 @@ class ApiPaths {
   static const newsfeed = 'api/newsfeed';
   static const newsfeedPost = 'api/newsfeed/post';
   static const newsfeedBlogPost = 'api/newsfeed/blog-post';
+  static const newsfeedUserFeed = 'api/newsfeed/user-feed';
+  static const newsfeedForumWatch = 'api/newsfeed/forum-watch';
   static const newsfeedItems = 'api/newsfeed-items/';
   static const newsfeedComments = 'api/newsfeed-items/';
   static const newsfeedCommentReplies = 'api/newsfeed-comments/';

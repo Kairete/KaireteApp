@@ -13,6 +13,7 @@ import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_compose_bar.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_tabs.dart';
+import 'package:kairete/features/profile/pages/user_profile_page.dart';
 
 /// Home senza drawer: il drawer GetX lasciava una barriera modale che
 /// bloccava tutto il body (schermo bianco / tap morti).
@@ -118,17 +119,24 @@ class _HomeShellPageState extends State<HomeShellPage> {
           }),
           Padding(
             padding: const EdgeInsets.only(right: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white24,
-              child: Obx(() {
-                final name = _auth.currentUser.value?.username ?? '';
-                return Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                );
-              }),
-            ),
+            child: Obx(() {
+              final user = _auth.currentUser.value;
+              final name = user?.username ?? '';
+              return InkWell(
+                onTap: user == null
+                    ? null
+                    : () => Get.to(() => UserProfilePage(userId: user.userId)),
+                customBorder: const CircleBorder(),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white24,
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+              );
+            }),
           ),
           IconButton(
             tooltip: 'Esci',

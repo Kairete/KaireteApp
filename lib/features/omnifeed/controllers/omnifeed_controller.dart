@@ -5,14 +5,11 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
-import 'package:kairete/features/blog/pages/blog_detail_page.dart';
-import 'package:kairete/features/forum/pages/thread_detail_page.dart';
-import 'package:kairete/features/groups/pages/group_detail_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
-import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 
 class OmnifeedController extends GetxController {
@@ -133,44 +130,13 @@ class OmnifeedController extends GetxController {
     commentsByItemId.value = loaded;
   }
 
-  void openDetail(OmnifeedItem item) {
-    final contentId = item.contentId;
-    switch (item.contentType) {
-      case 'tl_group_post':
-      case 'ksg_group_post':
-        final groupId = item.groupId ?? _groupIdFromViewUrl(item.viewUrl);
-        if (groupId != null && groupId > 0) {
-          Get.to(() => GroupDetailPage(groupId: groupId));
-          return;
-        }
-        break;
-      case 'thread':
-        if (contentId != null && contentId > 0) {
-          Get.to(
-            () => ThreadDetailPage(
-              threadId: contentId,
-              forumTitle: item.categoryLabel ?? item.moduleTitle,
-            ),
-          );
-          return;
-        }
-        break;
-      case 'ubs_blog_entry':
-        if (contentId != null && contentId > 0) {
-          Get.to(() => BlogDetailPage(entryId: contentId));
-          return;
-        }
-        break;
-    }
-    Get.to(() => OmnifeedDetailPage(item: item));
-  }
+  void openDetail(OmnifeedItem item) => OmnifeedNavigation.openDetail(item);
 
-  int? _groupIdFromViewUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-    final match = RegExp(r'social-groups/[^./]+\.(\d+)').firstMatch(url);
-    if (match == null) return null;
-    return int.tryParse(match.group(1)!);
-  }
+  void openAuthor(OmnifeedItem item) => OmnifeedNavigation.openAuthor(item);
+
+  void openBlog(OmnifeedItem item) => OmnifeedNavigation.openBlog(item);
+
+  void openForum(OmnifeedItem item) => OmnifeedNavigation.openForum(item);
 
   Future<void> openCompose() async {
     final created = await Get.to<bool>(() => const OmnifeedComposePage());

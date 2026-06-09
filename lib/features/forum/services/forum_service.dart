@@ -123,6 +123,19 @@ class ForumService {
 
   Future<ForumWatchState> fetchForumWatchState(int forumId) async {
     await AppApi.instance.applySession();
+    try {
+      final json = await _api.get(
+        ApiPaths.newsfeedForumWatch,
+        query: {'forum_id': forumId},
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        return ForumWatchState(
+          isWatched: json['is_watched'] == true,
+          canWatch: json['can_watch'] != false,
+        );
+      }
+    } catch (_) {}
+
     final json = await _api.get('${ApiPaths.forums}$forumId');
     _throwIfError(json);
     final forum = json['forum'] as Map<String, dynamic>? ?? json;
@@ -133,6 +146,24 @@ class ForumService {
 
   Future<bool> watchForum(int forumId, {required bool stop}) async {
     await AppApi.instance.applySession();
+    try {
+      final json = await _api.post(
+        ApiPaths.newsfeedForumWatch,
+        body: {
+          'forum_id': forumId,
+          if (stop) 'stop': true,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        if (json['is_watched'] is bool) {
+          return json['is_watched'] as bool;
+        }
+        return !stop;
+      }
+    } on ForumException {
+      rethrow;
+    } catch (_) {}
+
     final json = await _api.post(
       '${ApiPaths.forums}$forumId/watch',
       body: stop ? {'stop': true} : {},
@@ -148,9 +179,13 @@ class ForumService {
 }
 
 class ForumWatchState {
-  const ForumWatchState({required this.isWatched});
+  const ForumWatchState({
+    required this.isWatched,
+    this.canWatch = true,
+  });
 
   final bool isWatched;
+  final bool canWatch;
 }
 
 class ForumException implements Exception {
