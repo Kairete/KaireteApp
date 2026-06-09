@@ -27,6 +27,7 @@ class OmnifeedItem {
     this.visitorReactionId,
     this.author,
     this.categoryLabel,
+    this.blogLabel,
     this.viewUrl,
     this.groupId,
   });
@@ -43,6 +44,7 @@ class OmnifeedItem {
   final int? visitorReactionId;
   final OmnifeedAuthor? author;
   final String? categoryLabel;
+  final String? blogLabel;
   final String? viewUrl;
   final int? groupId;
 
@@ -58,6 +60,10 @@ class OmnifeedItem {
   /// Forum, blog, gruppo, ecc. accanto al nickname nell'header (stile web).
   String? get headerModuleLabel {
     if (isPlainFeedPost) return null;
+    if (contentType == 'ubs_blog_entry') {
+      final blog = blogLabel?.trim();
+      if (blog != null && blog.isNotEmpty) return blog;
+    }
     final category = categoryLabel?.trim();
     if (category != null && category.isNotEmpty) return category;
     final label = typeLabel.trim();
@@ -131,6 +137,38 @@ class OmnifeedItem {
       category = (group!['Group'] as Map)['name']?.toString();
     }
 
+    String? blogTitle;
+    for (final source in [
+      json['Blog'],
+      content?['Blog'],
+      json['BlogEntryItem'] is Map ? (json['BlogEntryItem'] as Map)['Blog'] : null,
+    ]) {
+      if (source is Map) {
+        final title = source['title']?.toString().trim();
+        if (title != null && title.isNotEmpty) {
+          blogTitle = title;
+          break;
+        }
+      }
+    }
+    if (category == null) {
+      for (final source in [
+        json['Category'],
+        content?['Category'],
+        json['BlogEntryItem'] is Map
+            ? (json['BlogEntryItem'] as Map)['Category']
+            : null,
+      ]) {
+        if (source is Map) {
+          final title = source['title']?.toString().trim();
+          if (title != null && title.isNotEmpty) {
+            category = title;
+            break;
+          }
+        }
+      }
+    }
+
     return OmnifeedItem(
       itemId: json['item_id'] as int? ?? 0,
       contentType: json['content_type']?.toString(),
@@ -146,6 +184,7 @@ class OmnifeedItem {
           ? OmnifeedAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : null,
       categoryLabel: category,
+      blogLabel: blogTitle,
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
     );
@@ -165,6 +204,7 @@ class OmnifeedItem {
       visitorReactionId: visitorReactionId ?? this.visitorReactionId,
       author: author,
       categoryLabel: categoryLabel,
+      blogLabel: blogLabel,
       viewUrl: viewUrl,
       groupId: groupId,
     );

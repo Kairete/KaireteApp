@@ -19,6 +19,19 @@ class ReactionService {
     int reactionId = 1,
   }) async {
     await _ensureLoggedIn(authorUserId: item.author?.userId);
+
+    if (item.contentType == 'ubs_blog_entry') {
+      final blogEntryId = item.contentId;
+      if (blogEntryId == null || blogEntryId <= 0) {
+        throw ReactionException('Articolo blog non disponibile.');
+      }
+      return reactBlogEntry(
+        blogEntryId,
+        authorUserId: item.author?.userId,
+        reactionId: reactionId,
+      );
+    }
+
     if (item.itemId > 0) {
       try {
         return await _postReact(
@@ -41,12 +54,6 @@ class ReactionService {
       case 'thread':
         final postId = await _threadFirstPostId(contentId);
         return reactToPost(postId, reactionId: reactionId);
-      case 'ubs_blog_entry':
-        return reactBlogEntry(
-          contentId,
-          authorUserId: item.author?.userId,
-          reactionId: reactionId,
-        );
       case 'tl_group_post':
         return _postReact('${ApiPaths.groupPosts}$contentId/react', reactionId);
       case 'ksg_group_post':
@@ -180,6 +187,8 @@ class ReactionService {
     final lower = message.toLowerCase();
     return lower.contains('endpoint') ||
         lower.contains('cannot be found') ||
+        lower.contains('could not be found') ||
+        lower.contains('not_found') ||
         lower.contains('invalid_route') ||
         lower.contains('invalid_action');
   }
