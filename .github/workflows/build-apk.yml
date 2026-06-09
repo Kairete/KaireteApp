@@ -50,8 +50,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
       - name: Build debug APK (arm64)
-        run: flutter build apk --debug --target-platform android-arm64
+        run: flutter build apk --debug --target-platform android-arm64 -v
 
       - name: Prepare APK for download
         run: |
