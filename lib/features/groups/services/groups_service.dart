@@ -83,6 +83,12 @@ class GroupsService {
     _throwIfError(json);
   }
 
+  Future<void> deletePost(int groupPostId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.delete('${ApiPaths.groupPosts}$groupPostId');
+    _throwIfError(json);
+  }
+
   Future<String> reactToPost({
     required int groupPostId,
     int? authorUserId,

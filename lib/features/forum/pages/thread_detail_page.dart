@@ -106,7 +106,27 @@ class _ThreadDetailPageState extends State<ThreadDetailPage> {
                             forumLabel.isNotEmpty ? forumLabel : null,
                         dateLabel: formatOmnifeedCardDate(thread.postDate),
                       ),
-                      body: ThreadPostBody(thread: thread),
+                      body: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ThreadPostBody(thread: thread),
+                          if (thread.attachments
+                              .any((a) => a.displayImageUrl != null)) ...[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                              child: FeedCardFullWidthImages(
+                                imageUrls: thread.attachments
+                                    .map((a) => a.displayImageUrl)
+                                    .whereType<String>()
+                                    .toList(),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      beforeFooter: thread.tags.isNotEmpty
+                          ? FeedCardTagsRow(tags: thread.tags)
+                          : null,
                       footer: FeedCardActionBar(
                         commentCount: thread.commentCount,
                         likeCount: thread.firstPostReactionScore,

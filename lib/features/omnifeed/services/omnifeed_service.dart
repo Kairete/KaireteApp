@@ -44,16 +44,44 @@ class OmnifeedService {
 
   Future<void> createProfilePost({
     required String message,
+    String attachmentKey = '',
     String attachmentHash = '',
   }) async {
     await AppApi.instance.applySession();
     final body = <String, dynamic>{'message': message.trim()};
-    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+    final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
+    if (attach.isNotEmpty) {
+      body['attachment_key'] = attach;
+      body['attachment_hash'] = attach;
+    }
 
     final json = await _api.post(
       ApiPaths.newsfeedPost,
       body: body,
     );
+    _throwIfError(json);
+  }
+
+  Future<void> deleteItem(int itemId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.delete('${ApiPaths.newsfeedItems}$itemId');
+    _throwIfError(json);
+  }
+
+  Future<void> updateItem({
+    required int itemId,
+    String? title,
+    required String message,
+  }) async {
+    await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'id': itemId,
+      'message': message.trim(),
+    };
+    if (title != null && title.trim().isNotEmpty) {
+      body['title'] = title.trim();
+    }
+    final json = await _api.post('${ApiPaths.newsfeedItems}$itemId', body: body);
     _throwIfError(json);
   }
 
@@ -63,6 +91,7 @@ class OmnifeedService {
     required String message,
     int categoryId = 0,
     String tags = '',
+    String attachmentKey = '',
     String attachmentHash = '',
   }) async {
     await AppApi.instance.applySession();
@@ -73,7 +102,11 @@ class OmnifeedService {
     };
     if (categoryId > 0) body['category_id'] = categoryId;
     if (tags.trim().isNotEmpty) body['tags'] = tags.trim();
-    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+    final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
+    if (attach.isNotEmpty) {
+      body['attachment_key'] = attach;
+      body['attachment_hash'] = attach;
+    }
 
     final json = await _api.post(ApiPaths.newsfeedBlogPost, body: body);
     _throwIfError(json);

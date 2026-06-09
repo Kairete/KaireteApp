@@ -17,12 +17,14 @@ class FeedCardShell extends StatelessWidget {
     required this.header,
     required this.body,
     required this.footer,
+    this.beforeFooter,
     this.comments = const [],
   });
 
   final Widget header;
   final Widget body;
   final Widget footer;
+  final Widget? beforeFooter;
   final List<Widget> comments;
 
   @override
@@ -39,6 +41,10 @@ class FeedCardShell extends StatelessWidget {
           header,
           feedCardDivider,
           ColoredBox(color: Colors.white, child: body),
+          if (beforeFooter != null) ...[
+            feedCardDivider,
+            ColoredBox(color: Colors.white, child: beforeFooter!),
+          ],
           feedCardDivider,
           footer,
           for (final comment in comments) ...[
@@ -664,6 +670,103 @@ class _FeedCommentIconButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class FeedCardTagsRow extends StatelessWidget {
+  const FeedCardTagsRow({super.key, required this.tags});
+
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    if (tags.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: tags
+            .map(
+              (tag) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F6F5),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppTheme.cardBorder),
+                ),
+                child: Text(
+                  tag.startsWith('#') ? tag : '#$tag',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class FeedCardFullWidthImages extends StatelessWidget {
+  const FeedCardFullWidthImages({
+    super.key,
+    required this.imageUrls,
+    this.onTap,
+  });
+
+  final List<String> imageUrls;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrls.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final url in imageUrls)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GestureDetector(
+              onTap: onTap,
+              child: CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                errorWidget: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class FeedCardOwnerMenu extends StatelessWidget {
+  const FeedCardOwnerMenu({super.key, this.onEdit, this.onDelete});
+
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    if (onEdit == null && onDelete == null) return const SizedBox.shrink();
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_horiz, color: AppTheme.textSecondary, size: 20),
+      onSelected: (value) {
+        if (value == 'edit') onEdit?.call();
+        if (value == 'delete') onDelete?.call();
+      },
+      itemBuilder: (_) => [
+        if (onEdit != null)
+          const PopupMenuItem(value: 'edit', child: Text('Modifica')),
+        if (onDelete != null)
+          const PopupMenuItem(value: 'delete', child: Text('Elimina')),
+      ],
     );
   }
 }

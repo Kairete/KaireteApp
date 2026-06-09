@@ -50,6 +50,11 @@ class ForumService {
             messageParsed: post['message_parsed']?.toString(),
             firstPostReactionScore:
                 post['reaction_score'] as int? ?? thread.firstPostReactionScore,
+            attachments: ForumThread.parseAttachments(post['Attachments']),
+            canEdit: post['can_edit'] as bool? ?? thread.canEdit,
+            canDelete: post['can_delete'] as bool? ??
+                post['can_soft_delete'] as bool? ??
+                thread.canDelete,
           );
         } catch (_) {
           return thread;
@@ -81,6 +86,9 @@ class ForumService {
         messageParsed: first.messageParsed,
         canReact: first.canReact,
         firstPostReactionScore: first.reactionScore,
+        attachments: first.attachments,
+        canEdit: first.canEdit,
+        canDelete: first.canDelete,
       );
     }
     return thread;
@@ -117,19 +125,53 @@ class ForumService {
     required int forumId,
     required String title,
     required String message,
+    String tags = '',
+    String attachmentKey = '',
   }) async {
     await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'node_id': forumId,
+      'title': title,
+      'message': message,
+    };
+    if (tags.trim().isNotEmpty) body['tags'] = tags.trim();
+    if (attachmentKey.isNotEmpty) body['attachment_key'] = attachmentKey;
+
     final json = await _api.post(
       ApiPaths.threads,
-      body: {
-        'node_id': forumId,
-        'title': title,
-        'message': message,
-      },
+      body: body,
     );
     _throwIfError(json);
     final raw = json['thread'] as Map<String, dynamic>? ?? json;
     return ForumThread.fromJson(raw);
+  }
+
+  Future<void> deleteThread(int threadId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.delete('${ApiPaths.threads}/$threadId');
+    _throwIfError(json);
+  }
+
+  Future<ForumThread> updateThread({
+    required ForumThread thread,
+    required String title,
+    required String message,
+  }) async {
+    await AppApi.instance.applySession();
+    final threadJson = await _api.post(
+      '${ApiPaths.threads}/${thread.threadId}',
+      body: {'title': title.trim()},
+    );
+    _throwIfError(threadJson);
+    final postId = thread.firstPostId;
+    if (postId != null && postId > 0) {
+      final postJson = await _api.post(
+        '${ApiPaths.posts}$postId',
+        body: {'message': message.trim()},
+      );
+      _throwIfError(postJson);
+    }
+    return fetchThread(thread.threadId, forumTitle: thread.forumTitle);
   }
 
   Future<ForumPost> postReply({

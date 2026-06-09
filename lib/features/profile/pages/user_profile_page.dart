@@ -102,6 +102,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         onForumTap: item.contentType == 'thread'
                             ? () => c.openForum(item)
                             : null,
+                        showOwnerActions: c.isCurrentUser,
+                        onEdit: () => c.editItem(item),
+                        onDelete: () => c.deleteItem(item),
                       );
                     },
                     childCount: c.items.length,

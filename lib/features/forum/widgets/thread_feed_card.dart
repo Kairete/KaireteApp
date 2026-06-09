@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
@@ -14,6 +15,9 @@ class ThreadFeedCard extends StatelessWidget {
     this.onReact,
     this.onAuthorTap,
     this.onForumTap,
+    this.onEdit,
+    this.onDelete,
+    this.showOwnerActions = false,
   });
 
   final ForumThread thread;
@@ -23,10 +27,16 @@ class ThreadFeedCard extends StatelessWidget {
   final Future<void> Function(int reactionId)? onReact;
   final VoidCallback? onAuthorTap;
   final VoidCallback? onForumTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool showOwnerActions;
 
   @override
   Widget build(BuildContext context) {
     final author = thread.author;
+    final imageAttachments = thread.attachments
+        .where((a) => a.displayImageUrl != null)
+        .toList();
 
     return FeedCardShell(
       header: FeedCardAuthorHeader(
@@ -36,6 +46,9 @@ class ThreadFeedCard extends StatelessWidget {
         dateLabel: formatOmnifeedCardDate(thread.postDate),
         onAuthorTap: onAuthorTap,
         onModuleTap: onForumTap,
+        trailing: showOwnerActions && (onEdit != null || onDelete != null)
+            ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
+            : null,
       ),
       body: Material(
         color: Colors.transparent,
@@ -72,11 +85,23 @@ class ThreadFeedCard extends StatelessWidget {
                     onTap: onOpen,
                     visible: true,
                   ),
+                if (imageAttachments.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  FeedCardFullWidthImages(
+                    imageUrls: imageAttachments
+                        .map((a) => a.displayImageUrl!)
+                        .toList(),
+                    onTap: onOpen,
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
+      beforeFooter: thread.tags.isNotEmpty
+          ? FeedCardTagsRow(tags: thread.tags)
+          : null,
       footer: FeedCardActionBar(
         commentCount: thread.commentCount,
         likeCount: thread.firstPostReactionScore,

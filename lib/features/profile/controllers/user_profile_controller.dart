@@ -6,6 +6,8 @@ import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/core/services/content_owner_service.dart';
+import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
@@ -18,6 +20,7 @@ class UserProfileController extends GetxController {
   final int userId;
   final ProfileService _profileService = ProfileService();
   final OmnifeedService _omnifeedService = OmnifeedService();
+  final ContentOwnerService _ownerService = ContentOwnerService();
 
   final profile = Rxn<UserProfile>();
   final items = <OmnifeedItem>[].obs;
@@ -137,4 +140,42 @@ class UserProfileController extends GetxController {
   void openBlog(OmnifeedItem item) => OmnifeedNavigation.openBlog(item);
 
   void openForum(OmnifeedItem item) => OmnifeedNavigation.openForum(item);
+
+  Future<void> editItem(OmnifeedItem item) async {
+    if (!isCurrentUser) return;
+    final context = Get.context;
+    if (context == null) return;
+    final result = await showContentEditDialog(context, item: item);
+    if (result == null) return;
+    try {
+      await _ownerService.updateItem(
+        item: item,
+        title: result.title,
+        message: result.message,
+      );
+      AppToast.success('Contenuto aggiornato.');
+      await loadFeed();
+    } on ContentOwnerException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    }
+  }
+
+  Future<void> deleteItem(OmnifeedItem item) async {
+    if (!isCurrentUser) return;
+    final context = Get.context;
+    if (context == null) return;
+    final confirmed = await confirmDeleteContent(context);
+    if (!confirmed) return;
+    try {
+      await _ownerService.deleteItem(item);
+      AppToast.success('Contenuto eliminato.');
+      await loadFeed();
+    } on ContentOwnerException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    }
+  }
 }

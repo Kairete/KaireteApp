@@ -29,6 +29,7 @@ class ProfileService {
       _fetchAuthoredProfilePosts(userId, page: page),
       _fetchUserBlogItems(userId, page: page),
       _fetchUserThreadItems(userId, page: page),
+      _fetchUserGroupPostItems(userId, page: page),
     ]);
 
     return OmnifeedFeed(items: _mergeAuthoredItems(sources, userId));
@@ -101,6 +102,34 @@ class ProfileService {
       return raw
           .whereType<Map<String, dynamic>>()
           .map((entry) => OmnifeedItem.fromBlogEntry(BlogEntry.fromJson(entry)))
+          .where((item) => _isAuthoredBy(item, userId))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<OmnifeedItem>> _fetchUserGroupPostItems(
+    int userId, {
+    required int page,
+  }) async {
+    try {
+      final json = await _api.get(
+        ApiPaths.groupPosts,
+        query: {
+          'user_id': userId,
+          'page': page,
+          'limit': 20,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return [];
+
+      final raw = json['posts'] as List<dynamic>? ??
+          json['group_posts'] as List<dynamic>? ??
+          [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(OmnifeedItem.fromGroupPostApi)
           .where((item) => _isAuthoredBy(item, userId))
           .toList();
     } catch (_) {

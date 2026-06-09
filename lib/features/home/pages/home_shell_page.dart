@@ -172,8 +172,21 @@ class _HomeShellPageState extends State<HomeShellPage> {
                     ? OmnifeedComposeBarMode.newsfeed
                     : OmnifeedComposeBarMode.blog,
                 onTapCompose: _tabIndex == 0 ? _feed.openCompose : null,
-                onTapRefresh: _tabIndex == 0 ? _feed.loadFeed : null,
-                isRefreshing: _tabIndex == 0 && _feed.isLoading.value,
+                onTapRefresh: _tabIndex == 0
+                    ? _feed.loadFeed
+                    : () async {
+                        const tag = 'blog_0_0';
+                        if (Get.isRegistered<BlogListController>(tag: tag)) {
+                          await Get.find<BlogListController>(tag: tag).loadEntries();
+                        }
+                      },
+                isRefreshing: _tabIndex == 0
+                    ? _feed.isLoading.value
+                    : Get.isRegistered<BlogListController>(tag: 'blog_0_0')
+                        ? Get.find<BlogListController>(tag: 'blog_0_0')
+                            .isLoading
+                            .value
+                        : false,
                 onTapBlog: _feed.openBlogCompose,
                 onTapCreateBlog: _tabIndex == 1 ? _openCreateBlog : null,
               ),

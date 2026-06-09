@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/core/widgets/feed_refresh_button.dart';
 
 enum OmnifeedComposeBarMode { newsfeed, blog }
 
@@ -41,8 +42,10 @@ class OmnifeedComposeBar extends StatelessWidget {
                 isRefreshing: isRefreshing,
               )
             : _BlogLayout(
+                onTapRefresh: onTapRefresh,
                 onTapBlog: onTapBlog,
                 onTapCreateBlog: onTapCreateBlog,
+                isRefreshing: isRefreshing,
               ),
       ),
     );
@@ -94,7 +97,7 @@ class _NewsfeedLayout extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            _RefreshButton(
+            FeedRefreshButton(
               onTap: onTapRefresh,
               isLoading: isRefreshing,
             ),
@@ -108,15 +111,28 @@ class _NewsfeedLayout extends StatelessWidget {
 }
 
 class _BlogLayout extends StatelessWidget {
-  const _BlogLayout({this.onTapBlog, this.onTapCreateBlog});
+  const _BlogLayout({
+    this.onTapRefresh,
+    this.onTapBlog,
+    this.onTapCreateBlog,
+    this.isRefreshing = false,
+  });
 
+  final VoidCallback? onTapRefresh;
   final VoidCallback? onTapBlog;
   final VoidCallback? onTapCreateBlog;
+  final bool isRefreshing;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (onTapRefresh != null)
+          FeedRefreshButton(
+            onTap: onTapRefresh,
+            isLoading: isRefreshing,
+          ),
+        if (onTapRefresh != null) const SizedBox(width: 8),
         if (onTapBlog != null)
           Expanded(child: _BlogButton(onTap: onTapBlog!, expanded: true)),
         if (onTapBlog != null && onTapCreateBlog != null)
@@ -133,56 +149,6 @@ class _BlogLayout extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _RefreshButton extends StatelessWidget {
-  const _RefreshButton({this.onTap, this.isLoading = false});
-
-  final VoidCallback? onTap;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.primary,
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(
-        onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF0F4A35)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isLoading)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              else
-                const Icon(Icons.refresh, size: 18, color: Colors.white),
-              const SizedBox(width: 6),
-              const Text(
-                'Aggiorna feed',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -228,7 +194,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Material(
+    return Material(
       color: background,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
@@ -258,6 +224,5 @@ class _ActionButton extends StatelessWidget {
         ),
       ),
     );
-    return expanded ? child : child;
   }
 }

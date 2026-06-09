@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/services/content_owner_service.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/core/utils/content_edit_helper.dart';
+import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_compose_page.dart';
@@ -13,6 +17,7 @@ import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart'
 
 class OmnifeedController extends GetxController {
   final OmnifeedService _service = OmnifeedService();
+  final ContentOwnerService _ownerService = ContentOwnerService();
 
   /// Garantisce che il controller esista (GetX a volte lo rimuove navigando).
   static OmnifeedController ensure() {
@@ -121,5 +126,48 @@ class OmnifeedController extends GetxController {
       return true;
     }
     return false;
+  }
+
+  bool isOwnedByCurrentUser(OmnifeedItem item) {
+    if (!Get.isRegistered<AuthFlowController>()) return false;
+    final userId = Get.find<AuthFlowController>().currentUser.value?.userId;
+    if (userId == null || userId <= 0) return false;
+    return item.author?.userId == userId;
+  }
+
+  Future<void> editItem(OmnifeedItem item) async {
+    final context = Get.context;
+    if (context == null) return;
+    final result = await showContentEditDialog(context, item: item);
+    if (result == null) return;
+    try {
+      await _ownerService.updateItem(
+        item: item,
+        title: result.title,
+        message: result.message,
+      );
+      AppToast.success('Contenuto aggiornato.');
+      await loadFeed();
+    } on ContentOwnerException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    }
+  }
+
+  Future<void> deleteItem(OmnifeedItem item) async {
+    final context = Get.context;
+    if (context == null) return;
+    final confirmed = await confirmDeleteContent(context);
+    if (!confirmed) return;
+    try {
+      await _ownerService.deleteItem(item);
+      AppToast.success('Contenuto eliminato.');
+      await loadFeed();
+    } on ContentOwnerException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    }
   }
 }

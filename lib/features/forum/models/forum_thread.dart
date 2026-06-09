@@ -1,5 +1,59 @@
 import 'package:kairete/features/forum/models/forum_node.dart';
 
+class ForumAttachment {
+  ForumAttachment({
+    required this.url,
+    this.imageUrl,
+    this.fileName = '',
+    this.isImage = false,
+  });
+
+  final String url;
+  final String? imageUrl;
+  final String fileName;
+  final bool isImage;
+
+  String? get displayImageUrl {
+    if (imageUrl != null && imageUrl!.isNotEmpty) return imageUrl;
+    if (isImage && url.isNotEmpty) return url;
+    return null;
+  }
+
+  factory ForumAttachment.fromJson(Map<String, dynamic> json) {
+    final direct = json['direct_url']?.toString() ??
+        json['view_url']?.toString() ??
+        json['url']?.toString() ??
+        '';
+    final thumb = json['thumbnail_url']?.toString() ??
+        json['image_url']?.toString();
+    final width = json['width'] as int? ?? 0;
+    final height = json['height'] as int? ?? 0;
+    final isImage = json['is_image'] == true ||
+        json['isImage'] == true ||
+        (width > 0 && height > 0) ||
+        _looksLikeImage(direct) ||
+        _looksLikeImage(thumb ?? '');
+
+    return ForumAttachment(
+      url: direct,
+      imageUrl: thumb,
+      fileName: json['filename']?.toString() ??
+          json['file_name']?.toString() ??
+          '',
+      isImage: isImage,
+    );
+  }
+
+  static bool _looksLikeImage(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.webp');
+  }
+}
+
 class ForumThread {
   ForumThread({
     required this.threadId,
@@ -16,6 +70,10 @@ class ForumThread {
     this.forumTitle,
     this.viewUrl,
     this.canReact = true,
+    this.tags = const [],
+    this.attachments = const [],
+    this.canEdit = false,
+    this.canDelete = false,
   });
 
   final int threadId;
@@ -32,6 +90,10 @@ class ForumThread {
   final String? forumTitle;
   final String? viewUrl;
   final bool canReact;
+  final List<String> tags;
+  final List<ForumAttachment> attachments;
+  final bool canEdit;
+  final bool canDelete;
 
   int get commentCount => replyCount;
 
@@ -95,6 +157,37 @@ class ForumThread {
     return null;
   }
 
+  static List<ForumAttachment> parseAttachments(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(ForumAttachment.fromJson)
+        .where((a) => a.url.isNotEmpty || (a.imageUrl?.isNotEmpty ?? false))
+        .toList();
+  }
+
+  static List<String> parseTags(Map<String, dynamic> json) {
+    final tags = <String>[];
+    final rawTags = json['tags'];
+    if (rawTags is List) {
+      for (final tag in rawTags) {
+        if (tag is String && tag.trim().isNotEmpty) {
+          tags.add(tag.trim());
+        } else if (tag is Map) {
+          final label = tag['tag']?.toString() ?? tag['text']?.toString();
+          if (label != null && label.trim().isNotEmpty) tags.add(label.trim());
+        }
+      }
+    }
+    final tagList = json['tag_list'];
+    if (tagList is List) {
+      for (final tag in tagList) {
+        if (tag is String && tag.trim().isNotEmpty) tags.add(tag.trim());
+      }
+    }
+    return tags;
+  }
+
   factory ForumThread.fromJson(Map<String, dynamic> json) {
     final forum = json['Forum'];
     String? forumTitle;
@@ -126,6 +219,13 @@ class ForumThread {
       forumTitle: forumTitle,
       viewUrl: json['view_url']?.toString(),
       canReact: json['can_react'] as bool? ?? true,
+      tags: parseTags(json),
+      attachments: parseAttachments(json['Attachments']) +
+          parseAttachments(json['FirstPost'] is Map
+              ? (json['FirstPost'] as Map)['Attachments']
+              : null),
+      canEdit: json['can_edit'] as bool? ?? false,
+      canDelete: json['can_delete'] as bool? ?? json['can_soft_delete'] as bool? ?? false,
     );
   }
 
@@ -135,6 +235,10 @@ class ForumThread {
     String? forumTitle,
     bool? canReact,
     int? firstPostReactionScore,
+    List<String>? tags,
+    List<ForumAttachment>? attachments,
+    bool? canEdit,
+    bool? canDelete,
   }) {
     return ForumThread(
       threadId: threadId,
@@ -152,6 +256,10 @@ class ForumThread {
       forumTitle: forumTitle ?? this.forumTitle,
       viewUrl: viewUrl,
       canReact: canReact ?? this.canReact,
+      tags: tags ?? this.tags,
+      attachments: attachments ?? this.attachments,
+      canEdit: canEdit ?? this.canEdit,
+      canDelete: canDelete ?? this.canDelete,
     );
   }
 }
@@ -185,6 +293,9 @@ class ForumPost {
     this.isFirstPost = false,
     this.author,
     this.canReact = true,
+    this.attachments = const [],
+    this.canEdit = false,
+    this.canDelete = false,
   });
 
   final int postId;
@@ -196,6 +307,9 @@ class ForumPost {
   final bool isFirstPost;
   final ForumAuthor? author;
   final bool canReact;
+  final List<ForumAttachment> attachments;
+  final bool canEdit;
+  final bool canDelete;
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
     return ForumPost(
@@ -207,6 +321,9 @@ class ForumPost {
       reactionScore: json['reaction_score'] as int? ?? 0,
       isFirstPost: json['is_first_post'] as bool? ?? false,
       canReact: json['can_react'] as bool? ?? true,
+      attachments: ForumThread.parseAttachments(json['Attachments']),
+      canEdit: json['can_edit'] as bool? ?? false,
+      canDelete: json['can_delete'] as bool? ?? json['can_soft_delete'] as bool? ?? false,
       author: json['User'] is Map<String, dynamic>
           ? ForumAuthor.fromJson(json['User'] as Map<String, dynamic>)
           : ForumAuthor(

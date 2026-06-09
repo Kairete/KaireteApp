@@ -59,6 +59,9 @@ class OmnifeedPage extends StatelessWidget {
                               : null,
                           onReact: (reactionId) =>
                               c.react(item, reactionId: reactionId),
+                          showOwnerActions: c.isOwnedByCurrentUser(item),
+                          onEdit: () => c.editItem(item),
+                          onDelete: () => c.deleteItem(item),
                         );
                       },
                     ),

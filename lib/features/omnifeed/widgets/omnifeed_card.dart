@@ -15,6 +15,9 @@ class OmnifeedCard extends StatelessWidget {
     this.onAuthorTap,
     this.onBlogTap,
     this.onForumTap,
+    this.onEdit,
+    this.onDelete,
+    this.showOwnerActions = false,
     this.comments = const [],
   });
 
@@ -25,6 +28,9 @@ class OmnifeedCard extends StatelessWidget {
   final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
   final VoidCallback? onForumTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool showOwnerActions;
   final List<Widget> comments;
 
   @override
@@ -39,6 +45,9 @@ class OmnifeedCard extends StatelessWidget {
         dateLabel: formatOmnifeedCardDate(item.itemDate),
         onAuthorTap: onAuthorTap,
         onModuleTap: _moduleTap(),
+        trailing: showOwnerActions && (onEdit != null || onDelete != null)
+            ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
+            : const FeedCardMenuButton(),
       ),
       body: InkWell(
         onTap: onOpen,
@@ -75,6 +84,9 @@ class OmnifeedCard extends StatelessWidget {
           ),
         ),
       ),
+      beforeFooter: item.tags.isNotEmpty
+          ? FeedCardTagsRow(tags: item.tags)
+          : null,
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
         likeCount: item.reactionScore,

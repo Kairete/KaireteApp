@@ -75,6 +75,15 @@ class _ThreadCreatePageState extends State<ThreadCreatePage> {
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 12),
+            TextField(
+              controller: c.tagsCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Tag (separati da virgola)',
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: TextField(
                 controller: c.messageCtrl,
@@ -91,6 +100,36 @@ class _ThreadCreatePageState extends State<ThreadCreatePage> {
                 textCapitalization: TextCapitalization.sentences,
               ),
             ),
+            const SizedBox(height: 12),
+            Obx(() {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: c.isSending.value ? null : c.pickAttachments,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Inserisci allegati'),
+                  ),
+                  if (c.pendingAttachments.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: c.pendingAttachments
+                          .map(
+                            (name) => Chip(
+                              label: Text(name),
+                              onDeleted: c.isSending.value
+                                  ? null
+                                  : () => c.removeAttachment(name),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ],
+              );
+            }),
           ],
         ),
       ),

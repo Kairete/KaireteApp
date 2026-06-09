@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/core/widgets/feed_refresh_button.dart';
 import 'package:kairete/features/feed/widgets/content_watch_bar.dart';
 import 'package:kairete/features/forum/controllers/forum_thread_list_controller.dart';
 import 'package:kairete/features/forum/widgets/thread_feed_card.dart';
@@ -38,6 +39,16 @@ class ForumThreadListPage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         title: Text(forumTitle),
         actions: [
+          Obx(
+            () => Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: FeedRefreshButton(
+                compact: true,
+                isLoading: controller.isLoading.value,
+                onTap: controller.loadThreads,
+              ),
+            ),
+          ),
           IconButton(
             tooltip: 'Nuova discussione',
             icon: const Icon(Icons.edit_outlined),

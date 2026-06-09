@@ -56,7 +56,7 @@ class OmnifeedComposeController extends GetxController {
 
     isSending.value = true;
     try {
-      String attachmentHash = '';
+      String attachmentKey = '';
       final userId = _profileUserId;
       if (pendingAttachments.isNotEmpty && userId != null && userId > 0) {
         final session =
@@ -64,19 +64,19 @@ class OmnifeedComposeController extends GetxController {
         for (final name in pendingAttachments) {
           final path = _attachmentPaths[name];
           if (path != null) {
-            await _attachments.uploadProfilePostFile(
+            await _attachments.uploadFile(
               session: session,
               filePath: path,
               filename: name,
             );
           }
         }
-        attachmentHash = session.hash;
+        attachmentKey = session.key;
       }
 
       await _service.createProfilePost(
         message: text.isEmpty ? ' ' : text,
-        attachmentHash: attachmentHash,
+        attachmentKey: attachmentKey,
       );
       Get.back(result: true);
     } on OmnifeedException catch (e) {

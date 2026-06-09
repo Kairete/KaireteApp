@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/core/widgets/feed_refresh_button.dart';
 import 'package:kairete/features/forum/controllers/forum_list_controller.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 import 'package:kairete/features/forum/widgets/forum_category_header.dart';
@@ -23,6 +24,18 @@ class ForumListPage extends StatelessWidget {
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         title: const Text('Forum'),
+        actions: [
+          Obx(
+            () => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FeedRefreshButton(
+                compact: true,
+                isLoading: controller.isLoading.value,
+                onTap: controller.loadForums,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.groups.isEmpty) {

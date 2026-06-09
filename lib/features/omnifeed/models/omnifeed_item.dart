@@ -48,6 +48,7 @@ class OmnifeedItem {
     this.forumId,
     this.viewUrl,
     this.groupId,
+    this.tags = const [],
   });
 
   final int itemId;
@@ -67,6 +68,7 @@ class OmnifeedItem {
   final int? forumId;
   final String? viewUrl;
   final int? groupId;
+  final List<String> tags;
 
   /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
   bool get isPlainFeedPost => contentType == 'profile_post';
@@ -198,6 +200,40 @@ class OmnifeedItem {
     );
   }
 
+  factory OmnifeedItem.fromGroupPostApi(Map<String, dynamic> json) {
+    final postId = json['group_post_id'] as int? ?? 0;
+    final user = json['User'];
+    final group = json['Group'];
+    String? groupName;
+    int? groupId = json['group_id'] as int?;
+    if (group is Map<String, dynamic>) {
+      groupName = group['name']?.toString() ?? group['title']?.toString();
+      groupId ??= group['group_id'] as int?;
+    }
+
+    return OmnifeedItem(
+      itemId: OmnifeedItemId.encode(OmnifeedItemId.typeGroupPost, postId),
+      contentType: 'tl_group_post',
+      contentId: postId,
+      contentTitle: groupName,
+      messagePlainText: json['message_plain_text']?.toString() ??
+          json['message']?.toString(),
+      messageParsed: json['message_parsed']?.toString(),
+      itemDate: json['post_date'] as int?,
+      commentCount: json['comment_count'] as int? ?? 0,
+      reactionScore: json['reaction_score'] as int? ?? 0,
+      author: user is Map<String, dynamic>
+          ? OmnifeedAuthor.fromJson(user)
+          : OmnifeedAuthor(
+              userId: json['user_id'] as int? ?? 0,
+              username: json['username']?.toString() ?? '',
+            ),
+      categoryLabel: groupName,
+      groupId: groupId,
+      viewUrl: json['view_url']?.toString(),
+    );
+  }
+
   factory OmnifeedItem.fromProfilePostApi(Map<String, dynamic> json) {
     final postId = json['profile_post_id'] as int? ?? 0;
     final user = json['User'];
@@ -291,14 +327,32 @@ class OmnifeedItem {
       visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map
           ? OmnifeedAuthor.fromJson(json['User'] as Map<String, dynamic>)
-          : null,
+          : (json['user_id'] is int
+              ? OmnifeedAuthor(
+                  userId: json['user_id'] as int,
+                  username: json['username']?.toString() ?? '',
+                )
+              : null),
       categoryLabel: category,
       blogLabel: blogTitle,
       blogId: blogId,
       forumId: forumId,
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
+      tags: _parseTags(json['tags']),
     );
+  }
+
+  static List<String> _parseTags(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .map((tag) {
+          if (tag is String) return tag.trim();
+          if (tag is Map) return tag['tag']?.toString().trim() ?? '';
+          return '';
+        })
+        .where((tag) => tag.isNotEmpty)
+        .toList();
   }
 
   OmnifeedItem copyWith({int? reactionScore, int? visitorReactionId}) {
@@ -320,6 +374,7 @@ class OmnifeedItem {
       forumId: forumId,
       viewUrl: viewUrl,
       groupId: groupId,
+      tags: tags,
     );
   }
 }
