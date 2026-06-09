@@ -1,7 +1,7 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/attachment_service.dart';
+import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/forum/services/forum_service.dart';
 
@@ -50,13 +50,9 @@ class ThreadCreateController extends GetxController {
   }
 
   Future<void> pickAttachments() async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-    if (result == null) return;
-    for (final file in result.files) {
-      final path = file.path;
-      if (path != null) {
-        addAttachment(path, file.name);
-      }
+    final files = await attach_pick.pickAttachments(allowMultiple: true);
+    for (final file in files) {
+      addAttachment(file.path, file.displayName);
     }
   }
 
@@ -66,18 +62,17 @@ class ThreadCreateController extends GetxController {
     try {
       String attachmentKey = '';
       if (pendingAttachments.isNotEmpty) {
-        final session =
-            await _attachments.createForumPostSession(nodeId: forumId);
+        final uploads = <({String path, String filename})>[];
         for (final name in pendingAttachments) {
           final path = _attachmentPaths[name];
           if (path != null) {
-            await _attachments.uploadFile(
-              session: session,
-              filePath: path,
-              filename: name,
-            );
+            uploads.add((path: path, filename: name));
           }
         }
+        final session = await _attachments.uploadForumFiles(
+          nodeId: forumId,
+          files: uploads,
+        );
         attachmentKey = session.key;
       }
 

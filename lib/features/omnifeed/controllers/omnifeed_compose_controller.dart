@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/attachment_service.dart';
+import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
@@ -50,6 +51,13 @@ class OmnifeedComposeController extends GetxController {
     _onTextChanged();
   }
 
+  Future<void> pickAttachments() async {
+    final files = await attach_pick.pickAttachments(allowMultiple: true);
+    for (final file in files) {
+      addAttachment(file.path, file.displayName);
+    }
+  }
+
   Future<void> publish() async {
     final text = messageCtrl.text.trim();
     if (text.isEmpty && pendingAttachments.isEmpty) return;
@@ -59,18 +67,17 @@ class OmnifeedComposeController extends GetxController {
       String attachmentKey = '';
       final userId = _profileUserId;
       if (pendingAttachments.isNotEmpty && userId != null && userId > 0) {
-        final session =
-            await _attachments.createProfilePostSession(profileUserId: userId);
+        final uploads = <({String path, String filename})>[];
         for (final name in pendingAttachments) {
           final path = _attachmentPaths[name];
           if (path != null) {
-            await _attachments.uploadFile(
-              session: session,
-              filePath: path,
-              filename: name,
-            );
+            uploads.add((path: path, filename: name));
           }
         }
+        final session = await _attachments.uploadProfileFiles(
+          profileUserId: userId,
+          files: uploads,
+        );
         attachmentKey = session.key;
       }
 

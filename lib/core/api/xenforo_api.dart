@@ -43,6 +43,7 @@ class XenforoApi {
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     Map<String, dynamic>? fields,
+    Map<String, dynamic>? query,
     Map<String, MultipartFile>? files,
   }) async {
     final form = FormData();
@@ -55,6 +56,7 @@ class XenforoApi {
     final response = await _dio.post<Map<String, dynamic>>(
       path,
       data: form,
+      queryParameters: query,
     );
     return response.data ?? {};
   }

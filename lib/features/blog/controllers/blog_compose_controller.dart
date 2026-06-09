@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/services/attachment_service.dart';
+import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
 
 class BlogComposeController extends GetxController {
   final BlogService _service = BlogService();
+  final AttachmentService _attachments = AttachmentService();
 
   final titleCtrl = TextEditingController();
   final messageCtrl = TextEditingController();
@@ -19,6 +22,8 @@ class BlogComposeController extends GetxController {
   final isSending = false.obs;
   final canSend = false.obs;
   final loadError = ''.obs;
+  final pendingAttachments = <String>[].obs;
+  final _attachmentPaths = <String, String>{};
 
   @override
   void onInit() {
@@ -74,6 +79,25 @@ class BlogComposeController extends GetxController {
     selectedCategoryId.value = categoryId;
   }
 
+  void addAttachment(String path, String displayName) {
+    _attachmentPaths[displayName] = path;
+    if (!pendingAttachments.contains(displayName)) {
+      pendingAttachments.add(displayName);
+    }
+  }
+
+  void removeAttachment(String displayName) {
+    pendingAttachments.remove(displayName);
+    _attachmentPaths.remove(displayName);
+  }
+
+  Future<void> pickAttachments() async {
+    final files = await attach_pick.pickAttachments(allowMultiple: true);
+    for (final file in files) {
+      addAttachment(file.path, file.displayName);
+    }
+  }
+
   Future<void> reload() => _loadOptions();
 
   Future<void> publish() async {
@@ -86,16 +110,35 @@ class BlogComposeController extends GetxController {
 
     isSending.value = true;
     try {
+      String attachmentKey = '';
+      if (pendingAttachments.isNotEmpty) {
+        final uploads = <({String path, String filename})>[];
+        for (final name in pendingAttachments) {
+          final path = _attachmentPaths[name];
+          if (path != null) {
+            uploads.add((path: path, filename: name));
+          }
+        }
+        final session = await _attachments.uploadBlogFiles(
+          blogId: blogId,
+          files: uploads,
+        );
+        attachmentKey = session.key;
+      }
+
       await _service.createEntry(
         blogId: blogId,
         title: titleCtrl.text.trim(),
         message: messageCtrl.text.trim(),
         categoryId: selectedCategoryId.value ?? 0,
         tags: tagsCtrl.text.trim(),
+        attachmentHash: attachmentKey,
       );
       Get.back(result: true);
     } on BlogException catch (e) {
       Get.snackbar('Errore', e.message);
+    } on AttachmentException catch (e) {
+      Get.snackbar('Errore allegati', e.message);
     } catch (_) {
       Get.snackbar('Errore', 'Pubblicazione non riuscita.');
     } finally {

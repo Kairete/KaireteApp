@@ -48,17 +48,21 @@ class OmnifeedService {
     String attachmentHash = '',
   }) async {
     await AppApi.instance.applySession();
-    final body = <String, dynamic>{'message': message.trim()};
+    final userId = await AppApi.instance.sessionUserId;
+    if (userId == null || userId <= 0) {
+      throw OmnifeedException('Sessione non valida.');
+    }
+
+    final body = <String, dynamic>{
+      'user_id': userId,
+      'message': message.trim(),
+    };
     final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
     if (attach.isNotEmpty) {
       body['attachment_key'] = attach;
-      body['attachment_hash'] = attach;
     }
 
-    final json = await _api.post(
-      ApiPaths.newsfeedPost,
-      body: body,
-    );
+    final json = await _api.post(ApiPaths.profilePosts, body: body);
     _throwIfError(json);
   }
 

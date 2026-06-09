@@ -189,6 +189,7 @@ class BlogService {
     int categoryId = 0,
     String tags = '',
     String attachmentHash = '',
+    String attachmentKey = '',
   }) async {
     await AppApi.instance.applySession();
     final body = <String, dynamic>{
@@ -198,7 +199,11 @@ class BlogService {
     };
     if (categoryId > 0) body['category_id'] = categoryId;
     if (tags.isNotEmpty) body['tags'] = tags;
-    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+    final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
+    if (attach.isNotEmpty) {
+      body['attachment_hash'] = attach;
+      body['attachment_key'] = attach;
+    }
 
     final json = await _api.post('${ApiPaths.blogEntries}/', body: body);
     _throwIfError(json);

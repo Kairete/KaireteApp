@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_compose_controller.dart';
@@ -64,7 +63,7 @@ class _OmnifeedComposePageState extends State<OmnifeedComposePage> {
             Obx(() {
               if (c.pendingAttachments.isEmpty) {
                 return OutlinedButton.icon(
-                  onPressed: c.isSending.value ? null : () => _pickFiles(c),
+                  onPressed: c.isSending.value ? null : c.pickAttachments,
                   icon: const Icon(Icons.attach_file),
                   label: const Text('Inserisci allegati'),
                 );
@@ -91,7 +90,7 @@ class _OmnifeedComposePageState extends State<OmnifeedComposePage> {
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
-                    onPressed: c.isSending.value ? null : () => _pickFiles(c),
+                    onPressed: c.isSending.value ? null : c.pickAttachments,
                     icon: const Icon(Icons.add),
                     label: const Text('Aggiungi allegato'),
                   ),
@@ -102,16 +101,5 @@ class _OmnifeedComposePageState extends State<OmnifeedComposePage> {
         ),
       ),
     );
-  }
-
-  Future<void> _pickFiles(OmnifeedComposeController c) async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-    if (result == null) return;
-    for (final file in result.files) {
-      final path = file.path;
-      if (path != null && path.isNotEmpty) {
-        c.addAttachment(path, file.name);
-      }
-    }
   }
 }
