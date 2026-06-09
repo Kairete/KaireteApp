@@ -42,11 +42,17 @@ class OmnifeedService {
     return OmnifeedCommentsPage.fromJson(json);
   }
 
-  Future<void> createProfilePost({required String message}) async {
+  Future<void> createProfilePost({
+    required String message,
+    String attachmentHash = '',
+  }) async {
     await AppApi.instance.applySession();
+    final body = <String, dynamic>{'message': message.trim()};
+    if (attachmentHash.isNotEmpty) body['attachment_hash'] = attachmentHash;
+
     final json = await _api.post(
       ApiPaths.newsfeedPost,
-      body: {'message': message.trim()},
+      body: body,
     );
     _throwIfError(json);
   }

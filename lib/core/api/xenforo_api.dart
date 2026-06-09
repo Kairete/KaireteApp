@@ -40,6 +40,25 @@ class XenforoApi {
     return response.data ?? {};
   }
 
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, dynamic>? fields,
+    Map<String, MultipartFile>? files,
+  }) async {
+    final form = FormData();
+    fields?.forEach((key, value) {
+      if (value != null) form.fields.add(MapEntry(key, value.toString()));
+    });
+    files?.forEach((key, file) {
+      form.files.add(MapEntry(key, file));
+    });
+    final response = await _dio.post<Map<String, dynamic>>(
+      path,
+      data: form,
+    );
+    return response.data ?? {};
+  }
+
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, dynamic>? query,

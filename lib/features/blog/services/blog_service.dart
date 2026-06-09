@@ -156,6 +156,32 @@ class BlogService {
         .toList();
   }
 
+  Future<CreatedBlog> createBlog({
+    required String title,
+    String slug = '',
+    String description = '',
+    bool isCommunity = false,
+    String communityMembers = '',
+  }) async {
+    await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'title': title,
+      'description': description,
+      'is_community': isCommunity ? 1 : 0,
+    };
+    if (slug.isNotEmpty) body['slug'] = slug;
+    if (communityMembers.isNotEmpty) body['community_members'] = communityMembers;
+
+    final json = await _api.post(ApiPaths.blogs, body: body);
+    _throwIfError(json);
+
+    final blog = json['blog'];
+    if (blog is Map<String, dynamic>) {
+      return CreatedBlog.fromJson(blog);
+    }
+    throw BlogException('Blog creato ma risposta non valida.');
+  }
+
   Future<BlogEntry> createEntry({
     required int blogId,
     required String title,
@@ -207,4 +233,24 @@ class BlogWatchState {
 
   final bool isWatched;
   final bool canWatch;
+}
+
+class CreatedBlog {
+  const CreatedBlog({
+    required this.blogId,
+    required this.title,
+    required this.slug,
+  });
+
+  final int blogId;
+  final String title;
+  final String slug;
+
+  factory CreatedBlog.fromJson(Map<String, dynamic> json) {
+    return CreatedBlog(
+      blogId: json['blog_id'] as int? ?? 0,
+      title: json['title']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+    );
+  }
 }

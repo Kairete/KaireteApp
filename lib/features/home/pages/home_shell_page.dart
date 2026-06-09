@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/config/app_build.dart';
@@ -6,6 +6,8 @@ import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
+import 'package:kairete/features/blog/controllers/blog_list_controller.dart';
+import 'package:kairete/features/blog/pages/blog_create_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/forum/pages/forum_list_page.dart';
 import 'package:kairete/features/groups/pages/groups_list_page.dart';
@@ -56,6 +58,16 @@ class _HomeShellPageState extends State<HomeShellPage> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => ForumListPage()),
     );
+  }
+
+  Future<void> _openCreateBlog() async {
+    final created = await Get.to<bool>(() => const BlogCreatePage());
+    if (created == true) {
+      const tag = 'blog_0_0';
+      if (Get.isRegistered<BlogListController>(tag: tag)) {
+        await Get.find<BlogListController>(tag: tag).loadEntries();
+      }
+    }
   }
 
   @override
@@ -153,10 +165,19 @@ class _HomeShellPageState extends State<HomeShellPage> {
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
           ),
-          OmnifeedComposeBar(
-            onTapCompose: _feed.openCompose,
-            onTapBlog: _feed.openBlogCompose,
-          ),
+          if (_tabIndex != 2)
+            Obx(
+              () => OmnifeedComposeBar(
+                mode: _tabIndex == 0
+                    ? OmnifeedComposeBarMode.newsfeed
+                    : OmnifeedComposeBarMode.blog,
+                onTapCompose: _tabIndex == 0 ? _feed.openCompose : null,
+                onTapRefresh: _tabIndex == 0 ? _feed.loadFeed : null,
+                isRefreshing: _tabIndex == 0 && _feed.isLoading.value,
+                onTapBlog: _feed.openBlogCompose,
+                onTapCreateBlog: _tabIndex == 1 ? _openCreateBlog : null,
+              ),
+            ),
           Expanded(
             child: ColoredBox(
               color: AppTheme.feedFooterBg,

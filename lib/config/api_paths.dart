@@ -12,12 +12,13 @@ class ApiPaths {
   static const newsfeedBlogPost = 'api/newsfeed/blog-post';
   static const newsfeedUserFeed = 'api/newsfeed/user-feed';
   static const newsfeedForumWatch = 'api/newsfeed/forum-watch';
+  static const newsfeedComposeAttachments = 'api/newsfeed/compose-attachments';
   static const newsfeedItems = 'api/newsfeed-items/';
   static const newsfeedComments = 'api/newsfeed-items/';
   static const newsfeedCommentReplies = 'api/newsfeed-comments/';
   static const profilePosts = 'api/profile-posts';
   static const groupPosts = 'api/group-posts/';
-  static const attachmentsNewKey = 'api/attachments/new-key';
+  static const attachments = 'api/attachments/';
 
   // Kairete Blog (XenForo REST)
   static const blogEntries = 'api/blog-entries';
