@@ -28,8 +28,10 @@ jobs:
       - name: Read build label
         run: |
           LABEL=$(grep "static const label" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
+          STAMP=$(grep "static const stamp" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
           echo "BUILD_LABEL=$LABEL" >> "$GITHUB_ENV"
-          echo "Build label: $LABEL"
+          echo "BUILD_STAMP=$STAMP" >> "$GITHUB_ENV"
+          echo "Build label: $LABEL ($STAMP)"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -51,41 +53,38 @@ jobs:
         run: flutter pub get
 
       - name: Build debug APK (arm64)
-        id: build_apk
-        continue-on-error: true
         run: |
           set -o pipefail
           flutter build apk --debug --target-platform android-arm64 2>&1 | tee build.log
 
-      - name: Report build errors
-        if: steps.build_apk.outcome == 'failure'
-        run: |
-          echo "### Build log (last 120 lines)" >> "$GITHUB_STEP_SUMMARY"
-          tail -120 build.log >> "$GITHUB_STEP_SUMMARY"
-          grep -E "Error:|error •|FAILURE|Exception" build.log | head -30 | while IFS= read -r line; do
-            echo "::error title=Build::$line"
-          done || true
-          exit 1
-
       - name: Prepare APK for download
-        if: steps.build_apk.outcome == 'success'
         run: |
           APK_DIR=build/app/outputs/flutter-apk
           ls -la "$APK_DIR"
           APK_FILE=$(find "$APK_DIR" -maxdepth 1 -name '*debug*.apk' | head -n 1)
           test -n "$APK_FILE"
           cp "$APK_FILE" Kairete-debug.apk
-          ls -la Kairete-debug.apk
+          cp "$APK_FILE" "Kairete-${BUILD_LABEL}.apk"
+          SIZE=$(stat -c%s Kairete-debug.apk)
+          {
+            echo "label=${BUILD_LABEL}"
+            echo "stamp=${BUILD_STAMP}"
+            echo "sha=${{ github.sha }}"
+            echo "size=${SIZE}"
+            echo "built=${{ github.run_id }}"
+          } > app-version.txt
+          ls -la Kairete-debug.apk "Kairete-${BUILD_LABEL}.apk" app-version.txt
 
       - name: Upload APK artifact
-        if: steps.build_apk.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: kairete-debug-apk-${{ env.BUILD_LABEL }}
-          path: Kairete-debug.apk
+          path: |
+            Kairete-debug.apk
+            Kairete-${{ env.BUILD_LABEL }}.apk
+            app-version.txt
 
       - name: Publish GitHub Release (latest)
-        if: steps.build_apk.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
@@ -93,27 +92,34 @@ jobs:
           body: |
             ## Installazione
             1. **Disinstalla** la versione precedente di Kairete
-            2. Scarica `Kairete-debug.apk` qui sotto
-            3. Verifica in app: titolo **Kairete · ${{ env.BUILD_LABEL }}** (non `b16`)
+            2. Scarica **`Kairete-${{ env.BUILD_LABEL }}.apk`** (nome con versione, evita cache)
+            3. Verifica in app: **Kairete · ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}**
 
-            Link diretto: https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-debug.apk
+            | File | URL |
+            |------|-----|
+            | Versionato | https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-${{ env.BUILD_LABEL }}.apk |
+            | Generico | https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-debug.apk |
 
             Commit: ${{ github.sha }}
           make_latest: true
-          files: Kairete-debug.apk
+          files: |
+            Kairete-debug.apk
+            Kairete-${{ env.BUILD_LABEL }}.apk
+            app-version.txt
 
       - name: Publish GitHub Release (archivio)
-        if: steps.build_apk.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ env.BUILD_LABEL }}-${{ github.run_id }}
           name: Kairete · ${{ env.BUILD_LABEL }} (archivio)
           prerelease: true
-          files: Kairete-debug.apk
+          files: |
+            Kairete-debug.apk
+            Kairete-${{ env.BUILD_LABEL }}.apk
+            app-version.txt
 
       - name: Upload APK to FTP server
-        if: steps.build_apk.outcome == 'success' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true))
-        continue-on-error: true
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -122,12 +128,15 @@ jobs:
             echo "::warning::FTP non configurato (secret FTP_USER/FTP_PASSWORD mancanti). Salta upload."
             exit 0
           fi
-          echo "Upload → ftp://${FTP_HOST}${FTP_REMOTE_PATH}"
-          curl -v --fail --show-error \
-            -T Kairete-debug.apk \
-            --ftp-create-dirs \
-            --ftp-pasv \
-            -u "${FTP_USER}:${FTP_PASSWORD}" \
-            "ftp://${FTP_HOST}${FTP_REMOTE_PATH}" \
-            || echo "::warning::Upload FTP fallito, APK resta su GitHub Releases."
-          echo "APK pubblicato: ${APK_PUBLIC_URL}"
+          BASE="ftp://${FTP_HOST}/public_html"
+          for remote in Kairete-debug.apk "Kairete-${BUILD_LABEL}.apk" app-version.txt; do
+            echo "Upload → ${BASE}/${remote}"
+            curl -v --fail --show-error \
+              -T "${remote}" \
+              --ftp-create-dirs \
+              --ftp-pasv \
+              -u "${FTP_USER}:${FTP_PASSWORD}" \
+              "${BASE}/${remote}"
+          done
+          echo "APK: ${APK_PUBLIC_URL}"
+          echo "Versione: https://www.kairete.it/app-version.txt"

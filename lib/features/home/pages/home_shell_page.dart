@@ -80,7 +80,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text('Kairete · ${AppBuild.label}'),
+        title: Text(AppBuild.appBarTitle),
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),

@@ -39,6 +39,10 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# APK locali (non committare: confondono con la build CI)
+Kairete-debug.apk
+Kairete-fix*.apk
 *.lock
 *.cmake
 *.cc
