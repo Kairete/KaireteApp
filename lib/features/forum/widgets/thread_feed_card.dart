@@ -12,6 +12,8 @@ class ThreadFeedCard extends StatelessWidget {
     this.onOpen,
     this.onComment,
     this.onReact,
+    this.onAuthorTap,
+    this.onForumTap,
   });
 
   final ForumThread thread;
@@ -19,6 +21,8 @@ class ThreadFeedCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
   final Future<void> Function(int reactionId)? onReact;
+  final VoidCallback? onAuthorTap;
+  final VoidCallback? onForumTap;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +30,8 @@ class ThreadFeedCard extends StatelessWidget {
       header: ThreadFeedHeader(
         thread: thread,
         forumTitle: forumTitle,
+        onAuthorTap: onAuthorTap,
+        onForumTap: onForumTap,
       ),
       body: Material(
         color: Colors.transparent,
@@ -82,10 +88,14 @@ class ThreadFeedHeader extends StatelessWidget {
     super.key,
     required this.thread,
     required this.forumTitle,
+    this.onAuthorTap,
+    this.onForumTap,
   });
 
   final ForumThread thread;
   final String forumTitle;
+  final VoidCallback? onAuthorTap;
+  final VoidCallback? onForumTap;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +106,10 @@ class ThreadFeedHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
+          GestureDetector(
+            onTap: onAuthorTap,
+            child: FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -108,11 +121,19 @@ class ThreadFeedHeader extends StatelessWidget {
                   text: TextSpan(
                     style: const TextStyle(fontSize: 14, height: 1.15),
                     children: [
-                      TextSpan(
-                        text: nickname,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.authorName,
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: GestureDetector(
+                          onTap: onAuthorTap,
+                          child: Text(
+                            nickname,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.authorName,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                       if (forumTitle.isNotEmpty) ...[
@@ -127,12 +148,19 @@ class ThreadFeedHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        TextSpan(
-                          text: forumTitle,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primary,
-                            fontSize: 14,
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.baseline,
+                          baseline: TextBaseline.alphabetic,
+                          child: GestureDetector(
+                            onTap: onForumTap,
+                            child: Text(
+                              forumTitle,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
                         ),
                       ],

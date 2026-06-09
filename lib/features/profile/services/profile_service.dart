@@ -1,6 +1,8 @@
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
@@ -21,6 +23,21 @@ class ProfileService {
   }) async {
     await AppApi.instance.applySession();
 
+    final sources = await Future.wait([
+      _fetchUserFeedFromApi(userId, page: page, sort: sort),
+      _fetchProfilePostsItems(userId, page: page),
+      _fetchUserBlogItems(userId, page: page),
+      _fetchUserThreadItems(userId, page: page),
+    ]);
+
+    return OmnifeedFeed(items: _mergeFeedItems(sources));
+  }
+
+  Future<List<OmnifeedItem>> _fetchUserFeedFromApi(
+    int userId, {
+    required int page,
+    required String sort,
+  }) async {
     try {
       final json = await _api.get(
         ApiPaths.newsfeedUserFeed,
@@ -32,36 +49,97 @@ class ProfileService {
         },
       );
       if (XenforoApi.firstErrorMessage(json) == null) {
-        final feed = OmnifeedFeed.fromJson(json);
-        if (feed.items.isNotEmpty) {
-          return feed;
-        }
+        return OmnifeedFeed.fromJson(json).items;
       }
     } catch (_) {}
-
-    return _fetchUserFeedFromProfilePosts(userId, page: page);
+    return [];
   }
 
-  Future<OmnifeedFeed> _fetchUserFeedFromProfilePosts(
+  Future<List<OmnifeedItem>> _fetchProfilePostsItems(
     int userId, {
-    int page = 1,
+    required int page,
   }) async {
-    final json = await _api.get(
-      '${ApiPaths.users}/$userId/profile-posts',
-      query: {
-        'page': page,
-        'limit': 20,
-      },
-    );
-    _throwIfError(json);
+    try {
+      final json = await _api.get(
+        '${ApiPaths.users}/$userId/profile-posts',
+        query: {
+          'page': page,
+          'limit': 20,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return [];
 
-    final raw = json['profile_posts'] as List<dynamic>? ?? [];
-    final items = raw
-        .whereType<Map<String, dynamic>>()
-        .map(OmnifeedItem.fromProfilePostApi)
-        .toList();
+      final raw = json['profile_posts'] as List<dynamic>? ?? [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(OmnifeedItem.fromProfilePostApi)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
 
-    return OmnifeedFeed(items: items);
+  Future<List<OmnifeedItem>> _fetchUserBlogItems(
+    int userId, {
+    required int page,
+  }) async {
+    try {
+      final json = await _api.get(
+        ApiPaths.blogEntries,
+        query: {
+          'user_id': userId,
+          'page': page,
+          'limit': 20,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return [];
+
+      final raw = json['blogEntryItems'] as List<dynamic>? ?? [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map((entry) => OmnifeedItem.fromBlogEntry(BlogEntry.fromJson(entry)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<OmnifeedItem>> _fetchUserThreadItems(
+    int userId, {
+    required int page,
+  }) async {
+    try {
+      final json = await _api.get(
+        ApiPaths.threads,
+        query: {
+          'starter_id': userId,
+          'page': page,
+          'limit': 20,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return [];
+
+      return ForumThreadsPage.fromJson(json)
+          .threads
+          .map(OmnifeedItem.fromForumThread)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  List<OmnifeedItem> _mergeFeedItems(List<List<OmnifeedItem>> sources) {
+    final byId = <int, OmnifeedItem>{};
+    for (final list in sources) {
+      for (final item in list) {
+        if (item.itemId <= 0) continue;
+        byId.putIfAbsent(item.itemId, () => item);
+      }
+    }
+
+    final merged = byId.values.toList()
+      ..sort((a, b) => (b.itemDate ?? 0).compareTo(a.itemDate ?? 0));
+    return merged;
   }
 
   Future<bool> followUser(int userId, {required bool stop}) async {

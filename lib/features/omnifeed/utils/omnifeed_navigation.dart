@@ -11,8 +11,10 @@ import 'package:kairete/features/profile/pages/user_profile_page.dart';
 class OmnifeedNavigation {
   OmnifeedNavigation._();
 
-  static void openAuthor(OmnifeedItem item) {
-    final userId = item.author?.userId;
+  static void openAuthor(OmnifeedItem item) =>
+      openUserProfile(item.author?.userId);
+
+  static void openUserProfile(int? userId) {
     if (userId == null || userId <= 0) return;
     Get.to(() => UserProfilePage(userId: userId));
   }

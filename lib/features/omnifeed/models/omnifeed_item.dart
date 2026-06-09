@@ -1,3 +1,19 @@
+import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/forum/models/forum_thread.dart';
+
+/// ID composto feed mobile (allineato a OmniFeed ItemIdCodec).
+class OmnifeedItemId {
+  OmnifeedItemId._();
+
+  static const multiplier = 1000000000;
+  static const typeProfilePost = 1;
+  static const typeThread = 2;
+  static const typeGroupPost = 3;
+  static const typeBlogPost = 4;
+
+  static int encode(int type, int nativeId) => type * multiplier + nativeId;
+}
+
 class OmnifeedFeed {
   OmnifeedFeed({required this.items});
 
@@ -122,11 +138,71 @@ class OmnifeedItem {
     }
   }
 
+  factory OmnifeedItem.fromBlogEntry(BlogEntry entry) {
+    final author = entry.author;
+    return OmnifeedItem(
+      itemId: OmnifeedItemId.encode(
+        OmnifeedItemId.typeBlogPost,
+        entry.blogEntryId,
+      ),
+      contentType: 'ubs_blog_entry',
+      contentId: entry.blogEntryId,
+      contentTitle: entry.title,
+      messagePlainText: entry.messagePlainText,
+      messageParsed: entry.messageParsed,
+      itemDate: entry.postDate,
+      commentCount: entry.commentCount,
+      reactionScore: entry.reactionScore,
+      visitorReactionId: entry.visitorReactionId,
+      author: author == null
+          ? null
+          : OmnifeedAuthor(
+              userId: author.userId,
+              username: author.username,
+              avatarUrl: author.avatarUrl,
+              displayName: author.displayName,
+            ),
+      blogLabel: entry.blog?.title,
+      blogId: entry.blog?.blogId,
+      categoryLabel: entry.category?.title,
+      viewUrl: entry.viewUrl,
+    );
+  }
+
+  factory OmnifeedItem.fromForumThread(ForumThread thread) {
+    final author = thread.author;
+    return OmnifeedItem(
+      itemId: OmnifeedItemId.encode(
+        OmnifeedItemId.typeThread,
+        thread.threadId,
+      ),
+      contentType: 'thread',
+      contentId: thread.threadId,
+      contentTitle: thread.title,
+      messagePlainText: thread.messagePlainText,
+      messageParsed: thread.messageParsed,
+      itemDate: thread.postDate,
+      commentCount: thread.commentCount,
+      reactionScore: thread.firstPostReactionScore,
+      author: author == null
+          ? null
+          : OmnifeedAuthor(
+              userId: author.userId,
+              username: author.username,
+              avatarUrl: author.avatarUrl,
+              displayName: author.displayName,
+            ),
+      categoryLabel: thread.forumTitle,
+      forumId: thread.nodeId,
+      viewUrl: thread.viewUrl,
+    );
+  }
+
   factory OmnifeedItem.fromProfilePostApi(Map<String, dynamic> json) {
     final postId = json['profile_post_id'] as int? ?? 0;
     final user = json['User'];
     return OmnifeedItem(
-      itemId: 1000000000 + postId,
+      itemId: OmnifeedItemId.encode(OmnifeedItemId.typeProfilePost, postId),
       contentType: 'profile_post',
       contentId: postId,
       messagePlainText: json['message']?.toString(),

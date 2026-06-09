@@ -12,6 +12,7 @@ class BlogFeedCard extends StatelessWidget {
     this.onOpen,
     this.onComment,
     this.onReact,
+    this.onAuthorTap,
     this.onBlogTap,
     this.onCategoryTap,
   });
@@ -20,6 +21,7 @@ class BlogFeedCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
   final Future<void> Function(int reactionId)? onReact;
+  final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
   final VoidCallback? onCategoryTap;
 
@@ -30,6 +32,7 @@ class BlogFeedCard extends StatelessWidget {
     return FeedCardShell(
       header: BlogFeedHeader(
         entry: entry,
+        onAuthorTap: onAuthorTap,
         onBlogTap: onBlogTap,
         onCategoryTap: onCategoryTap,
       ),
@@ -94,11 +97,13 @@ class BlogFeedHeader extends StatelessWidget {
   const BlogFeedHeader({
     super.key,
     required this.entry,
+    this.onAuthorTap,
     this.onBlogTap,
     this.onCategoryTap,
   });
 
   final BlogEntry entry;
+  final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
   final VoidCallback? onCategoryTap;
 
@@ -113,7 +118,10 @@ class BlogFeedHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
+          GestureDetector(
+            onTap: onAuthorTap,
+            child: FeedCardAvatar(url: author?.avatarUrl, name: author?.label),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -122,6 +130,7 @@ class BlogFeedHeader extends StatelessWidget {
                 _BlogAuthorLine(
                   nickname: nickname,
                   blogTitle: blogTitle,
+                  onAuthorTap: onAuthorTap,
                   onBlogTap: onBlogTap,
                 ),
                 const SizedBox(height: 3),
@@ -144,11 +153,13 @@ class _BlogAuthorLine extends StatelessWidget {
   const _BlogAuthorLine({
     required this.nickname,
     required this.blogTitle,
+    this.onAuthorTap,
     this.onBlogTap,
   });
 
   final String nickname;
   final String blogTitle;
+  final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
 
   @override
@@ -159,11 +170,19 @@ class _BlogAuthorLine extends StatelessWidget {
       text: TextSpan(
         style: const TextStyle(fontSize: 14, height: 1.15),
         children: [
-          TextSpan(
-            text: nickname,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppTheme.authorName,
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: GestureDetector(
+              onTap: onAuthorTap,
+              child: Text(
+                nickname,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.authorName,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ),
           if (blogTitle.isNotEmpty) ...[

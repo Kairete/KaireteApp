@@ -11,6 +11,7 @@ import 'package:kairete/features/groups/models/social_group.dart';
 import 'package:kairete/features/groups/pages/group_compose_page.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/groups/widgets/group_cover_header.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class GroupDetailPage extends StatefulWidget {
@@ -263,25 +264,33 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildPostCard(GroupPost post) {
     final comments = _commentsByPost[post.groupPostId] ?? const [];
+    final authorId = post.author?.userId;
+    void openAuthor() => OmnifeedNavigation.openUserProfile(authorId);
 
     return FeedCardShell(
       header: FeedCardHeaderBar(
         child: Row(
           children: [
-            FeedCardAvatar(
-              url: post.author?.avatarUrl,
-              name: post.author?.username,
+            GestureDetector(
+              onTap: openAuthor,
+              child: FeedCardAvatar(
+                url: post.author?.avatarUrl,
+                name: post.author?.username,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    post.author?.username ?? '',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.authorName,
+                  GestureDetector(
+                    onTap: openAuthor,
+                    child: Text(
+                      post.author?.username ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.authorName,
+                      ),
                     ),
                   ),
                   Text(
