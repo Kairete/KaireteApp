@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
@@ -67,7 +66,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text('Kairete · ${AppBuild.label}'),
+        title: const Text('Kairete'),
         shape: const Border(
           bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
         ),
