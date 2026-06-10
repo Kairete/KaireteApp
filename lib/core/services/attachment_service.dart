@@ -52,7 +52,7 @@ class AttachmentService {
     );
     _throwIfError(json);
     final key = _readToken(json, const ['key', 'attachment_key']);
-    if (key.isEmpty) {
+    if (key == null || key.isEmpty) {
       throw AttachmentException('Impossibile preparare gli allegati.');
     }
     final hash = _readToken(json, const ['hash']) ?? key;
