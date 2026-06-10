@@ -46,7 +46,7 @@ class BlogFeedCard extends StatelessWidget {
         onModuleTap: onBlogTap,
         trailing: showOwnerActions && (onEdit != null || onDelete != null)
             ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
-            : null,
+            : const FeedCardMenuButton(),
       ),
       body: InkWell(
         onTap: onOpen,
