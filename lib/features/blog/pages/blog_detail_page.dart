@@ -13,6 +13,7 @@ import 'package:kairete/features/blog/services/blog_service.dart';
 import 'package:kairete/features/blog/widgets/blog_entry_body.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
 class BlogDetailPage extends StatefulWidget {
   const BlogDetailPage({super.key, required this.entryId});
@@ -105,6 +106,7 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
           author: entry.author,
           blog: entry.blog,
           category: entry.category,
+          tags: entry.tags,
           coverImage: entry.coverImage,
           attachments: entry.attachments,
           viewUrl: entry.viewUrl,
@@ -236,6 +238,12 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                     onModuleTap: _openBlogFilter,
                                   ),
                                   body: BlogEntryBody(entry: _entry!),
+                                  beforeFooter: _entry!.tags.isNotEmpty
+                                      ? FeedCardTagsRow(
+                                          tags: _entry!.tags,
+                                          onTagTap: TagFeedNavigation.openTag,
+                                        )
+                                      : null,
                                   footer: FeedCardActionBar(
                                     commentCount: _entry!.commentCount,
                                     likeCount: _entry!.reactionScore,

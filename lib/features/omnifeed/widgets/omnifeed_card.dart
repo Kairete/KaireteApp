@@ -17,6 +17,7 @@ class OmnifeedCard extends StatelessWidget {
     this.onForumTap,
     this.onEdit,
     this.onDelete,
+    this.onTagTap,
     this.showOwnerActions = false,
     this.comments = const [],
   });
@@ -30,6 +31,7 @@ class OmnifeedCard extends StatelessWidget {
   final VoidCallback? onForumTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final void Function(String tag)? onTagTap;
   final bool showOwnerActions;
   final List<Widget> comments;
 
@@ -92,7 +94,7 @@ class OmnifeedCard extends StatelessWidget {
         ),
       ),
       beforeFooter: item.tags.isNotEmpty
-          ? FeedCardTagsRow(tags: item.tags)
+          ? FeedCardTagsRow(tags: item.tags, onTagTap: onTagTap)
           : null,
       footer: FeedCardActionBar(
         commentCount: item.commentCount,

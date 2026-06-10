@@ -2,8 +2,8 @@
 class AppBuild {
   AppBuild._();
 
-  static const label = 'fix17';
-  static const stamp = '20250610c';
+  static const label = 'fix18';
+  static const stamp = '20250607a';
 
   /// Titolo barra home: etichetta + timbro per capire subito quale APK è installato.
   static String get appBarTitle => 'Kairete · $label · $stamp';

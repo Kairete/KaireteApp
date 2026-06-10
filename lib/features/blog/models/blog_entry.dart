@@ -96,6 +96,7 @@ class BlogEntry {
     this.author,
     this.blog,
     this.category,
+    this.tags = const [],
     this.coverImage,
     this.attachments = const [],
     this.viewUrl,
@@ -114,6 +115,7 @@ class BlogEntry {
   final BlogAuthor? author;
   final BlogInfo? blog;
   final BlogCategory? category;
+  final List<String> tags;
   final BlogAttachment? coverImage;
   final List<BlogAttachment> attachments;
   final String? viewUrl;
@@ -195,6 +197,7 @@ class BlogEntry {
       category: json['Category'] is Map<String, dynamic>
           ? BlogCategory.fromJson(json['Category'] as Map<String, dynamic>)
           : null,
+      tags: _parseTags(json['tags']),
       coverImage: cover,
       attachments: attachments,
       viewUrl: json['view_url']?.toString(),
@@ -210,6 +213,18 @@ class BlogEntry {
     );
   }
 
+  static List<String> _parseTags(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .map((tag) {
+          if (tag is String) return tag.trim();
+          if (tag is Map) return tag['tag']?.toString().trim() ?? '';
+          return '';
+        })
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+  }
+
   BlogEntry copyWith({int? reactionScore}) {
     return BlogEntry(
       blogEntryId: blogEntryId,
@@ -223,6 +238,7 @@ class BlogEntry {
       author: author,
       blog: blog,
       category: category,
+      tags: tags,
       coverImage: coverImage,
       attachments: attachments,
       viewUrl: viewUrl,

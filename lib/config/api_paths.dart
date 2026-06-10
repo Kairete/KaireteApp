@@ -32,6 +32,10 @@ class ApiPaths {
   static const posts = 'api/posts/';
   static const reactions = 'api/reactions/';
 
+  // Tag feed (XenForo Kairete/TagFeed add-on)
+  static const tagFeed = 'api/tag-feed';
+  static const tags = 'api/tags/';
+
   // Kairete Social Groups
   static const socialGroups = 'api/social-groups/';
   static const blogEntryComments = 'api/blog-entry-comments/';

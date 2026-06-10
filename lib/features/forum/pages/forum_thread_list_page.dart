@@ -6,6 +6,7 @@ import 'package:kairete/features/feed/widgets/content_watch_bar.dart';
 import 'package:kairete/features/forum/controllers/forum_thread_list_controller.dart';
 import 'package:kairete/features/forum/widgets/thread_feed_card.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
 class ForumThreadListPage extends StatelessWidget {
   ForumThreadListPage({
@@ -139,6 +140,7 @@ class ForumThreadListPage extends StatelessWidget {
                     controller.react(thread, reactionId: reactionId),
                 onAuthorTap: () =>
                     OmnifeedNavigation.openUserProfile(thread.author?.userId),
+                onTagTap: TagFeedNavigation.openTag,
               );
             },
           ),

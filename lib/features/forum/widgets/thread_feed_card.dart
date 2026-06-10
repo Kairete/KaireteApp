@@ -17,6 +17,7 @@ class ThreadFeedCard extends StatelessWidget {
     this.onForumTap,
     this.onEdit,
     this.onDelete,
+    this.onTagTap,
     this.showOwnerActions = false,
   });
 
@@ -29,6 +30,7 @@ class ThreadFeedCard extends StatelessWidget {
   final VoidCallback? onForumTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final void Function(String tag)? onTagTap;
   final bool showOwnerActions;
 
   @override
@@ -100,7 +102,7 @@ class ThreadFeedCard extends StatelessWidget {
         ),
       ),
       beforeFooter: thread.tags.isNotEmpty
-          ? FeedCardTagsRow(tags: thread.tags)
+          ? FeedCardTagsRow(tags: thread.tags, onTagTap: onTagTap)
           : null,
       footer: FeedCardActionBar(
         commentCount: thread.commentCount,

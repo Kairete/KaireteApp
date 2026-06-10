@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
 class OmnifeedPage extends StatelessWidget {
   const OmnifeedPage({super.key});
@@ -59,6 +60,7 @@ class OmnifeedPage extends StatelessWidget {
                               : null,
                           onReact: (reactionId) =>
                               c.react(item, reactionId: reactionId),
+                          onTagTap: TagFeedNavigation.openTag,
                           showOwnerActions: c.isOwnedByCurrentUser(item),
                           onEdit: () => c.editItem(item),
                           onDelete: () => c.deleteItem(item),

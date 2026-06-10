@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/profile/controllers/user_profile_controller.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -102,6 +103,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         onForumTap: item.contentType == 'thread'
                             ? () => c.openForum(item)
                             : null,
+                        onTagTap: TagFeedNavigation.openTag,
                         showOwnerActions: c.isCurrentUser,
                         onEdit: () => c.editItem(item),
                         onDelete: () => c.deleteItem(item),

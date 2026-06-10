@@ -4,6 +4,7 @@ import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/blog/controllers/blog_list_controller.dart';
 import 'package:kairete/features/blog/widgets/blog_feed_card.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 import 'package:kairete/features/feed/widgets/content_watch_bar.dart';
 
 class BlogListPage extends StatelessWidget {
@@ -95,7 +96,7 @@ class BlogListPage extends StatelessWidget {
               onAuthorTap: () =>
                   OmnifeedNavigation.openUserProfile(entry.author?.userId),
               onBlogTap: () => controller.openBlogFilter(entry),
-              onCategoryTap: () => controller.openCategoryFilter(entry),
+              onTagTap: TagFeedNavigation.openTag,
             );
           },
         ),

@@ -14,7 +14,7 @@ class BlogFeedCard extends StatelessWidget {
     this.onReact,
     this.onAuthorTap,
     this.onBlogTap,
-    this.onCategoryTap,
+    this.onTagTap,
   });
 
   final BlogEntry entry;
@@ -23,7 +23,7 @@ class BlogFeedCard extends StatelessWidget {
   final Future<void> Function(int reactionId)? onReact;
   final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
-  final VoidCallback? onCategoryTap;
+  final void Function(String tag)? onTagTap;
 
   @override
   Widget build(BuildContext context) {
@@ -81,25 +81,13 @@ class BlogFeedCard extends StatelessWidget {
                 onTap: onOpen,
                 visible: entry.previewHasMore,
               ),
-              if (entry.category?.title?.isNotEmpty == true) ...[
-                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: onCategoryTap,
-                  behavior: HitTestBehavior.opaque,
-                  child: Text(
-                    entry.category!.title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
       ),
+      beforeFooter: entry.tags.isNotEmpty
+          ? FeedCardTagsRow(tags: entry.tags, onTagTap: onTagTap)
+          : null,
       footer: FeedCardActionBar(
         commentCount: entry.commentCount,
         likeCount: entry.reactionScore,
