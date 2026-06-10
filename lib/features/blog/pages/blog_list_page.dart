@@ -107,6 +107,10 @@ class BlogListPage extends StatelessWidget {
                   OmnifeedNavigation.openUserProfile(entry.author?.userId),
               onBlogTap: () => controller.openBlogFilter(entry),
               onTagTap: TagFeedNavigation.openTag,
+              showOwnerActions: entry.canEdit || entry.canDelete,
+              onEdit: entry.canEdit ? () => controller.editEntry(entry) : null,
+              onDelete:
+                  entry.canDelete ? () => controller.deleteEntry(entry) : null,
             );
           },
         ),

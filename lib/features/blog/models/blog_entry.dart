@@ -66,17 +66,24 @@ class BlogCategory {
 }
 
 class BlogAttachment {
-  BlogAttachment({this.thumbnailUrl, this.directUrl, this.attachDate});
+  BlogAttachment({
+    this.thumbnailUrl,
+    this.directUrl,
+    this.attachDate,
+    this.filename,
+  });
 
   final String? thumbnailUrl;
   final String? directUrl;
   final int? attachDate;
+  final String? filename;
 
   factory BlogAttachment.fromJson(Map<String, dynamic> json) {
     return BlogAttachment(
       thumbnailUrl: json['thumbnail_url']?.toString(),
       directUrl: json['direct_url']?.toString(),
       attachDate: json['attach_date'] as int?,
+      filename: json['filename']?.toString(),
     );
   }
 }
@@ -92,6 +99,8 @@ class BlogEntry {
     this.reactionScore = 0,
     this.canReact = true,
     this.canComment = false,
+    this.canEdit = false,
+    this.canDelete = false,
     this.visitorReactionId,
     this.author,
     this.blog,
@@ -112,6 +121,8 @@ class BlogEntry {
   final int reactionScore;
   final bool canReact;
   final bool canComment;
+  final bool canEdit;
+  final bool canDelete;
   final int? visitorReactionId;
   final BlogAuthor? author;
   final BlogInfo? blog;
@@ -194,6 +205,8 @@ class BlogEntry {
       reactionScore: json['reaction_score'] as int? ?? 0,
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
+      canEdit: json['can_edit'] as bool? ?? false,
+      canDelete: json['can_delete'] as bool? ?? false,
       visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map<String, dynamic>
           ? BlogAuthor.fromJson(json['User'] as Map<String, dynamic>)
@@ -253,6 +266,9 @@ class BlogEntry {
       commentCount: commentCount,
       reactionScore: reactionScore ?? this.reactionScore,
       canReact: canReact,
+      canComment: canComment,
+      canEdit: canEdit,
+      canDelete: canDelete,
       author: author,
       blog: blog,
       category: category,

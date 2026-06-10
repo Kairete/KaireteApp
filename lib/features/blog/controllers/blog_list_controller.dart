@@ -4,8 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/blog/models/blog_profile.dart';
+import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
@@ -155,5 +157,29 @@ class BlogListController extends GetxController {
         pageTitle: entry.category?.title ?? 'Categoria',
       ),
     );
+  }
+
+  Future<void> editEntry(BlogEntry entry) async {
+    if (!entry.canEdit) return;
+    final updated = await Get.to<bool>(() => BlogComposePage(editEntryId: entry.blogEntryId));
+    if (updated == true) await refreshAll();
+  }
+
+  Future<void> deleteEntry(BlogEntry entry) async {
+    if (!entry.canDelete) return;
+    final context = Get.context;
+    if (context == null) return;
+    if (!await confirmDeleteContent(context)) return;
+    try {
+      await _service.deleteEntry(entry.blogEntryId);
+      AppToast.success('Articolo eliminato.');
+      await refreshAll();
+    } on BlogException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile eliminare l\'articolo.');
+    }
   }
 }

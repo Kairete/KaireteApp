@@ -213,6 +213,45 @@ class BlogService {
     return parts.isNotEmpty ? parts.last : 'cover.jpg';
   }
 
+  Future<BlogEntry> updateEntry({
+    required int blogEntryId,
+    required String title,
+    required String message,
+    int categoryId = 0,
+    String tags = '',
+    String attachmentHash = '',
+    String attachmentKey = '',
+  }) async {
+    await AppApi.instance.applySession();
+    final body = <String, dynamic>{
+      'title': title,
+      'message': message,
+      'category_id': categoryId,
+      'tags': tags,
+    };
+    final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
+    if (attach.isNotEmpty) {
+      body['attachment_hash'] = attach;
+      body['attachment_key'] = attach;
+    }
+
+    final json = await _api.post('${ApiPaths.blogEntries}/$blogEntryId/', body: body);
+    _throwIfError(json);
+
+    final direct = json['blogEntry'];
+    if (direct is Map<String, dynamic>) {
+      return BlogEntry.fromJson(direct);
+    }
+
+    throw BlogException('Articolo aggiornato ma risposta non valida.');
+  }
+
+  Future<void> deleteEntry(int blogEntryId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.delete('${ApiPaths.blogEntries}/$blogEntryId/');
+    _throwIfError(json);
+  }
+
   Future<BlogEntry> createEntry({
     required int blogId,
     required String title,

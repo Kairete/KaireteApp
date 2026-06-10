@@ -63,12 +63,21 @@ class ContentOwnerService {
     required int blogEntryId,
     required String title,
     required String message,
+    int categoryId = 0,
+    String tags = '',
+    String attachmentHash = '',
   }) async {
     await _update(
       '${ApiPaths.blogEntries}/$blogEntryId',
       {
         'title': title.trim(),
         'message': message.trim(),
+        if (categoryId > 0) 'category_id': categoryId,
+        'tags': tags.trim(),
+        if (attachmentHash.isNotEmpty) ...{
+          'attachment_hash': attachmentHash,
+          'attachment_key': attachmentHash,
+        },
       },
     );
   }

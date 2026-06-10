@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/blog/models/blog_comment.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
 import 'package:kairete/features/blog/widgets/blog_entry_body.dart';
@@ -103,6 +105,9 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
           reactionScore: score < 0 ? 0 : score,
           canReact: entry.canReact,
           canComment: entry.canComment,
+          canEdit: entry.canEdit,
+          canDelete: entry.canDelete,
+          visitorReactionId: entry.visitorReactionId,
           author: entry.author,
           blog: entry.blog,
           category: entry.category,
@@ -110,6 +115,7 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
           coverImage: entry.coverImage,
           attachments: entry.attachments,
           viewUrl: entry.viewUrl,
+          previewHasMore: entry.previewHasMore,
         );
       });
       AppToast.success(
@@ -182,6 +188,32 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
+  Future<void> _editEntry() async {
+    final entry = _entry;
+    if (entry == null || !entry.canEdit) return;
+    final updated = await Get.to<bool>(
+      () => BlogComposePage(editEntryId: entry.blogEntryId),
+    );
+    if (updated == true) await _load();
+  }
+
+  Future<void> _deleteEntry() async {
+    final entry = _entry;
+    if (entry == null || !entry.canDelete) return;
+    if (!await confirmDeleteContent(context)) return;
+    try {
+      await _service.deleteEntry(entry.blogEntryId);
+      AppToast.success('Articolo eliminato.');
+      if (mounted) Get.back();
+    } on BlogException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile eliminare l\'articolo.');
+    }
+  }
+
   String _blogMetaDateLine(BlogEntry entry) {
     final date = formatOmnifeedCardDate(entry.postDate);
     final category = entry.category?.title ?? '';
@@ -236,6 +268,16 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                     moduleLabel: _entry!.blog?.title,
                                     dateLabel: _blogMetaDateLine(_entry!),
                                     onModuleTap: _openBlogFilter,
+                                    trailing: _entry!.canEdit || _entry!.canDelete
+                                        ? FeedCardOwnerMenu(
+                                            onEdit: _entry!.canEdit
+                                                ? _editEntry
+                                                : null,
+                                            onDelete: _entry!.canDelete
+                                                ? _deleteEntry
+                                                : null,
+                                          )
+                                        : const FeedCardMenuButton(),
                                   ),
                                   body: BlogEntryBody(entry: _entry!),
                                   beforeFooter: _entry!.tags.isNotEmpty

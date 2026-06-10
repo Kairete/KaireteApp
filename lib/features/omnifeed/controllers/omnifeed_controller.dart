@@ -136,6 +136,13 @@ class OmnifeedController extends GetxController {
   }
 
   Future<void> editItem(OmnifeedItem item) async {
+    if (item.contentType == 'ubs_blog_entry') {
+      final updated = await Get.to<bool>(
+        () => BlogComposePage(editEntryId: item.contentId),
+      );
+      if (updated == true) await loadFeed();
+      return;
+    }
     final context = Get.context;
     if (context == null) return;
     final result = await showContentEditDialog(context, item: item);

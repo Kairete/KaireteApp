@@ -15,6 +15,9 @@ class BlogFeedCard extends StatelessWidget {
     this.onAuthorTap,
     this.onBlogTap,
     this.onTagTap,
+    this.onEdit,
+    this.onDelete,
+    this.showOwnerActions = false,
   });
 
   final BlogEntry entry;
@@ -24,6 +27,9 @@ class BlogFeedCard extends StatelessWidget {
   final VoidCallback? onAuthorTap;
   final VoidCallback? onBlogTap;
   final void Function(String tag)? onTagTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool showOwnerActions;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +44,9 @@ class BlogFeedCard extends StatelessWidget {
         dateLabel: _metaDateLine(entry),
         onAuthorTap: onAuthorTap,
         onModuleTap: onBlogTap,
+        trailing: showOwnerActions && (onEdit != null || onDelete != null)
+            ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
+            : null,
       ),
       body: InkWell(
         onTap: onOpen,

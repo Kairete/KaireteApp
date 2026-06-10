@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
+import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/core/services/content_owner_service.dart';
 import 'package:kairete/core/utils/content_edit_helper.dart';
@@ -143,6 +144,13 @@ class UserProfileController extends GetxController {
 
   Future<void> editItem(OmnifeedItem item) async {
     if (!isCurrentUser) return;
+    if (item.contentType == 'ubs_blog_entry') {
+      final updated = await Get.to<bool>(
+        () => BlogComposePage(editEntryId: item.contentId),
+      );
+      if (updated == true) await loadFeed();
+      return;
+    }
     final context = Get.context;
     if (context == null) return;
     final result = await showContentEditDialog(context, item: item);
