@@ -67,7 +67,7 @@ class FeedCardHeaderBar extends StatelessWidget {
     return ColoredBox(
       color: AppTheme.feedItemChromeBg,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
         child: child,
       ),
     );
@@ -211,21 +211,24 @@ class FeedCardAuthorHeader extends StatelessWidget {
                   onModuleTap: onModuleTap,
                 ),
                 if (dateLabel != null && dateLabel!.isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     dateLabel!,
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textSecondary,
-                      height: 1.1,
+                      height: 1.0,
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          trailing,
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: trailing,
+          ),
         ],
       ),
     );
@@ -675,9 +678,14 @@ class _FeedCommentIconButton extends StatelessWidget {
 }
 
 class FeedCardTagsRow extends StatelessWidget {
-  const FeedCardTagsRow({super.key, required this.tags});
+  const FeedCardTagsRow({
+    super.key,
+    required this.tags,
+    this.onTagTap,
+  });
 
   final List<String> tags;
+  final void Function(String tag)? onTagTap;
 
   @override
   Widget build(BuildContext context) {
@@ -689,7 +697,9 @@ class FeedCardTagsRow extends StatelessWidget {
         runSpacing: 6,
         children: tags
             .map(
-              (tag) => Container(
+              (tag) => GestureDetector(
+                onTap: onTagTap == null ? null : () => onTagTap!(tag),
+                child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F6F5),
@@ -704,6 +714,7 @@ class FeedCardTagsRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
               ),
             )
             .toList(),
@@ -756,7 +767,10 @@ class FeedCardOwnerMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     if (onEdit == null && onDelete == null) return const SizedBox.shrink();
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_horiz, color: AppTheme.textSecondary, size: 20),
+      padding: EdgeInsets.zero,
+      splashRadius: 18,
+      offset: const Offset(0, 24),
+      child: const FeedCardMenuButton(),
       onSelected: (value) {
         if (value == 'edit') onEdit?.call();
         if (value == 'delete') onDelete?.call();
