@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -5,6 +8,7 @@ import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/features/blog/models/blog_comment.dart';
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/blog/models/blog_profile.dart';
 
 class BlogService {
   XenforoApi get _api => AppApi.instance.xenforo;
@@ -106,14 +110,19 @@ class BlogService {
     }
   }
 
-  Future<BlogWatchState> fetchBlogWatchState(int blogId) async {
+  Future<BlogProfile> fetchBlogProfile(int blogId) async {
     await AppApi.instance.applySession();
     final json = await _api.get('${ApiPaths.blogs}$blogId/');
     _throwIfError(json);
     final blog = json['blog'] as Map<String, dynamic>? ?? json;
+    return BlogProfile.fromJson(blog);
+  }
+
+  Future<BlogWatchState> fetchBlogWatchState(int blogId) async {
+    final profile = await fetchBlogProfile(blogId);
     return BlogWatchState(
-      isWatched: blog['is_watched'] == true,
-      canWatch: blog['can_watch'] != false,
+      isWatched: profile.isWatched,
+      canWatch: profile.canWatch,
     );
   }
 
@@ -162,6 +171,7 @@ class BlogService {
     String description = '',
     bool isCommunity = false,
     String communityMembers = '',
+    String? coverPath,
   }) async {
     await AppApi.instance.applySession();
     final body = <String, dynamic>{
@@ -172,7 +182,23 @@ class BlogService {
     if (slug.isNotEmpty) body['slug'] = slug;
     if (communityMembers.isNotEmpty) body['community_members'] = communityMembers;
 
-    final json = await _api.post(ApiPaths.blogs, body: body);
+    final Map<String, dynamic> json;
+    if (coverPath != null &&
+        coverPath.isNotEmpty &&
+        File(coverPath).existsSync()) {
+      json = await _api.postMultipart(
+        ApiPaths.blogs,
+        fields: body,
+        files: {
+          'cover': MultipartFile.fromFileSync(
+            coverPath,
+            filename: _fileNameFromPath(coverPath),
+          ),
+        },
+      );
+    } else {
+      json = await _api.post(ApiPaths.blogs, body: body);
+    }
     _throwIfError(json);
 
     final blog = json['blog'];
@@ -180,6 +206,11 @@ class BlogService {
       return CreatedBlog.fromJson(blog);
     }
     throw BlogException('Blog creato ma risposta non valida.');
+  }
+
+  String _fileNameFromPath(String path) {
+    final parts = path.split(RegExp(r'[/\\]'));
+    return parts.isNotEmpty ? parts.last : 'cover.jpg';
   }
 
   Future<BlogEntry> createEntry({
@@ -245,17 +276,20 @@ class CreatedBlog {
     required this.blogId,
     required this.title,
     required this.slug,
+    this.coverUrl,
   });
 
   final int blogId;
   final String title;
   final String slug;
+  final String? coverUrl;
 
   factory CreatedBlog.fromJson(Map<String, dynamic> json) {
     return CreatedBlog(
       blogId: json['blog_id'] as int? ?? 0,
       title: json['title']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
+      coverUrl: json['cover_url']?.toString(),
     );
   }
 }

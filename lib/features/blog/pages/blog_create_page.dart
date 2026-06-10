@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/blog/controllers/blog_create_controller.dart';
@@ -80,20 +82,76 @@ class _BlogCreatePageState extends State<BlogCreatePage> {
               onChanged: (v) => c.setCommunity(v == 1),
             ),
           ),
-          Obx(
-            () => c.isCommunity.value
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: TextField(
-                      controller: c.membersCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Co-autori (opzionale)',
-                        hintText: 'Nomi utente XenForo separati da virgola',
+          const SizedBox(height: 12),
+          TextField(
+            controller: c.membersCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Co-autori (opzionale)',
+              hintText: 'Nomi utente XenForo separati da virgola',
+              helperText:
+                  'Se inserisci co-autori, il blog viene creato come Community.',
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Cover del blog',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            final path = c.coverPath.value;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (path != null && path.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 6,
+                      child: Image.file(
+                        File(path),
+                        fit: BoxFit.cover,
                       ),
                     ),
                   )
-                : const SizedBox.shrink(),
-          ),
+                else
+                  Container(
+                    height: 120,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade400),
+                    ),
+                    child: const Text(
+                      'Nessuna cover selezionata',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: c.isSaving.value ? null : c.pickCover,
+                      icon: const Icon(Icons.image_outlined),
+                      label: const Text('Scegli immagine'),
+                    ),
+                    if (path != null && path.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: c.isSaving.value ? null : c.clearCover,
+                        child: const Text('Rimuovi'),
+                      ),
+                    ],
+                  ],
+                ),
+                const Text(
+                  'Immagine orizzontale consigliata. Comparirà sopra la lista degli articoli.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );

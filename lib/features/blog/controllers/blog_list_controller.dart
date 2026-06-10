@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/blog/models/blog_profile.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
@@ -22,6 +23,7 @@ class BlogListController extends GetxController {
   final items = <BlogEntry>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final blogProfile = Rxn<BlogProfile>();
   final isWatched = false.obs;
   final canWatch = true.obs;
   final watchLoading = false.obs;
@@ -31,19 +33,20 @@ class BlogListController extends GetxController {
     super.onInit();
     loadEntries();
     if (filterBlogId != null) {
-      loadWatchState();
+      loadBlogProfile();
     }
   }
 
-  Future<void> loadWatchState() async {
+  Future<void> loadBlogProfile() async {
     final blogId = filterBlogId;
     if (blogId == null) return;
     try {
-      final state = await _service
-          .fetchBlogWatchState(blogId)
+      final profile = await _service
+          .fetchBlogProfile(blogId)
           .timeout(const Duration(seconds: 15));
-      isWatched.value = state.isWatched;
-      canWatch.value = state.canWatch;
+      blogProfile.value = profile;
+      isWatched.value = profile.isWatched;
+      canWatch.value = profile.canWatch;
     } catch (_) {
       canWatch.value = false;
     }
@@ -92,6 +95,13 @@ class BlogListController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> refreshAll() async {
+    await Future.wait([
+      loadEntries(),
+      if (filterBlogId != null) loadBlogProfile(),
+    ]);
   }
 
   Future<void> react(BlogEntry entry, {int reactionId = 1}) async {

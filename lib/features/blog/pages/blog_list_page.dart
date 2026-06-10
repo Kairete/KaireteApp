@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/blog/controllers/blog_list_controller.dart';
+import 'package:kairete/features/blog/widgets/blog_cover_header.dart';
 import 'package:kairete/features/blog/widgets/blog_feed_card.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
@@ -45,48 +46,57 @@ class BlogListPage extends StatelessWidget {
           onRetry: controller.loadEntries,
         );
       }
+
+      final profile = controller.blogProfile.value;
+      final showCover = filterBlogId != null && profile != null;
+      final showWatch = filterBlogId != null;
+      final headerCount = (showCover ? 1 : 0) + (showWatch ? 1 : 0);
+
       if (controller.items.isEmpty) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (filterBlogId != null)
-              Obx(
-                () => ContentWatchBar(
+        return RefreshIndicator(
+          onRefresh: controller.refreshAll,
+          child: ListView(
+            children: [
+              if (showCover) BlogCoverHeader(profile: profile!),
+              if (showWatch)
+                ContentWatchBar(
                   isWatched: controller.isWatched.value,
                   isLoading: controller.watchLoading.value,
                   visible: controller.canWatch.value,
                   onTap: controller.toggleWatch,
                 ),
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.35,
+                child: const Center(child: Text('Nessun articolo del blog.')),
               ),
-            const Expanded(
-              child: Center(child: Text('Nessun articolo del blog.')),
-            ),
-          ],
+            ],
+          ),
         );
       }
+
       return RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([
-            controller.loadEntries(),
-            if (filterBlogId != null) controller.loadWatchState(),
-          ]);
-        },
+        onRefresh: controller.refreshAll,
         child: ListView.builder(
           padding: const EdgeInsets.only(bottom: 16),
-          itemCount: controller.items.length + (filterBlogId != null ? 1 : 0),
+          itemCount: controller.items.length + headerCount,
           itemBuilder: (_, i) {
-            if (filterBlogId != null && i == 0) {
-              return Obx(
-                () => ContentWatchBar(
+            var offset = 0;
+            if (showCover) {
+              if (i == 0) return BlogCoverHeader(profile: profile!);
+              offset++;
+            }
+            if (showWatch) {
+              if (i == offset) {
+                return ContentWatchBar(
                   isWatched: controller.isWatched.value,
                   isLoading: controller.watchLoading.value,
                   visible: controller.canWatch.value,
                   onTap: controller.toggleWatch,
-                ),
-              );
+                );
+              }
+              offset++;
             }
-            final index = filterBlogId != null ? i - 1 : i;
-            final entry = controller.items[index];
+            final entry = controller.items[i - offset];
             return BlogFeedCard(
               entry: entry,
               onOpen: () => controller.openDetail(entry),
