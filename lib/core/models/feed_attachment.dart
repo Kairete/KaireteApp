@@ -1,3 +1,5 @@
+import 'package:kairete/core/utils/api_url.dart';
+
 class FeedAttachment {
   const FeedAttachment({
     this.thumbnailUrl,
@@ -10,10 +12,10 @@ class FeedAttachment {
   final String? filename;
 
   String? get displayImageUrl {
-    final thumb = thumbnailUrl?.trim();
-    if (thumb != null && thumb.isNotEmpty) return thumb;
-    final direct = directUrl?.trim();
-    if (direct != null && direct.isNotEmpty) return direct;
+    final thumb = ApiUrl.resolve(thumbnailUrl);
+    if (thumb.isNotEmpty) return thumb;
+    final direct = ApiUrl.resolve(directUrl);
+    if (direct.isNotEmpty) return direct;
     return null;
   }
 

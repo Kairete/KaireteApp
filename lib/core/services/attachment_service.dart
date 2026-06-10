@@ -125,7 +125,10 @@ class AttachmentService {
         );
         _throwIfError(json);
         key = _readToken(json, const ['key', 'attachment_key']) ?? key;
-        hash = _readToken(json, const ['hash']) ?? hash;
+        hash = _readToken(json, const ['hash', 'temp_hash']) ?? hash;
+        if (key.isEmpty && hash.isNotEmpty) {
+          key = hash;
+        }
       } else {
         final json = await _uploadViaAttachments(
           session: session.copyWith(key: key, hash: hash),
