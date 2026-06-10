@@ -60,6 +60,7 @@ class OmnifeedService {
     final attach = attachmentKey.isNotEmpty ? attachmentKey : attachmentHash;
     if (attach.isNotEmpty) {
       body['attachment_key'] = attach;
+      body['attachment_hash'] = attach;
     }
 
     final json = await _api.post(ApiPaths.profilePosts, body: body);

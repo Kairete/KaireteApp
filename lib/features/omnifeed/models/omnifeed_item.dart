@@ -1,3 +1,4 @@
+import 'package:kairete/core/models/feed_attachment.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 
@@ -49,6 +50,7 @@ class OmnifeedItem {
     this.viewUrl,
     this.groupId,
     this.tags = const [],
+    this.attachments = const [],
   });
 
   final int itemId;
@@ -69,6 +71,10 @@ class OmnifeedItem {
   final String? viewUrl;
   final int? groupId;
   final List<String> tags;
+  final List<FeedAttachment> attachments;
+
+  List<String> get imageAttachmentUrls =>
+      attachments.map((a) => a.displayImageUrl).whereType<String>().toList();
 
   /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
   bool get isPlainFeedPost => contentType == 'profile_post';
@@ -168,6 +174,14 @@ class OmnifeedItem {
       blogId: entry.blog?.blogId,
       categoryLabel: entry.category?.title,
       viewUrl: entry.viewUrl,
+      attachments: entry.attachments
+          .map(
+            (a) => FeedAttachment(
+              thumbnailUrl: a.thumbnailUrl,
+              directUrl: a.directUrl,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -197,6 +211,16 @@ class OmnifeedItem {
       categoryLabel: thread.forumTitle,
       forumId: thread.nodeId,
       viewUrl: thread.viewUrl,
+      tags: thread.tags,
+      attachments: thread.attachments
+          .map(
+            (a) => FeedAttachment(
+              thumbnailUrl: a.imageUrl,
+              directUrl: a.url,
+              filename: a.fileName,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -253,6 +277,7 @@ class OmnifeedItem {
               username: json['username']?.toString() ?? '',
             ),
       viewUrl: json['view_url']?.toString(),
+      attachments: FeedAttachment.parseList(json['Attachments']),
     );
   }
 
@@ -340,6 +365,7 @@ class OmnifeedItem {
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: _parseTags(json['tags']),
+      attachments: FeedAttachment.parseList(json['Attachments']),
     );
   }
 
@@ -375,6 +401,7 @@ class OmnifeedItem {
       viewUrl: viewUrl,
       groupId: groupId,
       tags: tags,
+      attachments: attachments,
     );
   }
 }

@@ -80,6 +80,13 @@ class OmnifeedCard extends StatelessWidget {
                 onTap: onOpen,
                 visible: item.listPreviewNeedsDetailLink,
               ),
+              if (item.imageAttachmentUrls.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                FeedCardFullWidthImages(
+                  imageUrls: item.imageAttachmentUrls,
+                  onTap: onOpen,
+                ),
+              ],
             ],
           ),
         ),
