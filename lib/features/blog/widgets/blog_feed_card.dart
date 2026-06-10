@@ -79,7 +79,7 @@ class BlogFeedCard extends StatelessWidget {
               ),
               FeedCardDetailLink(
                 onTap: onOpen,
-                visible: entry.previewHasMore,
+                visible: entry.previewHasMoreVisible,
               ),
             ],
           ),

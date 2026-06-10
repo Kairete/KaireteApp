@@ -100,6 +100,7 @@ class BlogEntry {
     this.coverImage,
     this.attachments = const [],
     this.viewUrl,
+    this.previewHasMore = false,
   });
 
   final int blogEntryId;
@@ -119,6 +120,7 @@ class BlogEntry {
   final BlogAttachment? coverImage;
   final List<BlogAttachment> attachments;
   final String? viewUrl;
+  final bool previewHasMore;
 
   String? get thumbnailUrl {
     final cover = coverImage?.thumbnailUrl ?? coverImage?.directUrl;
@@ -136,15 +138,20 @@ class BlogEntry {
     return _stripHtml(messageParsed);
   }
 
-  bool get previewHasMore {
+  bool get previewHasMoreVisible {
+    if (previewHasMore) return true;
     final plain = messagePlainText?.trim() ?? '';
     if (plain.length >= 280) return true;
-    final parsed = _stripHtml(messageParsed);
-    return parsed.length >= 280;
+    return _stripHtml(messageParsed).length >= 280;
   }
 
   String get listPreviewBody {
     final body = previewBody;
+    if (previewHasMoreVisible) {
+      if (body.endsWith('…') || body.endsWith('...')) return body;
+      if (body.length <= 277) return '$body…';
+      return '${body.substring(0, 277).trimRight()}…';
+    }
     if (body.length <= 280) return body;
     return '${body.substring(0, 277).trimRight()}…';
   }
@@ -201,7 +208,18 @@ class BlogEntry {
       coverImage: cover,
       attachments: attachments,
       viewUrl: json['view_url']?.toString(),
+      previewHasMore: _parsePreviewHasMore(json),
     );
+  }
+
+  static bool _parsePreviewHasMore(Map<String, dynamic> json) {
+    final raw = json['preview_has_more'] ?? json['previewHasMore'];
+    if (raw == true || raw == 1) return true;
+    if (raw == false || raw == 0) return false;
+    final plain = json['message_plain_text']?.toString().trim() ?? '';
+    if (plain.length >= 280) return true;
+    final parsed = json['message_parsed']?.toString() ?? '';
+    return BlogEntry._stripHtml(parsed).length >= 280;
   }
 
   static BlogAuthor? _authorFromRoot(Map<String, dynamic> json) {
@@ -242,6 +260,7 @@ class BlogEntry {
       coverImage: coverImage,
       attachments: attachments,
       viewUrl: viewUrl,
+      previewHasMore: previewHasMore,
     );
   }
 }
