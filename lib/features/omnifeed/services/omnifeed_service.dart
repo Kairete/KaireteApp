@@ -5,6 +5,7 @@ import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_media_enrichment.dart';
 
 class OmnifeedService {
   XenforoApi get _api => AppApi.instance.xenforo;
@@ -38,6 +39,8 @@ class OmnifeedService {
       } catch (_) {}
     }
 
+    items = await enrichMediaAlbumHeaders(items);
+
     return OmnifeedFeed(items: items);
   }
 
@@ -45,16 +48,7 @@ class OmnifeedService {
     List<OmnifeedItem> primary,
     List<OmnifeedItem> extra,
   ) {
-    final byId = <int, OmnifeedItem>{};
-    for (final item in primary) {
-      if (item.itemId > 0) byId[item.itemId] = item;
-    }
-    for (final item in extra) {
-      if (item.itemId > 0) byId.putIfAbsent(item.itemId, () => item);
-    }
-    final merged = byId.values.toList()
-      ..sort((a, b) => (b.itemDate ?? 0).compareTo(a.itemDate ?? 0));
-    return merged;
+    return mergeOmnifeedItemLists([primary, extra]);
   }
 
   Future<OmnifeedItem> fetchItemDetail(int itemId) async {

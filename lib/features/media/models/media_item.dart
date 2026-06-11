@@ -125,6 +125,13 @@ class MediaItem {
 
   String get displayTitle => title?.trim().isNotEmpty == true ? title!.trim() : 'Media';
 
+  /// Titolo album per l'header feed (`nickname > album`).
+  String? get albumHeaderLabel {
+    final label = album?.title.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return null;
+  }
+
   String get previewBody {
     final plain = description?.trim();
     if (plain != null && plain.isNotEmpty) return plain;

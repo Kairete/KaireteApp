@@ -6,6 +6,7 @@ import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_media_enrichment.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
 class ProfileService {
@@ -35,7 +36,11 @@ class ProfileService {
       _fetchUserMediaItems(userId),
     ]);
 
-    return OmnifeedFeed(items: _mergeAuthoredItems(sources, userId));
+    return OmnifeedFeed(
+      items: await enrichMediaAlbumHeaders(
+        _mergeAuthoredItems(sources, userId),
+      ),
+    );
   }
 
   Future<List<OmnifeedItem>> _fetchUserFeedFromApi(
@@ -191,17 +196,16 @@ class ProfileService {
     List<List<OmnifeedItem>> sources,
     int userId,
   ) {
-    final byId = <int, OmnifeedItem>{};
-    for (final list in sources) {
-      for (final item in list) {
-        if (item.itemId <= 0 || !_isAuthoredBy(item, userId)) continue;
-        byId.putIfAbsent(item.itemId, () => item);
-      }
-    }
-
-    final merged = byId.values.toList()
-      ..sort((a, b) => (b.itemDate ?? 0).compareTo(a.itemDate ?? 0));
-    return merged;
+    final filtered = sources
+        .map(
+          (list) => list
+              .where(
+                (item) => item.itemId > 0 && _isAuthoredBy(item, userId),
+              )
+              .toList(),
+        )
+        .toList();
+    return mergeOmnifeedItemLists(filtered);
   }
 
   Future<bool> followUser(int userId, {required bool stop}) async {

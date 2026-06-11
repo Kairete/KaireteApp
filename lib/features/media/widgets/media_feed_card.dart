@@ -32,14 +32,13 @@ class MediaFeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final author = item.author;
-    final albumTitle = item.album?.title.trim();
     final categoryTitle = item.category?.title.trim();
 
     return FeedCardShell(
       header: FeedCardAuthorHeader(
         avatarUrl: author?.avatarUrl,
         authorName: author?.label ?? author?.username,
-        moduleLabel: albumTitle != null && albumTitle.isNotEmpty ? albumTitle : null,
+        moduleLabel: item.albumHeaderLabel,
         dateLabel: formatOmnifeedCardDate(item.mediaDate),
         categoryLabel: categoryTitle,
         onAuthorTap: onAuthorTap,

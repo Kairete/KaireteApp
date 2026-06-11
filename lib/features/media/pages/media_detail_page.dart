@@ -210,7 +210,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                 avatarUrl: _item!.author?.avatarUrl,
                                 authorName: _item!.author?.label ??
                                     _item!.author?.username,
-                                moduleLabel: _item!.album?.title,
+                                moduleLabel: _item!.albumHeaderLabel,
                                 dateLabel:
                                     formatOmnifeedCardDate(_item!.mediaDate),
                                 categoryLabel: _item!.category?.title,

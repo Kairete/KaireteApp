@@ -99,6 +99,13 @@ class OmnifeedItem {
 
   String get moduleTitle => contentTitle?.trim() ?? '';
 
+  /// Titolo album per l'header media (`nickname > album`), mai la categoria.
+  String? get headerAlbumLabel {
+    final album = albumLabel?.trim();
+    if (album != null && album.isNotEmpty) return album;
+    return null;
+  }
+
   /// Forum, blog, album media, gruppo, ecc. accanto al nickname nell'header.
   String? get headerModuleLabel {
     if (isPlainFeedPost) return null;
@@ -107,11 +114,7 @@ class OmnifeedItem {
       if (blog != null && blog.isNotEmpty) return blog;
     }
     if (contentType == 'xfmg_media') {
-      final album = albumLabel?.trim();
-      if (album != null && album.isNotEmpty) return album;
-      final category = categoryLabel?.trim();
-      if (category != null && category.isNotEmpty) return category;
-      return null;
+      return headerAlbumLabel;
     }
     final category = categoryLabel?.trim();
     if (category != null && category.isNotEmpty) return category;
@@ -578,10 +581,113 @@ class OmnifeedItem {
       blogLabel: blogLabel,
       blogId: blogId,
       forumId: forumId,
+      albumId: albumId,
+      albumLabel: albumLabel,
+      mediaCategoryId: mediaCategoryId,
+      mediaThumbnailUrl: mediaThumbnailUrl,
+      mediaUrl: mediaUrl,
+      mediaType: mediaType,
       viewUrl: viewUrl,
       groupId: groupId,
       tags: tags,
       attachments: attachments,
+    );
+  }
+
+  OmnifeedItem mergedWith(OmnifeedItem other) {
+    return OmnifeedItem(
+      itemId: itemId,
+      contentType: contentType ?? other.contentType,
+      contentId: contentId ?? other.contentId,
+      contentTitle: _pickText(contentTitle, other.contentTitle),
+      messagePlainText: _pickText(messagePlainText, other.messagePlainText),
+      messageParsed: _pickText(messageParsed, other.messageParsed),
+      itemDate: itemDate ?? other.itemDate,
+      commentCount: commentCount > 0 ? commentCount : other.commentCount,
+      reactionScore: reactionScore > 0 ? reactionScore : other.reactionScore,
+      visitorReactionId: visitorReactionId ?? other.visitorReactionId,
+      author: _mergeAuthors(author, other.author),
+      categoryLabel: _pickText(categoryLabel, other.categoryLabel),
+      blogLabel: _pickText(blogLabel, other.blogLabel),
+      blogId: (blogId ?? 0) > 0 ? blogId : other.blogId,
+      forumId: (forumId ?? 0) > 0 ? forumId : other.forumId,
+      albumId: (albumId ?? 0) > 0 ? albumId : other.albumId,
+      albumLabel: _pickText(albumLabel, other.albumLabel),
+      mediaCategoryId:
+          (mediaCategoryId ?? 0) > 0 ? mediaCategoryId : other.mediaCategoryId,
+      mediaThumbnailUrl: _pickText(mediaThumbnailUrl, other.mediaThumbnailUrl),
+      mediaUrl: _pickText(mediaUrl, other.mediaUrl),
+      mediaType: _pickText(mediaType, other.mediaType),
+      viewUrl: _pickText(viewUrl, other.viewUrl),
+      groupId: (groupId ?? 0) > 0 ? groupId : other.groupId,
+      tags: tags.isNotEmpty ? tags : other.tags,
+      attachments: attachments.isNotEmpty ? attachments : other.attachments,
+    );
+  }
+
+  OmnifeedItem enrichedFromMedia(MediaItem? media) {
+    if (media == null || contentType != 'xfmg_media') return this;
+    final albumTitle = media.album?.title.trim();
+    final categoryTitle = media.category?.title.trim();
+    final mediaAuthor = media.author;
+    return OmnifeedItem(
+      itemId: itemId,
+      contentType: contentType,
+      contentId: contentId ?? media.mediaId,
+      contentTitle: _pickText(contentTitle, media.title),
+      messagePlainText: _pickText(messagePlainText, media.description),
+      messageParsed: _pickText(messageParsed, media.description),
+      itemDate: itemDate ?? media.mediaDate,
+      commentCount: commentCount > 0 ? commentCount : media.commentCount,
+      reactionScore: reactionScore > 0 ? reactionScore : media.reactionScore,
+      visitorReactionId: visitorReactionId ?? media.visitorReactionId,
+      author: mediaAuthor == null
+          ? author
+          : OmnifeedAuthor(
+              userId: author?.userId ?? mediaAuthor.userId,
+              username: _pickText(author?.username, mediaAuthor.username) ?? '',
+              avatarUrl: _pickText(author?.avatarUrl, mediaAuthor.avatarUrl),
+              displayName:
+                  _pickText(author?.displayName, mediaAuthor.displayName),
+            ),
+      categoryLabel: _pickText(categoryLabel, categoryTitle),
+      blogLabel: blogLabel,
+      blogId: blogId,
+      forumId: forumId,
+      albumId: (albumId ?? 0) > 0 ? albumId : media.album?.albumId,
+      albumLabel: _pickText(albumLabel, albumTitle),
+      mediaCategoryId:
+          (mediaCategoryId ?? 0) > 0 ? mediaCategoryId : media.category?.categoryId,
+      mediaThumbnailUrl:
+          _pickText(mediaThumbnailUrl, media.thumbnailUrl ?? media.heroImageUrl),
+      mediaUrl: _pickText(mediaUrl, media.mediaUrl),
+      mediaType: _pickText(mediaType, media.mediaType),
+      viewUrl: _pickText(viewUrl, media.viewUrl),
+      groupId: groupId,
+      tags: tags.isNotEmpty ? tags : media.tags,
+      attachments: attachments,
+    );
+  }
+
+  static String? _pickText(String? primary, String? secondary) {
+    final first = primary?.trim();
+    if (first != null && first.isNotEmpty) return first;
+    final second = secondary?.trim();
+    if (second != null && second.isNotEmpty) return second;
+    return primary ?? secondary;
+  }
+
+  static OmnifeedAuthor? _mergeAuthors(
+    OmnifeedAuthor? a,
+    OmnifeedAuthor? b,
+  ) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return OmnifeedAuthor(
+      userId: a.userId > 0 ? a.userId : b.userId,
+      username: _pickText(a.username, b.username) ?? '',
+      avatarUrl: _pickText(a.avatarUrl, b.avatarUrl),
+      displayName: _pickText(a.displayName, b.displayName),
     );
   }
 }
