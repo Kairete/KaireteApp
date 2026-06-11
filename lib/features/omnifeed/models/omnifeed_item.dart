@@ -144,7 +144,18 @@ class OmnifeedItem {
 
   bool get isMediaVideo =>
       mediaType == 'video' ||
-      (mediaUrl?.contains('.mp4') ?? false);
+      mediaType == 'video_upload' ||
+      (mediaUrl?.contains('.mp4') ?? false) ||
+      (mediaUrl?.contains('.webm') ?? false) ||
+      (mediaUrl?.contains('.mov') ?? false);
+
+  bool get isMediaAudio =>
+      mediaType == 'audio' ||
+      mediaType == 'audio_upload' ||
+      (mediaUrl?.contains('.mp3') ?? false) ||
+      (mediaUrl?.contains('.m4a') ?? false);
+
+  bool get isMediaPlayable => isMediaVideo || isMediaAudio;
 
   MediaItem toMediaPreview() {
     final user = author;
@@ -181,7 +192,7 @@ class OmnifeedItem {
   String? get mediaHeroUrl {
     final thumb = mediaThumbnailUrl?.trim();
     if (thumb != null && thumb.isNotEmpty) return thumb;
-    if (!isMediaVideo) {
+    if (!isMediaPlayable) {
       final direct = mediaUrl?.trim();
       if (direct != null && direct.isNotEmpty) return direct;
     }

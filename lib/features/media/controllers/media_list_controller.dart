@@ -45,27 +45,27 @@ class MediaListController extends GetxController {
           .timeout(const Duration(seconds: 15));
       albumProfile.value = profile;
       isWatched.value = profile.isWatched;
-      canWatch.value = profile.canWatch;
+      canWatch.value = true;
     } catch (_) {
-      canWatch.value = false;
+      canWatch.value = true;
     }
   }
 
   Future<void> toggleWatch() async {
     final albumId = filterAlbumId;
-    if (albumId == null || !canWatch.value || watchLoading.value) return;
+    if (albumId == null || watchLoading.value) return;
     watchLoading.value = true;
     final stop = isWatched.value;
     try {
       final watched = await _service.watchAlbum(albumId, stop: stop);
       isWatched.value = watched;
-      AppToast.success(watched ? 'Album seguito.' : 'Watch rimosso.');
+      AppToast.success(watched ? 'Ti sei unito all\'album.' : 'Hai lasciato l\'album.');
     } on MediaException catch (e) {
       AppToast.error(AppToast.mapApiError(e.message));
     } on DioException catch (e) {
       AppToast.error(XenforoApi.connectionMessage(e));
     } catch (_) {
-      AppToast.error('Impossibile aggiornare il watch.');
+      AppToast.error('Impossibile aggiornare lo stato join.');
     } finally {
       watchLoading.value = false;
     }

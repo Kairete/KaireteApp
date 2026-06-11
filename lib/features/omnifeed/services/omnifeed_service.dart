@@ -2,6 +2,7 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 
@@ -24,7 +25,36 @@ class OmnifeedService {
       },
     );
     _throwIfError(json);
-    return OmnifeedFeed.fromJson(json);
+    var items = OmnifeedFeed.fromJson(json).items;
+
+    final userId = await AppApi.instance.sessionUserId ?? 0;
+    if (userId > 0) {
+      try {
+        final ownMedia = await MediaService().fetchMedia(userId: userId, limit: 30);
+        items = _mergeFeedItems(
+          items,
+          ownMedia.map(OmnifeedItem.fromMediaItem).toList(),
+        );
+      } catch (_) {}
+    }
+
+    return OmnifeedFeed(items: items);
+  }
+
+  List<OmnifeedItem> _mergeFeedItems(
+    List<OmnifeedItem> primary,
+    List<OmnifeedItem> extra,
+  ) {
+    final byId = <int, OmnifeedItem>{};
+    for (final item in primary) {
+      if (item.itemId > 0) byId[item.itemId] = item;
+    }
+    for (final item in extra) {
+      if (item.itemId > 0) byId.putIfAbsent(item.itemId, () => item);
+    }
+    final merged = byId.values.toList()
+      ..sort((a, b) => (b.itemDate ?? 0).compareTo(a.itemDate ?? 0));
+    return merged;
   }
 
   Future<OmnifeedItem> fetchItemDetail(int itemId) async {

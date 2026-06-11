@@ -86,20 +86,31 @@ class MediaService {
 
   Future<MediaAlbumProfile> fetchAlbumProfile(int albumId) async {
     await AppApi.instance.applySession();
-    final json = await _api.get('${ApiPaths.mediaAlbums}$albumId/');
+    final json = await _api.get(
+      '${ApiPaths.mediaAlbums}$albumId/',
+      query: {'with': 'User,LastMedia'},
+    );
     _throwIfError(json);
     final album = json['album'];
-    if (album is Map<String, dynamic>) {
-      return MediaAlbumProfile.fromJson(album);
+    if (album is! Map<String, dynamic>) {
+      throw MediaException('Album non trovato.');
     }
-    throw MediaException('Album non trovato.');
+    var profile = MediaAlbumProfile.fromJson(album);
+    if (!profile.hasCover) {
+      final media = await fetchMedia(albumId: albumId, limit: 1);
+      final thumb = media.isNotEmpty ? media.first.heroImageUrl : null;
+      if (thumb != null && thumb.isNotEmpty) {
+        profile = profile.copyWith(coverUrl: thumb);
+      }
+    }
+    return profile;
   }
 
   Future<bool> watchAlbum(int albumId, {required bool stop}) async {
     await AppApi.instance.applySession();
     final json = await _api.post(
       '${ApiPaths.mediaAlbums}$albumId/watch/',
-      body: stop ? {'stop': true} : null,
+      body: stop ? {'stop': true} : {},
     );
     _throwIfError(json);
     if (json['is_watched'] is bool) {
@@ -108,6 +119,9 @@ class MediaService {
     if (json['is_watching'] is bool) {
       return json['is_watching'] as bool;
     }
+    final action = json['action']?.toString();
+    if (action == 'watch') return true;
+    if (action == 'unwatch') return false;
     return !stop;
   }
 
@@ -189,8 +203,6 @@ class MediaService {
     required String title,
     required String description,
     required String viewPrivacy,
-    String? coverPath,
-    String? coverFilename,
   }) async {
     await AppApi.instance.applySession();
     final fields = <String, dynamic>{
@@ -199,20 +211,9 @@ class MediaService {
       'view_privacy': viewPrivacy,
     };
 
-    Map<String, MultipartFile>? files;
-    if (coverPath != null &&
-        coverPath.isNotEmpty &&
-        coverFilename != null &&
-        coverFilename.isNotEmpty) {
-      files = {
-        'file': await MultipartFile.fromFile(coverPath, filename: coverFilename),
-      };
-    }
-
     final json = await _api.postMultipart(
       ApiPaths.mediaAlbums,
       fields: fields,
-      files: files,
     );
     _throwIfError(json);
 

@@ -67,7 +67,7 @@ class MediaComposeController extends GetxController {
   }
 
   Future<void> pickAttachment() async {
-    final files = await attach_pick.pickAttachments(allowMultiple: false);
+    final files = await attach_pick.pickMediaAttachments(allowMultiple: false);
     if (files.isEmpty) return;
     final file = files.first;
     pendingFile.value = file.path;
@@ -151,7 +151,7 @@ class AlbumCreateController extends GetxController {
   }
 
   Future<void> pickCover() async {
-    final files = await attach_pick.pickAttachments(allowMultiple: false);
+    final files = await attach_pick.pickMediaAttachments(allowMultiple: false);
     if (files.isEmpty) return;
     final file = files.first;
     pendingFile.value = file.path;
@@ -162,13 +162,25 @@ class AlbumCreateController extends GetxController {
     if (!canSend.value || isSending.value) return;
     isSending.value = true;
     try {
-      await _service.createAlbum(
+      final album = await _service.createAlbum(
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         viewPrivacy: selectedPrivacy.value,
-        coverPath: pendingFile.value,
-        coverFilename: pendingFilename.value,
       );
+      final coverPath = pendingFile.value;
+      final coverName = pendingFilename.value;
+      if (coverPath != null &&
+          coverPath.isNotEmpty &&
+          coverName != null &&
+          coverName.isNotEmpty) {
+        await _service.createMedia(
+          title: titleCtrl.text.trim(),
+          description: descriptionCtrl.text.trim(),
+          albumId: album.albumId,
+          filePath: coverPath,
+          filename: coverName,
+        );
+      }
       Get.back(result: true);
     } on MediaException catch (e) {
       Get.snackbar('Errore', e.message);

@@ -73,7 +73,7 @@ class MediaListPage extends StatelessWidget {
                     await Get.to<bool>(() => const AlbumCreatePage());
                 if (created == true) await controller.refreshAll();
               },
-              showJoin: isAlbumView && controller.canWatch.value,
+              showJoin: isAlbumView,
               isJoined: controller.isWatched.value,
               joinLoading: controller.watchLoading.value,
               onTapJoin: controller.toggleWatch,

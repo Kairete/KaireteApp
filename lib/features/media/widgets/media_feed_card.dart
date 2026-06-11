@@ -61,7 +61,7 @@ class MediaFeedCard extends StatelessWidget {
                   color: AppTheme.accent,
                 ),
               ),
-              if (item.heroImageUrl != null) ...[
+              if (item.heroImageUrl != null || item.isPlayable) ...[
                 const SizedBox(height: 8),
                 MediaThumbnail(
                   item: item,

@@ -92,7 +92,7 @@ class _MediaComposePageState extends State<MediaComposePage> {
               icon: const Icon(Icons.attach_file),
               label: Obx(
                 () => Text(
-                  c.pendingFilename.value ?? 'Allegato (immagine o video)',
+                  c.pendingFilename.value ?? 'Allegato (foto, video o audio)',
                 ),
               ),
             ),

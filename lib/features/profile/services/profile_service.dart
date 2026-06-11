@@ -3,6 +3,8 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
+import 'package:kairete/features/media/models/media_item.dart';
+import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
@@ -30,6 +32,7 @@ class ProfileService {
       _fetchUserBlogItems(userId, page: page),
       _fetchUserThreadItems(userId, page: page),
       _fetchUserGroupPostItems(userId, page: page),
+      _fetchUserMediaItems(userId),
     ]);
 
     return OmnifeedFeed(items: _mergeAuthoredItems(sources, userId));
@@ -132,6 +135,15 @@ class ProfileService {
           .map(OmnifeedItem.fromGroupPostApi)
           .where((item) => _isAuthoredBy(item, userId))
           .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<OmnifeedItem>> _fetchUserMediaItems(int userId) async {
+    try {
+      final media = await MediaService().fetchMedia(userId: userId, limit: 30);
+      return media.map(OmnifeedItem.fromMediaItem).toList();
     } catch (_) {
       return [];
     }

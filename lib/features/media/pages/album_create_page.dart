@@ -81,7 +81,7 @@ class _AlbumCreatePageState extends State<AlbumCreatePage> {
             icon: const Icon(Icons.image_outlined),
             label: Obx(
               () => Text(
-                c.pendingFilename.value ?? 'Cover album (allegato)',
+                c.pendingFilename.value ?? 'Primo media / cover album',
               ),
             ),
           ),

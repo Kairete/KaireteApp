@@ -169,7 +169,7 @@ class _JoinChip extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      isJoined ? 'Unwatch' : 'Join',
+                      isJoined ? 'Joined' : 'Join',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

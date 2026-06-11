@@ -15,6 +15,7 @@ import 'package:kairete/features/media/pages/media_compose_page.dart';
 import 'package:kairete/features/media/pages/media_list_page.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
+import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/media/widgets/media_viewer.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';

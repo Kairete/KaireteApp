@@ -21,6 +21,19 @@ class MediaAlbumProfile {
 
   bool get hasCover => coverUrl != null && coverUrl!.trim().isNotEmpty;
 
+  MediaAlbumProfile copyWith({String? coverUrl}) {
+    return MediaAlbumProfile(
+      albumId: albumId,
+      title: title,
+      description: description,
+      coverUrl: coverUrl ?? this.coverUrl,
+      isWatched: isWatched,
+      canWatch: canWatch,
+      ownerUsername: ownerUsername,
+      ownerAvatarUrl: ownerAvatarUrl,
+    );
+  }
+
   factory MediaAlbumProfile.fromJson(Map<String, dynamic> json) {
     String? cover;
     final thumb = json['thumbnail_url']?.toString();
@@ -32,6 +45,13 @@ class MediaAlbumProfile {
       cover = custom;
     } else if (icon != null && icon.isNotEmpty) {
       cover = icon;
+    }
+    final lastMedia = json['LastMedia'];
+    if ((cover == null || cover.isEmpty) && lastMedia is Map) {
+      final lastThumb = lastMedia['thumbnail_url']?.toString();
+      if (lastThumb != null && lastThumb.isNotEmpty) {
+        cover = lastThumb;
+      }
     }
 
     String? ownerName;

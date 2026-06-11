@@ -106,8 +106,20 @@ class MediaItem {
 
   bool get isVideo =>
       mediaType == 'video' ||
+      mediaType == 'video_upload' ||
       (mediaUrl?.contains('.mp4') ?? false) ||
-      (mediaUrl?.contains('.webm') ?? false);
+      (mediaUrl?.contains('.webm') ?? false) ||
+      (mediaUrl?.contains('.mov') ?? false);
+
+  bool get isAudio =>
+      mediaType == 'audio' ||
+      mediaType == 'audio_upload' ||
+      (mediaUrl?.contains('.mp3') ?? false) ||
+      (mediaUrl?.contains('.m4a') ?? false) ||
+      (mediaUrl?.contains('.wav') ?? false) ||
+      (mediaUrl?.contains('.ogg') ?? false);
+
+  bool get isPlayable => isVideo || isAudio;
 
   String get displayTitle => title?.trim().isNotEmpty == true ? title!.trim() : 'Media';
 
@@ -135,7 +147,7 @@ class MediaItem {
     final thumb = thumbnailUrl?.trim();
     if (thumb != null && thumb.isNotEmpty) return thumb;
     final direct = mediaUrl?.trim();
-    if (direct != null && direct.isNotEmpty && !isVideo) return direct;
+    if (direct != null && direct.isNotEmpty && !isPlayable) return direct;
     return null;
   }
 

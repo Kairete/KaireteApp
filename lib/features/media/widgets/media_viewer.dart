@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
-import 'package:video_player/video_player.dart';
 import 'package:kairete/features/media/models/media_item.dart';
+import 'package:kairete/features/media/widgets/media_thumbnail.dart';
+import 'package:video_player/video_player.dart';
 
 class MediaViewerPage extends StatefulWidget {
   const MediaViewerPage({super.key, required this.item});
@@ -21,7 +22,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.item.isVideo) {
+    if (widget.item.isPlayable) {
       _initVideo();
     }
   }
@@ -74,7 +75,7 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
                 'Media non disponibile.',
                 style: TextStyle(color: Colors.white),
               )
-            : item.isVideo
+            : item.isPlayable
                 ? _buildVideoBody()
                 : InteractiveViewer(
                     child: CachedNetworkImage(
@@ -151,9 +152,9 @@ class MediaDetailBody extends StatelessWidget {
               color: AppTheme.accent,
             ),
           ),
-          if (item.heroImageUrl != null) ...[
+          if (item.heroImageUrl != null || item.isPlayable) ...[
             const SizedBox(height: 10),
-            _DetailThumbnail(item: item, onTap: onThumbnailTap),
+            MediaThumbnail(item: item, onTap: onThumbnailTap),
           ],
           if (description.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -166,55 +167,6 @@ class MediaDetailBody extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailThumbnail extends StatelessWidget {
-  const _DetailThumbnail({required this.item, this.onTap});
-
-  final MediaItem item;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final hero = item.heroImageUrl!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: CachedNetworkImage(
-              imageUrl: hero,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
-          if (item.isVideo)
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: const Icon(
-                    Icons.play_circle_fill,
-                    color: Colors.white,
-                    size: 56,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

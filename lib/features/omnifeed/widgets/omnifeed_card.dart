@@ -150,7 +150,7 @@ class OmnifeedCard extends StatelessWidget {
           const SizedBox(height: 8),
           MediaThumbnail(
             item: preview,
-            onTap: preview.isVideo ? openViewer : onOpen,
+            onTap: preview.isPlayable ? openViewer : onOpen,
           ),
         ],
         if (body.isNotEmpty) ...[

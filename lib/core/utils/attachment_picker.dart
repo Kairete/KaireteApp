@@ -12,11 +12,58 @@ class PickedAttachment {
   final String displayName;
 }
 
-/// Seleziona file allegati; su Android copia in temp quando [PlatformFile.path] è assente.
-Future<List<PickedAttachment>> pickAttachments({bool allowMultiple = true}) async {
+const _imageExtensions = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'heic',
+  'heif',
+  'bmp',
+];
+
+const _mediaExtensions = [
+  ..._imageExtensions,
+  'mp4',
+  'mov',
+  'm4v',
+  'webm',
+  'mkv',
+  '3gp',
+  'mp3',
+  'm4a',
+  'wav',
+  'aac',
+  'ogg',
+  'flac',
+  'opus',
+];
+
+/// Seleziona immagini (post blog, forum, …).
+Future<List<PickedAttachment>> pickAttachments({bool allowMultiple = true}) {
+  return _pickFiles(
+    allowMultiple: allowMultiple,
+    extensions: _imageExtensions,
+  );
+}
+
+/// Seleziona foto, video e audio per XFMG.
+Future<List<PickedAttachment>> pickMediaAttachments({bool allowMultiple = false}) {
+  return _pickFiles(
+    allowMultiple: allowMultiple,
+    extensions: _mediaExtensions,
+  );
+}
+
+Future<List<PickedAttachment>> _pickFiles({
+  required bool allowMultiple,
+  required List<String> extensions,
+}) async {
   final result = await FilePicker.platform.pickFiles(
     allowMultiple: allowMultiple,
-    type: FileType.image,
+    type: FileType.custom,
+    allowedExtensions: extensions,
     withData: true,
   );
   if (result == null || result.files.isEmpty) return const [];
