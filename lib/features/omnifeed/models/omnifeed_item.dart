@@ -109,6 +109,8 @@ class OmnifeedItem {
     if (contentType == 'xfmg_media') {
       final album = albumLabel?.trim();
       if (album != null && album.isNotEmpty) return album;
+      final category = categoryLabel?.trim();
+      if (category != null && category.isNotEmpty) return category;
       return null;
     }
     final category = categoryLabel?.trim();
@@ -452,6 +454,10 @@ class OmnifeedItem {
       }
     }
 
+    final mediaPayload = json['Media'] is Map
+        ? Map<String, dynamic>.from(json['Media'] as Map)
+        : null;
+
     String? albumTitle;
     int? albumId;
     int? mediaCategoryId;
@@ -466,6 +472,8 @@ class OmnifeedItem {
       json['album'],
       content?['Album'],
       content?['album'],
+      mediaPayload?['Album'],
+      mediaPayload?['album'],
     ]) {
       if (source is Map) {
         final title = source['title']?.toString().trim();
@@ -478,23 +486,32 @@ class OmnifeedItem {
     if (albumId == null && json['album_id'] is int && (json['album_id'] as int) > 0) {
       albumId = json['album_id'] as int;
     }
+    if (albumId == null && mediaPayload?['album_id'] is int) {
+      final id = mediaPayload!['album_id'] as int;
+      if (id > 0) albumId = id;
+    }
     if (albumTitle == null || albumTitle.isEmpty) {
-      final label = json['album_label']?.toString().trim();
+      final label = json['album_label']?.toString().trim() ??
+          mediaPayload?['album_label']?.toString().trim();
       if (label != null && label.isNotEmpty) albumTitle = label;
     }
     if ((albumTitle == null || albumTitle.isEmpty) && albumId != null) {
-      final container = json['container_name']?.toString().trim();
+      final container = json['container_name']?.toString().trim() ??
+          mediaPayload?['container_name']?.toString().trim();
       if (container != null && container.isNotEmpty) {
         albumTitle = container;
       }
     }
 
     final mediaThumb = json['thumbnail_url']?.toString() ??
-        content?['thumbnail_url']?.toString();
+        content?['thumbnail_url']?.toString() ??
+        mediaPayload?['thumbnail_url']?.toString();
     final mediaDirect = json['media_url']?.toString() ??
-        content?['media_url']?.toString();
+        content?['media_url']?.toString() ??
+        mediaPayload?['media_url']?.toString();
     final mediaKind = json['media_type']?.toString() ??
-        content?['media_type']?.toString();
+        content?['media_type']?.toString() ??
+        mediaPayload?['media_type']?.toString();
 
     return OmnifeedItem(
       itemId: json['item_id'] as int? ?? 0,

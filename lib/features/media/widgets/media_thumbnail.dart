@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:kairete/core/utils/media_playback.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 
 class MediaThumbnail extends StatelessWidget {
@@ -31,6 +32,8 @@ class MediaThumbnail extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               child: CachedNetworkImage(
                 imageUrl: hero,
+                httpHeaders:
+                    MediaPlayback.needsApiAuth(hero) ? MediaPlayback.apiHeaders() : null,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorWidget: (_, __, ___) => _PlayablePlaceholder(

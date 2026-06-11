@@ -29,8 +29,13 @@ class MediaPlayback {
     return resolveAbsoluteUrl('api/media/$mediaId/data');
   }
 
+  static String thumbnailEndpointUrl(int mediaId) {
+    return resolveAbsoluteUrl('api/media/$mediaId/thumbnail');
+  }
+
   static bool needsApiAuth(String url) {
     final lower = url.toLowerCase();
-    return lower.contains('/api/media/') && lower.contains('/data');
+    return lower.contains('/api/media/') &&
+        (lower.contains('/data') || lower.contains('/thumbnail'));
   }
 }

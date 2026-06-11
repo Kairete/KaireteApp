@@ -150,6 +150,11 @@ class MediaItem {
     if (thumb != null && thumb.isNotEmpty) {
       return MediaPlayback.resolveAbsoluteUrl(thumb);
     }
+    if (isPlayable && mediaId > 0) {
+      final apiThumb =
+          MediaPlayback.thumbnailEndpointUrl(mediaId);
+      if (apiThumb.isNotEmpty) return apiThumb;
+    }
     final direct = mediaUrl?.trim();
     if (direct != null && direct.isNotEmpty && !isPlayable) {
       return MediaPlayback.resolveAbsoluteUrl(direct);

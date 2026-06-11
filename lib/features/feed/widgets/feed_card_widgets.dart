@@ -144,11 +144,14 @@ class FeedCardAuthorLine extends StatelessWidget {
         ),
         if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 1),
-            child: Icon(
-              Icons.play_arrow,
-              size: 15,
-              color: AppTheme.primary,
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '>',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+                fontSize: 14,
+              ),
             ),
           ),
           Flexible(

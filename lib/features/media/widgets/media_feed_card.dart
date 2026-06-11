@@ -38,7 +38,7 @@ class MediaFeedCard extends StatelessWidget {
     return FeedCardShell(
       header: FeedCardAuthorHeader(
         avatarUrl: author?.avatarUrl,
-        authorName: author?.username ?? author?.label,
+        authorName: author?.label ?? author?.username,
         moduleLabel: albumTitle != null && albumTitle.isNotEmpty ? albumTitle : null,
         dateLabel: formatOmnifeedCardDate(item.mediaDate),
         categoryLabel: categoryTitle,

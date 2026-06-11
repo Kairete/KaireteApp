@@ -208,8 +208,8 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                             FeedCardShell(
                               header: FeedCardAuthorHeader(
                                 avatarUrl: _item!.author?.avatarUrl,
-                                authorName: _item!.author?.username ??
-                                    _item!.author?.label,
+                                authorName: _item!.author?.label ??
+                                    _item!.author?.username,
                                 moduleLabel: _item!.album?.title,
                                 dateLabel:
                                     formatOmnifeedCardDate(_item!.mediaDate),

@@ -50,7 +50,7 @@ class OmnifeedCard extends StatelessWidget {
     return FeedCardShell(
       header: FeedCardAuthorHeader(
         avatarUrl: author?.avatarUrl,
-        authorName: author?.username ?? author?.label,
+        authorName: author?.label ?? author?.username,
         moduleLabel: item.headerModuleLabel,
         dateLabel: date,
         categoryLabel: isMedia ? item.categoryLabel : null,
@@ -146,7 +146,7 @@ class OmnifeedCard extends StatelessWidget {
               color: AppTheme.accent,
             ),
           ),
-        if (preview.heroImageUrl != null) ...[
+        if (preview.heroImageUrl != null || preview.isPlayable) ...[
           const SizedBox(height: 8),
           MediaThumbnail(
             item: preview,
