@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -215,7 +216,7 @@ class MediaService {
       tags: tags,
     );
 
-    final omniJson = await _postUpload(
+    final omniJson = await _postUploadMultipart(
       ApiPaths.newsfeedMediaUpload,
       fields,
       filePath,
@@ -225,22 +226,49 @@ class MediaService {
     final omniItem = _parseCreatedMedia(omniJson);
     if (omniItem != null) return fetchMediaItem(omniItem.mediaId);
 
-    final omniErr = XenforoApi.firstErrorMessage(omniJson);
+    var omniErr = XenforoApi.firstErrorMessage(omniJson);
+    if (_isMissingUploadError(omniJson, omniErr)) {
+      final retryJson = await _postUploadBase64(
+        ApiPaths.newsfeedMediaUpload,
+        fields,
+        filePath,
+        filename,
+        kind: kind,
+      );
+      final retryItem = _parseCreatedMedia(retryJson);
+      if (retryItem != null) return fetchMediaItem(retryItem.mediaId);
+      omniErr = XenforoApi.firstErrorMessage(retryJson) ?? omniErr;
+    }
+
     if (omniErr != null && !_shouldFallbackToNativeUpload(omniJson)) {
       throw MediaException(_mapUploadError(omniErr, kind));
     }
 
-    final nativeJson = await _postUpload(
+    var nativeJson = await _postUploadMultipart(
       ApiPaths.media,
       fields,
       filePath,
       filename,
       kind: kind,
     );
-    _throwIfError(nativeJson, uploadKind: kind);
-
-    final nativeItem = _parseCreatedMedia(nativeJson);
+    var nativeItem = _parseCreatedMedia(nativeJson);
     if (nativeItem != null) return fetchMediaItem(nativeItem.mediaId);
+
+    var nativeErr = XenforoApi.firstErrorMessage(nativeJson);
+    if (_isMissingUploadError(nativeJson, nativeErr)) {
+      nativeJson = await _postUploadBase64(
+        ApiPaths.media,
+        fields,
+        filePath,
+        filename,
+        kind: kind,
+      );
+      nativeItem = _parseCreatedMedia(nativeJson);
+      if (nativeItem != null) return fetchMediaItem(nativeItem.mediaId);
+      nativeErr = XenforoApi.firstErrorMessage(nativeJson) ?? nativeErr;
+    }
+
+    _throwIfError(nativeJson, uploadKind: kind);
     throw MediaException('Media creato ma risposta non valida.');
   }
 
@@ -263,7 +291,7 @@ class MediaService {
     return fields;
   }
 
-  Future<Map<String, dynamic>> _postUpload(
+  Future<Map<String, dynamic>> _postUploadMultipart(
     String path,
     Map<String, dynamic> fields,
     String filePath,
@@ -271,39 +299,87 @@ class MediaService {
     required MediaUploadKind kind,
   }) async {
     try {
-      final file = await _buildUploadFile(filePath, filename, kind);
+      final file = _buildUploadFile(filePath, filename, kind);
+      final attachment = _buildUploadFile(filePath, filename, kind);
       return await _api.postMultipart(
         path,
         fields: fields,
-        files: {'file': file},
+        files: {
+          'file': file,
+          'attachment': attachment,
+        },
       );
     } on DioException catch (e) {
       throw MediaException(XenforoApi.connectionMessage(e));
     }
   }
 
-  Future<MultipartFile> _buildUploadFile(
+  Future<Map<String, dynamic>> _postUploadBase64(
+    String path,
+    Map<String, dynamic> fields,
+    String filePath,
+    String filename, {
+    required MediaUploadKind kind,
+  }) async {
+    const maxBytes = 25 * 1024 * 1024;
+    final bytes = await File(filePath).readAsBytes();
+    if (bytes.length > maxBytes) {
+      throw MediaException(
+        'Video troppo grande (${(bytes.length / (1024 * 1024)).toStringAsFixed(1)} MB). '
+        'Chiedi all\'hosting di aumentare upload_max_filesize e post_max_size in PHP '
+        '(consigliato almeno 128M).',
+      );
+    }
+    final safeName = _safeUploadFilename(filename, kind);
+    final mime = mediaUploadMimeTypeForKind(kind, safeName) ?? 'application/octet-stream';
+    try {
+      return await _api.post(
+        path,
+        body: {
+          ...fields,
+          'file_base64': base64Encode(bytes),
+          'file_name': safeName,
+          'file_mime': mime,
+        },
+      );
+    } on DioException catch (e) {
+      throw MediaException(XenforoApi.connectionMessage(e));
+    }
+  }
+
+  MultipartFile _buildUploadFile(
     String filePath,
     String filename,
     MediaUploadKind kind,
-  ) async {
+  ) {
     final safeName = _safeUploadFilename(filename, kind);
     final mime = mediaUploadMimeTypeForKind(kind, safeName);
     final contentType = mime == null ? null : MediaType.parse(mime);
-    final file = File(filePath);
-    if (await file.exists()) {
-      return MultipartFile.fromFile(
-        filePath,
-        filename: safeName,
-        contentType: contentType,
-      );
-    }
-    final bytes = await file.readAsBytes();
-    return MultipartFile.fromBytes(
-      bytes,
+    return MultipartFile.fromFileSync(
+      filePath,
       filename: safeName,
       contentType: contentType,
     );
+  }
+
+  bool _isMissingUploadError(Map<String, dynamic> json, String? message) {
+    final lower = message?.toLowerCase() ?? '';
+    if (lower.contains('file mancante') ||
+        lower.contains('required input missing') ||
+        (lower.contains('embed') && lower.contains('file'))) {
+      return true;
+    }
+    final errors = json['errors'];
+    if (errors is! List) return false;
+    for (final err in errors) {
+      if (err is! Map) continue;
+      final missing = err['params'];
+      if (missing is Map && missing['missing'] is List) {
+        final list = (missing['missing'] as List).map((e) => e.toString()).toList();
+        if (list.contains('file') || list.contains('embed_url')) return true;
+      }
+    }
+    return false;
   }
 
   String _safeUploadFilename(String filename, MediaUploadKind kind) {
@@ -401,12 +477,13 @@ class MediaService {
         lower.contains('embed url') ||
         (lower.contains('embed') && lower.contains('file')) ||
         lower.contains('required input missing')) {
-      return 'Il file video non è arrivato al server (non serve un URL YouTube). '
-          'Installa OmniFeed 1.7.71+ in XenForo, riprova con fix31 e verifica che il video abbia estensione .mp4/.mov.';
+      return 'Il file non è arrivato al server. Prova fix33, verifica i limiti PHP '
+          '(upload_max_filesize / post_max_size) e che il video sia .mp4/.mov.';
     }
 
     if (lower.contains('file mancante')) {
-      return 'Il file non è arrivato al server. Installa OmniFeed 1.7.72+ e riprova.';
+      return 'Il file non è arrivato al server. Aggiorna l\'app a fix33. '
+          'Se persiste, aumenta upload_max_filesize in PHP (consigliato 128M o più).';
     }
 
     if ((lower.contains('url') && (lower.contains('valid') || lower.contains('valido'))) ||

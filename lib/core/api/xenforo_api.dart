@@ -58,8 +58,10 @@ class XenforoApi {
       data: form,
       queryParameters: query,
       options: Options(
-        sendTimeout: const Duration(minutes: 2),
-        receiveTimeout: const Duration(minutes: 2),
+        sendTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 5),
+        followRedirects: false,
+        validateStatus: (status) => status != null && status < 500,
       ),
     );
     return response.data ?? {};

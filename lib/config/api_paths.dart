@@ -13,7 +13,7 @@ class ApiPaths {
   static const newsfeedUserFeed = 'api/newsfeed/user-feed';
   static const newsfeedForumWatch = 'api/newsfeed/forum-watch';
   static const newsfeedAlbumWatch = 'api/newsfeed/album-watch';
-  static const newsfeedMediaUpload = 'api/newsfeed/media-upload';
+  static const newsfeedMediaUpload = 'api/newsfeed/media-upload/';
   static const newsfeedComposeAttachments = 'api/newsfeed/compose-attachments';
   static const newsfeedItems = 'api/newsfeed-items/';
   static const newsfeedComments = 'api/newsfeed-items/';
