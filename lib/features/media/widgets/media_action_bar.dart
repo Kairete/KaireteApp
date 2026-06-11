@@ -48,7 +48,7 @@ class MediaActionBar extends StatelessWidget {
             const SizedBox(width: 8),
             FeedRefreshButton(
               onTap: onTapRefresh,
-              isRefreshing: isRefreshing,
+              isLoading: isRefreshing,
             ),
           ],
         ),
