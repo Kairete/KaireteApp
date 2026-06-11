@@ -13,8 +13,26 @@ MediaUploadKind mediaUploadKindFromFilename(String filename) {
   return MediaUploadKind.unknown;
 }
 
+/// Rileva il tipo dal nome file e, in fallback, dal path temporaneo.
+MediaUploadKind mediaUploadKindFromSources({
+  required String filename,
+  required String filePath,
+}) {
+  final fromName = mediaUploadKindFromFilename(filename);
+  if (fromName != MediaUploadKind.unknown) return fromName;
+  final pathName = filePath.split(RegExp(r'[/\\]')).last;
+  return mediaUploadKindFromFilename(pathName);
+}
+
 String? mediaUploadMimeType(String filename) {
-  switch (mediaUploadKindFromFilename(filename)) {
+  return mediaUploadMimeTypeForKind(
+    mediaUploadKindFromFilename(filename),
+    filename,
+  );
+}
+
+String? mediaUploadMimeTypeForKind(MediaUploadKind kind, String filename) {
+  switch (kind) {
     case MediaUploadKind.video:
       final ext = filename.split('.').last.toLowerCase();
       switch (ext) {

@@ -158,16 +158,25 @@ class MediaItem {
   }
 
   String? get openMediaUrl {
+    final type = mediaType?.toLowerCase() ?? '';
+    final isEmbedType = type == 'embed';
+
     final direct = mediaUrl?.trim();
-    if (direct != null && direct.isNotEmpty) {
+    if (direct != null && direct.isNotEmpty && !isEmbedType) {
       return MediaPlayback.resolveAbsoluteUrl(direct);
     }
+
+    if (mediaId > 0 && isPlayable && !isEmbedType) {
+      return MediaPlayback.dataEndpointUrl(mediaId);
+    }
+
     final embed = mediaEmbedUrl?.trim();
     if (embed != null && embed.isNotEmpty) {
       return MediaPlayback.resolveAbsoluteUrl(embed);
     }
-    if (mediaId > 0 && isPlayable) {
-      return MediaPlayback.dataEndpointUrl(mediaId);
+
+    if (direct != null && direct.isNotEmpty) {
+      return MediaPlayback.resolveAbsoluteUrl(direct);
     }
     return null;
   }

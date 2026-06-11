@@ -204,12 +204,14 @@ class MediaService {
       );
     }
 
-    final kind = mediaUploadKindFromFilename(filename);
+    final kind = mediaUploadKindFromSources(
+      filename: filename,
+      filePath: filePath,
+    );
     final fields = _uploadFields(
       title: title,
       description: description,
       albumId: albumId,
-      categoryId: categoryId,
       tags: tags,
     );
 
@@ -246,7 +248,6 @@ class MediaService {
     required String title,
     required String description,
     required int albumId,
-    required int categoryId,
     required String tags,
   }) {
     final fields = <String, dynamic>{
@@ -254,9 +255,6 @@ class MediaService {
       'description': description.trim(),
       'album_id': albumId,
     };
-    if (categoryId > 0) {
-      fields['category_id'] = categoryId;
-    }
     if (tags.trim().isNotEmpty) {
       for (final tag in _splitTags(tags)) {
         fields['tags[]'] = tag;
@@ -277,10 +275,7 @@ class MediaService {
       return await _api.postMultipart(
         path,
         fields: fields,
-        files: {
-          'file': file,
-          'upload': await _buildUploadFile(filePath, filename, kind),
-        },
+        files: {'file': file},
       );
     } on DioException catch (e) {
       throw MediaException(XenforoApi.connectionMessage(e));
@@ -293,7 +288,7 @@ class MediaService {
     MediaUploadKind kind,
   ) async {
     final safeName = _safeUploadFilename(filename, kind);
-    final mime = mediaUploadMimeType(safeName);
+    final mime = mediaUploadMimeTypeForKind(kind, safeName);
     final contentType = mime == null ? null : MediaType.parse(mime);
     final file = File(filePath);
     if (await file.exists()) {
@@ -411,7 +406,15 @@ class MediaService {
     }
 
     if (lower.contains('file mancante')) {
-      return 'Il file non è arrivato al server. Installa OmniFeed 1.7.71+ e riprova.';
+      return 'Il file non è arrivato al server. Installa OmniFeed 1.7.72+ e riprova.';
+    }
+
+    if ((lower.contains('url') && (lower.contains('valid') || lower.contains('valido'))) ||
+        lower.contains('cannot be embedded') ||
+        lower.contains('incorporat')) {
+      return 'Il server ha interpretato il video come embed (link YouTube) invece che come file .mp4. '
+          'Non incollare link nel titolo/descrizione: seleziona il file video dal telefono. '
+          'Aggiorna OmniFeed 1.7.72 e fix32.';
     }
 
     // Messaggio già specifico dal server: non sostituirlo con l'hint generico ACP.
