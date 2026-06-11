@@ -108,6 +108,27 @@ class MediaService {
 
   Future<bool> watchAlbum(int albumId, {required bool stop}) async {
     await AppApi.instance.applySession();
+    try {
+      final json = await _api.post(
+        ApiPaths.newsfeedAlbumWatch,
+        body: {
+          'album_id': albumId,
+          if (stop) 'stop': true,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        if (json['is_watched'] is bool) {
+          return json['is_watched'] as bool;
+        }
+        if (json['is_watching'] is bool) {
+          return json['is_watching'] as bool;
+        }
+        return !stop;
+      }
+    } on MediaException {
+      rethrow;
+    } catch (_) {}
+
     final json = await _api.post(
       '${ApiPaths.mediaAlbums}$albumId/watch/',
       body: stop ? {'stop': true} : {},
