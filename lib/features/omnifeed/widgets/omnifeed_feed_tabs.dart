@@ -15,6 +15,7 @@ class OmnifeedFeedTabs extends StatelessWidget {
     _TabSpec(Icons.home_outlined, 'News feed', 0),
     _TabSpec(Icons.menu_book_outlined, 'Blogs', 0),
     _TabSpec(Icons.groups_outlined, 'Gruppi', 0),
+    _TabSpec(Icons.perm_media_outlined, 'Media', 0),
   ];
 
   @override

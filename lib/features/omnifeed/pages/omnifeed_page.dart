@@ -4,6 +4,7 @@ import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
 class OmnifeedPage extends StatelessWidget {
   const OmnifeedPage({super.key});
@@ -57,6 +58,12 @@ class OmnifeedPage extends StatelessWidget {
                               : null,
                           onForumTap: item.contentType == 'thread'
                               ? () => c.openForum(item)
+                              : null,
+                          onMediaTap: item.contentType == 'xfmg_media'
+                              ? () => OmnifeedNavigation.openMediaAlbum(item)
+                              : null,
+                          onMediaCategoryTap: item.contentType == 'xfmg_media'
+                              ? () => OmnifeedNavigation.openMediaCategory(item)
                               : null,
                           onReact: (reactionId) =>
                               c.react(item, reactionId: reactionId),

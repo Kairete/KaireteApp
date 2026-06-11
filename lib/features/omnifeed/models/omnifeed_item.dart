@@ -1,6 +1,7 @@
 import 'package:kairete/core/models/feed_attachment.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
+import 'package:kairete/features/media/models/media_item.dart';
 
 /// ID composto feed mobile (allineato a OmniFeed ItemIdCodec).
 class OmnifeedItemId {
@@ -11,6 +12,7 @@ class OmnifeedItemId {
   static const typeThread = 2;
   static const typeGroupPost = 3;
   static const typeBlogPost = 4;
+  static const typeMedia = 5;
 
   static int encode(int type, int nativeId) => type * multiplier + nativeId;
 }
@@ -47,6 +49,12 @@ class OmnifeedItem {
     this.blogLabel,
     this.blogId,
     this.forumId,
+    this.albumId,
+    this.albumLabel,
+    this.mediaCategoryId,
+    this.mediaThumbnailUrl,
+    this.mediaUrl,
+    this.mediaType,
     this.viewUrl,
     this.groupId,
     this.tags = const [],
@@ -68,6 +76,12 @@ class OmnifeedItem {
   final String? blogLabel;
   final int? blogId;
   final int? forumId;
+  final int? albumId;
+  final String? albumLabel;
+  final int? mediaCategoryId;
+  final String? mediaThumbnailUrl;
+  final String? mediaUrl;
+  final String? mediaType;
   final String? viewUrl;
   final int? groupId;
   final List<String> tags;
@@ -85,12 +99,16 @@ class OmnifeedItem {
 
   String get moduleTitle => contentTitle?.trim() ?? '';
 
-  /// Forum, blog, gruppo, ecc. accanto al nickname nell'header (stile web).
+  /// Forum, blog, album media, gruppo, ecc. accanto al nickname nell'header.
   String? get headerModuleLabel {
     if (isPlainFeedPost) return null;
     if (contentType == 'ubs_blog_entry') {
       final blog = blogLabel?.trim();
       if (blog != null && blog.isNotEmpty) return blog;
+    }
+    if (contentType == 'xfmg_media') {
+      final album = albumLabel?.trim();
+      if (album != null && album.isNotEmpty) return album;
     }
     final category = categoryLabel?.trim();
     if (category != null && category.isNotEmpty) return category;
@@ -120,12 +138,26 @@ class OmnifeedItem {
 
   bool get previewHasMore {
     final body = displayBody;
-    if (body.isEmpty) return true;
+    if (body.isEmpty) return contentType == 'xfmg_media';
     return body.length >= 280;
   }
 
+  bool get isMediaVideo =>
+      mediaType == 'video' ||
+      (mediaUrl?.contains('.mp4') ?? false);
+
+  String? get mediaHeroUrl {
+    final thumb = mediaThumbnailUrl?.trim();
+    if (thumb != null && thumb.isNotEmpty) return thumb;
+    if (!isMediaVideo) {
+      final direct = mediaUrl?.trim();
+      if (direct != null && direct.isNotEmpty) return direct;
+    }
+    return null;
+  }
+
   bool get listPreviewNeedsDetailLink =>
-      displayBody.isEmpty || previewHasMore;
+      displayBody.isEmpty || previewHasMore || contentType == 'xfmg_media';
 
   String get typeLabel {
     switch (contentType) {
@@ -182,6 +214,42 @@ class OmnifeedItem {
             ),
           )
           .toList(),
+    );
+  }
+
+  factory OmnifeedItem.fromMediaItem(MediaItem entry) {
+    final author = entry.author;
+    return OmnifeedItem(
+      itemId: OmnifeedItemId.encode(
+        OmnifeedItemId.typeMedia,
+        entry.mediaId,
+      ),
+      contentType: 'xfmg_media',
+      contentId: entry.mediaId,
+      contentTitle: entry.title,
+      messagePlainText: entry.description,
+      messageParsed: entry.description,
+      itemDate: entry.mediaDate,
+      commentCount: entry.commentCount,
+      reactionScore: entry.reactionScore,
+      visitorReactionId: entry.visitorReactionId,
+      author: author == null
+          ? null
+          : OmnifeedAuthor(
+              userId: author.userId,
+              username: author.username,
+              avatarUrl: author.avatarUrl,
+              displayName: author.displayName,
+            ),
+      albumLabel: entry.album?.title,
+      albumId: entry.album?.albumId,
+      categoryLabel: entry.category?.title,
+      mediaCategoryId: entry.category?.categoryId,
+      mediaThumbnailUrl: entry.thumbnailUrl,
+      mediaUrl: entry.mediaUrl,
+      mediaType: entry.mediaType,
+      viewUrl: entry.viewUrl,
+      tags: entry.tags,
     );
   }
 
@@ -328,6 +396,7 @@ class OmnifeedItem {
         json['BlogEntryItem'] is Map
             ? (json['BlogEntryItem'] as Map)['Category']
             : null,
+        json['Media'] is Map ? (json['Media'] as Map)['Category'] : null,
       ]) {
         if (source is Map) {
           final title = source['title']?.toString().trim();
@@ -338,6 +407,32 @@ class OmnifeedItem {
         }
       }
     }
+
+    String? albumTitle;
+    int? albumId;
+    int? mediaCategoryId;
+    for (final source in [json['Category'], content?['Category']]) {
+      if (source is Map) {
+        final id = source['category_id'] as int?;
+        if (id != null && id > 0) mediaCategoryId = id;
+      }
+    }
+    for (final source in [json['Album'], content?['Album']]) {
+      if (source is Map) {
+        final title = source['title']?.toString().trim();
+        if (title != null && title.isNotEmpty) albumTitle = title;
+        final id = source['album_id'] as int?;
+        if (id != null && id > 0) albumId = id;
+        if (albumTitle != null && albumId != null) break;
+      }
+    }
+
+    final mediaThumb = json['thumbnail_url']?.toString() ??
+        content?['thumbnail_url']?.toString();
+    final mediaDirect = json['media_url']?.toString() ??
+        content?['media_url']?.toString();
+    final mediaKind = json['media_type']?.toString() ??
+        content?['media_type']?.toString();
 
     return OmnifeedItem(
       itemId: json['item_id'] as int? ?? 0,
@@ -362,6 +457,12 @@ class OmnifeedItem {
       blogLabel: blogTitle,
       blogId: blogId,
       forumId: forumId,
+      albumId: albumId,
+      albumLabel: albumTitle,
+      mediaCategoryId: mediaCategoryId,
+      mediaThumbnailUrl: mediaThumb,
+      mediaUrl: mediaDirect,
+      mediaType: mediaKind,
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: _parseTags(json['tags']),

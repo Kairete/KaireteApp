@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/tagfeed/controllers/tagfeed_controller.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
@@ -62,6 +63,12 @@ class TagFeedPage extends StatelessWidget {
                             : null,
                         onForumTap: item.contentType == 'thread'
                             ? () => c.openForum(item)
+                            : null,
+                        onMediaTap: item.contentType == 'xfmg_media'
+                            ? () => OmnifeedNavigation.openMediaAlbum(item)
+                            : null,
+                        onMediaCategoryTap: item.contentType == 'xfmg_media'
+                            ? () => OmnifeedNavigation.openMediaCategory(item)
                             : null,
                         onReact: (reactionId) =>
                             c.react(item, reactionId: reactionId),

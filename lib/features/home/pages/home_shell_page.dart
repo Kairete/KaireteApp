@@ -11,6 +11,7 @@ import 'package:kairete/features/blog/pages/blog_create_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/forum/pages/forum_list_page.dart';
 import 'package:kairete/features/groups/pages/groups_list_page.dart';
+import 'package:kairete/features/media/pages/media_list_page.dart';
 import 'package:kairete/features/home/bindings/home_binding.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_page.dart';
@@ -165,7 +166,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
           ),
-          if (_tabIndex != 2)
+          if (_tabIndex != 2 && _tabIndex != 3)
             Obx(
               () => OmnifeedComposeBar(
                 mode: _tabIndex == 0
@@ -174,15 +175,19 @@ class _HomeShellPageState extends State<HomeShellPage> {
                 onTapCompose: _tabIndex == 0 ? _feed.openCompose : null,
                 onTapRefresh: _tabIndex == 0
                     ? _feed.loadFeed
-                    : () async {
-                        const tag = 'blog_0_0';
-                        if (Get.isRegistered<BlogListController>(tag: tag)) {
-                          await Get.find<BlogListController>(tag: tag).loadEntries();
-                        }
-                      },
+                    : _tabIndex == 1
+                        ? () async {
+                            const tag = 'blog_0_0';
+                            if (Get.isRegistered<BlogListController>(tag: tag)) {
+                              await Get.find<BlogListController>(tag: tag)
+                                  .loadEntries();
+                            }
+                          }
+                        : null,
                 isRefreshing: _tabIndex == 0
                     ? _feed.isLoading.value
-                    : Get.isRegistered<BlogListController>(tag: 'blog_0_0')
+                    : _tabIndex == 1 &&
+                            Get.isRegistered<BlogListController>(tag: 'blog_0_0')
                         ? Get.find<BlogListController>(tag: 'blog_0_0')
                             .isLoading
                             .value
@@ -198,7 +203,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
                   ? const OmnifeedPage()
                   : _tabIndex == 1
                       ? BlogListPage()
-                      : const GroupsListPage(),
+                      : _tabIndex == 2
+                          ? const GroupsListPage()
+                          : MediaListPage(),
             ),
           ),
         ],

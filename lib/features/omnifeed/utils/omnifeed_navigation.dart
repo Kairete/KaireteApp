@@ -6,6 +6,8 @@ import 'package:kairete/features/forum/pages/forum_thread_list_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/groups/pages/group_detail_page.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/media/pages/media_detail_page.dart';
+import 'package:kairete/features/media/pages/media_list_page.dart';
 import 'package:kairete/features/omnifeed/pages/omnifeed_detail_page.dart';
 
 class OmnifeedNavigation {
@@ -69,8 +71,38 @@ class OmnifeedNavigation {
           return;
         }
         break;
+      case 'xfmg_media':
+        if (contentId != null && contentId > 0) {
+          Get.to(() => MediaDetailPage(mediaId: contentId));
+          return;
+        }
+        break;
     }
     Get.to(() => OmnifeedDetailPage(item: item));
+  }
+
+  static void openMediaAlbum(OmnifeedItem item) {
+    final albumId = item.albumId;
+    if (albumId == null || albumId <= 0) return;
+    Get.to(
+      () => MediaListPage(
+        filterAlbumId: albumId,
+        pageTitle: item.albumLabel ?? 'Album',
+        showActionBar: false,
+      ),
+    );
+  }
+
+  static void openMediaCategory(OmnifeedItem item) {
+    final categoryId = item.mediaCategoryId;
+    if (categoryId == null || categoryId <= 0) return;
+    Get.to(
+      () => MediaListPage(
+        filterCategoryId: categoryId,
+        pageTitle: item.categoryLabel ?? 'Categoria',
+        showActionBar: false,
+      ),
+    );
   }
 
   static int? _groupIdFromViewUrl(String? url) {

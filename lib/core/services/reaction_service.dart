@@ -58,6 +58,18 @@ class ReactionService {
         return _postReact('${ApiPaths.groupPosts}$contentId/react', reactionId);
       case 'ksg_group_post':
         return _postReact('${ApiPaths.groupPosts}$contentId/react', reactionId);
+      case 'ubs_blog_entry':
+        return reactBlogEntry(
+          contentId,
+          authorUserId: item.author?.userId,
+          reactionId: reactionId,
+        );
+      case 'xfmg_media':
+        return reactMedia(
+          contentId,
+          authorUserId: item.author?.userId,
+          reactionId: reactionId,
+        );
       default:
         throw ReactionException(
           'Reazione non supportata per ${item.typeLabel}.',
@@ -142,6 +154,18 @@ class ReactionService {
       '${ApiPaths.groupComments}$commentId/react',
       reactionId,
     );
+  }
+
+  Future<String> reactMedia(
+    int mediaId, {
+    int? authorUserId,
+    int reactionId = 1,
+  }) async {
+    await _ensureLoggedIn(authorUserId: authorUserId);
+    if (mediaId <= 0) {
+      throw ReactionException('Media non disponibile.');
+    }
+    return _postReact('${ApiPaths.media}$mediaId/react', reactionId);
   }
 
   Future<void> _ensureLoggedIn({int? authorUserId}) async {

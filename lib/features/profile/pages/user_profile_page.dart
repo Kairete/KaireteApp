@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/profile/controllers/user_profile_controller.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
@@ -102,6 +103,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             : null,
                         onForumTap: item.contentType == 'thread'
                             ? () => c.openForum(item)
+                            : null,
+                        onMediaTap: item.contentType == 'xfmg_media'
+                            ? () => OmnifeedNavigation.openMediaAlbum(item)
+                            : null,
+                        onMediaCategoryTap: item.contentType == 'xfmg_media'
+                            ? () => OmnifeedNavigation.openMediaCategory(item)
                             : null,
                         onTagTap: TagFeedNavigation.openTag,
                         showOwnerActions: c.isCurrentUser,

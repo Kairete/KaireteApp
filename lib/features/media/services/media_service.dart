@@ -1,0 +1,224 @@
+import 'package:dio/dio.dart';
+import 'package:kairete/config/api_paths.dart';
+import 'package:kairete/core/api/app_api.dart';
+import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/features/media/models/media_comment.dart';
+import 'package:kairete/features/media/models/media_item.dart';
+
+class MediaService {
+  XenforoApi get _api => AppApi.instance.xenforo;
+  final ReactionService _reactions = ReactionService();
+
+  Future<List<MediaItem>> fetchMedia({
+    int? albumId,
+    int? categoryId,
+    int? userId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    await AppApi.instance.applySession();
+    final query = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+    if (albumId != null) query['album_id'] = albumId;
+    if (categoryId != null) query['category_id'] = categoryId;
+    if (userId != null) query['user_id'] = userId;
+
+    final json = await _api.get(ApiPaths.media, query: query);
+    _throwIfError(json);
+    return _parseMediaList(json);
+  }
+
+  Future<MediaItem> fetchMediaItem(int mediaId) async {
+    await AppApi.instance.applySession();
+    var json = await _api.get('${ApiPaths.media}$mediaId/');
+    _throwIfError(json);
+
+    final direct = json['media'];
+    if (direct is Map<String, dynamic>) {
+      return MediaItem.fromJson(direct);
+    }
+
+    json = await _api.get(ApiPaths.media, query: {'media_id': mediaId});
+    _throwIfError(json);
+    final list = _parseMediaList(json);
+    for (final item in list) {
+      if (item.mediaId == mediaId) return item;
+    }
+    throw MediaException('Media non trovato.');
+  }
+
+  Future<List<MediaAlbum>> fetchAlbums({int? userId}) async {
+    await AppApi.instance.applySession();
+    final query = <String, dynamic>{};
+    if (userId != null) query['user_id'] = userId;
+
+    final json = await _api.get(ApiPaths.mediaAlbums, query: query);
+    _throwIfError(json);
+    final raw = json['albums'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => MediaAlbum.fromJson(Map<String, dynamic>.from(e)))
+        .where((a) => a.albumId > 0)
+        .toList();
+  }
+
+  Future<List<MediaCategory>> fetchCategories() async {
+    await AppApi.instance.applySession();
+    final json = await _api.get(ApiPaths.mediaCategories);
+    _throwIfError(json);
+    final raw = json['categories'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => MediaCategory.fromJson(Map<String, dynamic>.from(e)))
+        .where((c) => c.categoryId > 0)
+        .toList();
+  }
+
+  Future<MediaCommentsPage> fetchComments(int mediaId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.get('${ApiPaths.media}$mediaId/comments');
+    _throwIfError(json);
+    return MediaCommentsPage.fromJson(json);
+  }
+
+  Future<void> postComment({
+    required int mediaId,
+    required String message,
+  }) async {
+    await AppApi.instance.applySession();
+    final json = await _api.post(
+      ApiPaths.mediaComments,
+      body: {
+        'media_id': mediaId,
+        'message': message,
+      },
+    );
+    _throwIfError(json);
+  }
+
+  Future<String> react({
+    required int mediaId,
+    int? authorUserId,
+    int reactionId = 1,
+  }) async {
+    try {
+      return await _reactions.reactMedia(
+        mediaId,
+        authorUserId: authorUserId,
+        reactionId: reactionId,
+      );
+    } on ReactionException catch (e) {
+      throw MediaException(e.message);
+    }
+  }
+
+  Future<MediaItem> createMedia({
+    required String title,
+    required String description,
+    required int albumId,
+    String tags = '',
+    required String filePath,
+    required String filename,
+  }) async {
+    await AppApi.instance.applySession();
+    final fields = <String, dynamic>{
+      'title': title.trim(),
+      'description': description.trim(),
+      'album_id': albumId,
+    };
+    if (tags.trim().isNotEmpty) {
+      for (final tag in _splitTags(tags)) {
+        fields['tags[]'] = tag;
+      }
+    }
+
+    final json = await _api.postMultipart(
+      ApiPaths.media,
+      fields: fields,
+      files: {
+        'file': await MultipartFile.fromFile(filePath, filename: filename),
+      },
+    );
+    _throwIfError(json);
+
+    final media = json['media'];
+    if (media is Map<String, dynamic>) {
+      return MediaItem.fromJson(media);
+    }
+    throw MediaException('Media creato ma risposta non valida.');
+  }
+
+  Future<MediaAlbum> createAlbum({
+    required String title,
+    required String description,
+    required String viewPrivacy,
+    String? coverPath,
+    String? coverFilename,
+  }) async {
+    await AppApi.instance.applySession();
+    final fields = <String, dynamic>{
+      'title': title.trim(),
+      'description': description.trim(),
+      'view_privacy': viewPrivacy,
+    };
+
+    Map<String, MultipartFile>? files;
+    if (coverPath != null &&
+        coverPath.isNotEmpty &&
+        coverFilename != null &&
+        coverFilename.isNotEmpty) {
+      files = {
+        'file': await MultipartFile.fromFile(coverPath, filename: coverFilename),
+      };
+    }
+
+    final json = await _api.postMultipart(
+      ApiPaths.mediaAlbums,
+      fields: fields,
+      files: files,
+    );
+    _throwIfError(json);
+
+    final album = json['album'];
+    if (album is Map<String, dynamic>) {
+      return MediaAlbum.fromJson(album);
+    }
+    throw MediaException('Album creato ma risposta non valida.');
+  }
+
+  List<MediaItem> _parseMediaList(Map<String, dynamic> json) {
+    final raw = json['media'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => MediaItem.fromJson(Map<String, dynamic>.from(e)))
+        .where((m) => m.mediaId > 0)
+        .toList();
+  }
+
+  List<String> _splitTags(String raw) {
+    return raw
+        .split(RegExp(r'[,\s]+'))
+        .map((t) => t.trim().replaceAll('#', ''))
+        .where((t) => t.isNotEmpty)
+        .toList();
+  }
+
+  void _throwIfError(Map<String, dynamic> json) {
+    final err = XenforoApi.firstErrorMessage(json);
+    if (err != null) throw MediaException(err);
+  }
+}
+
+class MediaException implements Exception {
+  MediaException(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
+}

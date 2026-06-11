@@ -40,4 +40,10 @@ class ApiPaths {
   static const socialGroups = 'api/social-groups/';
   static const blogEntryComments = 'api/blog-entry-comments/';
   static const groupComments = 'api/group-comments/';
+
+  // XenForo Media Gallery (XFMG)
+  static const media = 'api/media/';
+  static const mediaAlbums = 'api/media-albums/';
+  static const mediaCategories = 'api/media-categories/';
+  static const mediaComments = 'api/media-comments';
 }
