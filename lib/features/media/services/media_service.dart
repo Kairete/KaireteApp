@@ -205,30 +205,20 @@ class MediaService {
     }
 
     final kind = mediaUploadKindFromFilename(filename);
-    final omniFields = _uploadFields(
+    final fields = _uploadFields(
       title: title,
       description: description,
       albumId: albumId,
       categoryId: categoryId,
       tags: tags,
-      kind: kind,
-      includeMediaType: true,
-    );
-    final nativeFields = _uploadFields(
-      title: title,
-      description: description,
-      albumId: albumId,
-      categoryId: categoryId,
-      tags: tags,
-      kind: kind,
-      includeMediaType: false,
     );
 
     final omniJson = await _postUpload(
       ApiPaths.newsfeedMediaUpload,
-      omniFields,
+      fields,
       filePath,
       filename,
+      kind: kind,
     );
     final omniItem = _parseCreatedMedia(omniJson);
     if (omniItem != null) return fetchMediaItem(omniItem.mediaId);
@@ -240,9 +230,10 @@ class MediaService {
 
     final nativeJson = await _postUpload(
       ApiPaths.media,
-      nativeFields,
+      fields,
       filePath,
       filename,
+      kind: kind,
     );
     _throwIfError(nativeJson, uploadKind: kind);
 
@@ -257,17 +248,12 @@ class MediaService {
     required int albumId,
     required int categoryId,
     required String tags,
-    required MediaUploadKind kind,
-    required bool includeMediaType,
   }) {
     final fields = <String, dynamic>{
       'title': title.trim(),
       'description': description.trim(),
       'album_id': albumId,
     };
-    if (includeMediaType) {
-      fields['media_type'] = mediaUploadTypeField(kind);
-    }
     if (categoryId > 0) {
       fields['category_id'] = categoryId;
     }
@@ -283,14 +269,17 @@ class MediaService {
     String path,
     Map<String, dynamic> fields,
     String filePath,
-    String filename,
-  ) async {
+    String filename, {
+    required MediaUploadKind kind,
+  }) async {
     try {
+      final file = await _buildUploadFile(filePath, filename, kind);
       return await _api.postMultipart(
         path,
         fields: fields,
         files: {
-          'file': await _buildUploadFile(filePath, filename),
+          'file': file,
+          'upload': await _buildUploadFile(filePath, filename, kind),
         },
       );
     } on DioException catch (e) {
@@ -298,21 +287,46 @@ class MediaService {
     }
   }
 
-  Future<MultipartFile> _buildUploadFile(String filePath, String filename) async {
-    final safeName = _safeUploadFilename(filename);
+  Future<MultipartFile> _buildUploadFile(
+    String filePath,
+    String filename,
+    MediaUploadKind kind,
+  ) async {
+    final safeName = _safeUploadFilename(filename, kind);
     final mime = mediaUploadMimeType(safeName);
-    final bytes = await File(filePath).readAsBytes();
+    final contentType = mime == null ? null : MediaType.parse(mime);
+    final file = File(filePath);
+    if (await file.exists()) {
+      return MultipartFile.fromFile(
+        filePath,
+        filename: safeName,
+        contentType: contentType,
+      );
+    }
+    final bytes = await file.readAsBytes();
     return MultipartFile.fromBytes(
       bytes,
       filename: safeName,
-      contentType: mime == null ? null : MediaType.parse(mime),
+      contentType: contentType,
     );
   }
 
-  String _safeUploadFilename(String filename) {
-    final trimmed = filename.trim();
-    if (trimmed.isNotEmpty && trimmed.contains('.')) return trimmed;
-    return 'upload_${DateTime.now().millisecondsSinceEpoch}.bin';
+  String _safeUploadFilename(String filename, MediaUploadKind kind) {
+    var trimmed = filename.trim();
+    if (trimmed.isEmpty) trimmed = 'upload';
+    if (!trimmed.contains('.')) {
+      switch (kind) {
+        case MediaUploadKind.video:
+          trimmed = '$trimmed.mp4';
+        case MediaUploadKind.audio:
+          trimmed = '$trimmed.m4a';
+        case MediaUploadKind.image:
+          trimmed = '$trimmed.jpg';
+        case MediaUploadKind.unknown:
+          trimmed = '$trimmed.bin';
+      }
+    }
+    return trimmed;
   }
 
   MediaItem? _parseCreatedMedia(Map<String, dynamic> json) {
@@ -324,18 +338,13 @@ class MediaService {
 
   bool _shouldFallbackToNativeUpload(Map<String, dynamic> json) {
     final errors = json['errors'];
-    if (errors is! List || errors.isEmpty) return true;
+    if (errors is! List || errors.isEmpty) return false;
     final first = errors.first;
-    if (first is! Map) return true;
+    if (first is! Map) return false;
     final code = first['code']?.toString() ?? '';
-    if (code == 'requested_page_not_found' ||
+    return code == 'requested_page_not_found' ||
         code == 'endpoint_not_found' ||
-        code == 'api_scope_error') {
-      return true;
-    }
-    final msg = XenforoApi.firstErrorMessage(json)?.toLowerCase() ?? '';
-    return msg.contains('file mancante') ||
-        msg.contains('missing') && msg.contains('file');
+        code == 'api_scope_error';
   }
 
   Future<MediaAlbum> createAlbum({
@@ -392,6 +401,18 @@ class MediaService {
 
   String _mapUploadError(String message, MediaUploadKind kind) {
     final lower = message.toLowerCase();
+
+    if (lower.contains('embed_url') ||
+        lower.contains('embed url') ||
+        (lower.contains('embed') && lower.contains('file')) ||
+        lower.contains('required input missing')) {
+      return 'Il file video non è arrivato al server (non serve un URL YouTube). '
+          'Installa OmniFeed 1.7.71+ in XenForo, riprova con fix31 e verifica che il video abbia estensione .mp4/.mov.';
+    }
+
+    if (lower.contains('file mancante')) {
+      return 'Il file non è arrivato al server. Installa OmniFeed 1.7.71+ e riprova.';
+    }
 
     // Messaggio già specifico dal server: non sostituirlo con l'hint generico ACP.
     if (lower.contains('carica video') ||
