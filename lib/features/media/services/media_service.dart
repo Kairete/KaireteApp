@@ -473,16 +473,23 @@ class MediaService {
   String _mapUploadError(String message, MediaUploadKind kind) {
     final lower = message.toLowerCase();
 
+    if (lower.contains('unexpected error') ||
+        lower.contains('unexpected_error') ||
+        lower.contains('errore imprevisto')) {
+      return 'Errore sul server durante l\'upload. Aggiorna OmniFeed 1.7.74 e fix34. '
+          'Se persiste: verifica permessi video XFMG, categoria con «Video upload» abilitato, '
+          'e limiti PHP upload_max_filesize (128M). Dettaglio: $message';
+    }
     if (lower.contains('embed_url') ||
         lower.contains('embed url') ||
         (lower.contains('embed') && lower.contains('file')) ||
         lower.contains('required input missing')) {
-      return 'Il file non è arrivato al server. Prova fix33, verifica i limiti PHP '
+      return 'Il file non è arrivato al server. Prova fix34, verifica i limiti PHP '
           '(upload_max_filesize / post_max_size) e che il video sia .mp4/.mov.';
     }
 
     if (lower.contains('file mancante')) {
-      return 'Il file non è arrivato al server. Aggiorna l\'app a fix33. '
+      return 'Il file non è arrivato al server. Aggiorna l\'app a fix34. '
           'Se persiste, aumenta upload_max_filesize in PHP (consigliato 128M o più).';
     }
 
