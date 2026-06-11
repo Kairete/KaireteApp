@@ -392,13 +392,39 @@ class MediaService {
 
   String _mapUploadError(String message, MediaUploadKind kind) {
     final lower = message.toLowerCase();
-    if (lower.contains('permission') ||
-        lower.contains('permess') ||
-        lower.contains('no_permission')) {
+
+    // Messaggio già specifico dal server: non sostituirlo con l'hint generico ACP.
+    if (lower.contains('carica video') ||
+        lower.contains('carica audio') ||
+        lower.contains('aggiungere media') ||
+        lower.contains('proprietario') ||
+        lower.contains('categoria') ||
+        lower.contains('album owner') ||
+        lower.contains('allowed_types') ||
+        lower.contains('non consentiti')) {
+      return message;
+    }
+
+    const generic = [
+      'you do not have permission',
+      'do not have permission to view',
+      'no_permission',
+      'requested_page_not_found',
+    ];
+    if (generic.any((p) => lower.contains(p))) {
       if (kind != MediaUploadKind.unknown) {
         return mediaUploadPermissionHint(kind);
       }
       return 'Non hai i permessi per caricare questo file nell\'album.';
+    }
+
+    if (lower.contains('permission') ||
+        lower.contains('permess') ||
+        lower.contains('no_permission')) {
+      if (kind != MediaUploadKind.unknown) {
+        return '$message\n\n${mediaUploadPermissionHint(kind)}';
+      }
+      return message;
     }
     return message;
   }
