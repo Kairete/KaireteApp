@@ -31,6 +31,7 @@ class MediaDetailPage extends StatefulWidget {
 class _MediaDetailPageState extends State<MediaDetailPage> {
   final MediaService _service = MediaService();
   final _commentCtrl = TextEditingController();
+  final _commentFocus = FocusNode();
   MediaItem? _item;
   List<MediaComment> _comments = const [];
   bool _loading = true;
@@ -46,6 +47,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
   @override
   void dispose() {
     _commentCtrl.dispose();
+    _commentFocus.dispose();
     super.dispose();
   }
 
@@ -253,8 +255,9 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                     ),
                     FeedCommentBar(
                       controller: _commentCtrl,
+                      focusNode: _commentFocus,
+                      isSending: _sending,
                       onSend: _sendComment,
-                      sending: _sending,
                     ),
                   ],
                 ),
