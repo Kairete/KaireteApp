@@ -5,6 +5,7 @@ import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/services/media_service.dart';
+import 'package:kairete/features/media/utils/media_navigation.dart';
 
 class MediaComposeController extends GetxController {
   final MediaService _service = MediaService();
@@ -87,7 +88,7 @@ class MediaComposeController extends GetxController {
     isSending.value = true;
     try {
       final album = albums.firstWhereOrNull((a) => a.albumId == albumId);
-      await _service.createMedia(
+      final created = await _service.createMedia(
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         albumId: albumId,
@@ -96,7 +97,7 @@ class MediaComposeController extends GetxController {
         filePath: path,
         filename: name,
       );
-      Get.back(result: true);
+      await MediaNavigation.openPublishedMedia(created.mediaId);
     } on MediaException catch (e) {
       Get.snackbar('Errore', e.message);
     } on DioException catch (e) {
@@ -179,7 +180,7 @@ class AlbumCreateController extends GetxController {
           coverPath.isNotEmpty &&
           coverName != null &&
           coverName.isNotEmpty) {
-        await _service.createMedia(
+        final cover = await _service.createMedia(
           title: titleCtrl.text.trim(),
           description: descriptionCtrl.text.trim(),
           albumId: album.albumId,
@@ -187,6 +188,8 @@ class AlbumCreateController extends GetxController {
           filePath: coverPath,
           filename: coverName,
         );
+        await MediaNavigation.openPublishedMedia(cover.mediaId);
+        return;
       }
       Get.back(result: true);
     } on MediaException catch (e) {

@@ -64,9 +64,8 @@ class MediaListPage extends StatelessWidget {
             () => MediaActionBar(
               onTapRefresh: controller.refreshAll,
               onTapAddMedia: () async {
-                final created =
-                    await Get.to<bool>(() => const MediaComposePage());
-                if (created == true) await controller.refreshAll();
+                await Get.to(() => const MediaComposePage());
+                await controller.refreshAll();
               },
               onTapCreateAlbum: () async {
                 final created =

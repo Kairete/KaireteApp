@@ -109,6 +109,7 @@ class OmnifeedItem {
     if (contentType == 'xfmg_media') {
       final album = albumLabel?.trim();
       if (album != null && album.isNotEmpty) return album;
+      return null;
     }
     final category = categoryLabel?.trim();
     if (category != null && category.isNotEmpty) return category;
@@ -460,7 +461,12 @@ class OmnifeedItem {
         if (id != null && id > 0) mediaCategoryId = id;
       }
     }
-    for (final source in [json['Album'], content?['Album']]) {
+    for (final source in [
+      json['Album'],
+      json['album'],
+      content?['Album'],
+      content?['album'],
+    ]) {
       if (source is Map) {
         final title = source['title']?.toString().trim();
         if (title != null && title.isNotEmpty) albumTitle = title;
@@ -471,6 +477,10 @@ class OmnifeedItem {
     }
     if (albumId == null && json['album_id'] is int && (json['album_id'] as int) > 0) {
       albumId = json['album_id'] as int;
+    }
+    if (albumTitle == null || albumTitle.isEmpty) {
+      final label = json['album_label']?.toString().trim();
+      if (label != null && label.isNotEmpty) albumTitle = label;
     }
     if ((albumTitle == null || albumTitle.isEmpty) && albumId != null) {
       final container = json['container_name']?.toString().trim();

@@ -47,11 +47,11 @@ class XenforoApi {
     Map<String, MultipartFile>? files,
   }) async {
     final form = FormData();
-    fields?.forEach((key, value) {
-      if (value != null) form.fields.add(MapEntry(key, value.toString()));
-    });
     files?.forEach((key, file) {
       form.files.add(MapEntry(key, file));
+    });
+    fields?.forEach((key, value) {
+      if (value != null) form.fields.add(MapEntry(key, value.toString()));
     });
     final response = await _dio.post<Map<String, dynamic>>(
       path,

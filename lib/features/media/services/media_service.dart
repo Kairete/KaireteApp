@@ -299,12 +299,20 @@ class MediaService {
   }
 
   Future<MultipartFile> _buildUploadFile(String filePath, String filename) async {
-    final mime = mediaUploadMimeType(filename);
-    return MultipartFile.fromFile(
-      filePath,
-      filename: filename,
+    final safeName = _safeUploadFilename(filename);
+    final mime = mediaUploadMimeType(safeName);
+    final bytes = await File(filePath).readAsBytes();
+    return MultipartFile.fromBytes(
+      bytes,
+      filename: safeName,
       contentType: mime == null ? null : MediaType.parse(mime),
     );
+  }
+
+  String _safeUploadFilename(String filename) {
+    final trimmed = filename.trim();
+    if (trimmed.isNotEmpty && trimmed.contains('.')) return trimmed;
+    return 'upload_${DateTime.now().millisecondsSinceEpoch}.bin';
   }
 
   MediaItem? _parseCreatedMedia(Map<String, dynamic> json) {
@@ -320,9 +328,14 @@ class MediaService {
     final first = errors.first;
     if (first is! Map) return true;
     final code = first['code']?.toString() ?? '';
-    return code == 'requested_page_not_found' ||
+    if (code == 'requested_page_not_found' ||
         code == 'endpoint_not_found' ||
-        code == 'api_scope_error';
+        code == 'api_scope_error') {
+      return true;
+    }
+    final msg = XenforoApi.firstErrorMessage(json)?.toLowerCase() ?? '';
+    return msg.contains('file mancante') ||
+        msg.contains('missing') && msg.contains('file');
   }
 
   Future<MediaAlbum> createAlbum({

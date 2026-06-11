@@ -165,8 +165,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
             tooltip: 'Aggiungi media',
             icon: const Icon(Icons.add_photo_alternate_outlined),
             onPressed: () async {
-              final created = await Get.to<bool>(() => const MediaComposePage());
-              if (created == true) await _load();
+              await Get.to(() => const MediaComposePage());
             },
           ),
           IconButton(

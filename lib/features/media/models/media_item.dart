@@ -159,14 +159,16 @@ class MediaItem {
 
   factory MediaItem.fromJson(Map<String, dynamic> json) {
     MediaAlbumRef? album;
-    final albumRaw = json['Album'];
-    if (albumRaw is Map<String, dynamic>) {
-      album = MediaAlbumRef.fromJson(albumRaw);
+    final albumRaw = json['Album'] ?? json['album'];
+    if (albumRaw is Map) {
+      album = MediaAlbumRef.fromJson(Map<String, dynamic>.from(albumRaw));
     } else if (json['album_id'] is int && json['album_id'] as int > 0) {
-      final containerName = json['container_name']?.toString().trim() ?? '';
+      final albumTitle = json['album_label']?.toString().trim() ??
+          json['container_name']?.toString().trim() ??
+          '';
       album = MediaAlbumRef(
         albumId: json['album_id'] as int,
-        title: containerName,
+        title: albumTitle,
       );
     } else if (json['container_type']?.toString() == 'album' &&
         json['container_id'] is int &&
