@@ -217,32 +217,27 @@ class MediaService {
       tags: tags,
     );
 
-    // API nativa XFMG prima: gestisce upload/file senza il layer OmniFeed.
-    final paths = [ApiPaths.media, ApiPaths.newsfeedMediaUpload];
-    String? lastErr;
-    Map<String, dynamic>? lastJson;
-
-    for (final path in paths) {
-      final result = await _attemptUpload(
-        path,
-        fields,
-        filePath,
-        filename,
-        kind: kind,
-      );
-      final createdId = _extractCreatedMediaId(result.json);
-      if (createdId != null) {
-        return fetchMediaItem(createdId);
-      }
-      lastErr = result.error ?? lastErr;
-      lastJson = result.json ?? lastJson;
+    // Solo API nativa XFMG: OmniFeed media-upload resta rotto finché non si
+    // installa 1.7.76+ sul forum; evitiamo di passarci sopra.
+    final result = await _attemptUpload(
+      ApiPaths.media,
+      fields,
+      filePath,
+      filename,
+      kind: kind,
+      nativeFileOnly: true,
+    );
+    final createdId = _extractCreatedMediaId(result.json);
+    if (createdId != null) {
+      return fetchMediaItem(createdId);
     }
 
+    final lastErr = result.error;
     if (lastErr != null && lastErr.isNotEmpty) {
       throw MediaException(_mapUploadError(lastErr, kind));
     }
-    if (lastJson != null) {
-      _throwIfError(lastJson, uploadKind: kind);
+    if (result.json != null) {
+      _throwIfError(result.json!, uploadKind: kind);
     }
     throw MediaException('Media creato ma risposta non valida.');
   }
@@ -253,6 +248,7 @@ class MediaService {
     String filePath,
     String filename, {
     required MediaUploadKind kind,
+    bool nativeFileOnly = false,
   }) async {
     var json = await _postUploadMultipart(
       path,
@@ -260,6 +256,7 @@ class MediaService {
       filePath,
       filename,
       kind: kind,
+      nativeFileOnly: nativeFileOnly,
     );
     if (_extractCreatedMediaId(json) != null) {
       return (json: json, error: null);
@@ -325,19 +322,26 @@ class MediaService {
     String filePath,
     String filename, {
     required MediaUploadKind kind,
+    bool nativeFileOnly = false,
   }) async {
     try {
       final file = _buildUploadFile(filePath, filename, kind);
-      final attachment = _buildUploadFile(filePath, filename, kind);
+      final files = nativeFileOnly
+          ? {'file': file}
+          : {
+              'file': file,
+              'attachment': _buildUploadFile(filePath, filename, kind),
+            };
       return await _api.postMultipart(
         path,
         fields: fields,
-        files: {
-          'file': file,
-          'attachment': attachment,
-        },
+        files: files,
       );
     } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
       throw MediaException(XenforoApi.connectionMessage(e));
     }
   }
@@ -489,6 +493,13 @@ class MediaService {
 
   String _mapUploadError(String message, MediaUploadKind kind) {
     final lower = message.toLowerCase();
+
+    if (lower.contains('mediatemp') ||
+        (lower.contains('media\\creator') && lower.contains('album'))) {
+      return 'OmniFeed sul forum non è aggiornato (bug MediaTemp/Album). '
+          'In ACP installa OmniFeed 1.7.76, oppure aggiorna l\'app a fix38 che '
+          'usa solo l\'API nativa XFMG.\n\nDettaglio tecnico: $message';
+    }
 
     if (lower.contains('unexpected error') ||
         lower.contains('unexpected_error') ||
