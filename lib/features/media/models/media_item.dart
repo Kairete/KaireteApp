@@ -233,15 +233,26 @@ class MediaItem {
 }
 
 class MediaAlbum {
-  MediaAlbum({required this.albumId, required this.title});
+  MediaAlbum({
+    required this.albumId,
+    required this.title,
+    this.categoryId = 0,
+  });
 
   final int albumId;
   final String title;
+  final int categoryId;
 
   factory MediaAlbum.fromJson(Map<String, dynamic> json) {
+    var categoryId = json['category_id'] as int? ?? 0;
+    final category = json['Category'];
+    if (categoryId <= 0 && category is Map) {
+      categoryId = category['category_id'] as int? ?? 0;
+    }
     return MediaAlbum(
       albumId: json['album_id'] as int? ?? 0,
       title: json['title']?.toString() ?? '',
+      categoryId: categoryId,
     );
   }
 }

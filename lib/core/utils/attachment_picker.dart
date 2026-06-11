@@ -53,18 +53,20 @@ Future<List<PickedAttachment>> pickMediaAttachments({bool allowMultiple = false}
   return _pickFiles(
     allowMultiple: allowMultiple,
     extensions: _mediaExtensions,
+    withData: false,
   );
 }
 
 Future<List<PickedAttachment>> _pickFiles({
   required bool allowMultiple,
   required List<String> extensions,
+  bool withData = true,
 }) async {
   final result = await FilePicker.platform.pickFiles(
     allowMultiple: allowMultiple,
     type: FileType.custom,
     allowedExtensions: extensions,
-    withData: true,
+    withData: withData,
   );
   if (result == null || result.files.isEmpty) return const [];
 

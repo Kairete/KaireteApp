@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/utils/media_upload_kind.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_comment.dart';
@@ -57,7 +59,7 @@ class MediaService {
 
   Future<List<MediaAlbum>> fetchAlbums({int? userId}) async {
     await AppApi.instance.applySession();
-    final query = <String, dynamic>{};
+    final query = <String, dynamic>{'with': 'Category'};
     if (userId != null) query['user_id'] = userId;
 
     final json = await _api.get(ApiPaths.mediaAlbums, query: query);
@@ -188,30 +190,57 @@ class MediaService {
     required String title,
     required String description,
     required int albumId,
+    int categoryId = 0,
     String tags = '',
     required String filePath,
     required String filename,
   }) async {
     await AppApi.instance.applySession();
+    final kind = mediaUploadKindFromFilename(filename);
     final fields = <String, dynamic>{
       'title': title.trim(),
       'description': description.trim(),
       'album_id': albumId,
+      'media_type': mediaUploadTypeField(kind),
     };
+    if (categoryId > 0) {
+      fields['category_id'] = categoryId;
+    }
     if (tags.trim().isNotEmpty) {
       for (final tag in _splitTags(tags)) {
         fields['tags[]'] = tag;
       }
     }
 
-    final json = await _api.postMultipart(
+    final mime = mediaUploadMimeType(filename);
+    final file = await MultipartFile.fromFile(
+      filePath,
+      filename: filename,
+      contentType: mime == null ? null : MediaType.parse(mime),
+    );
+
+    Map<String, dynamic> json;
+    try {
+      json = await _api.postMultipart(
+        ApiPaths.newsfeedMediaUpload,
+        fields: fields,
+        files: {'file': file},
+      );
+      if (XenforoApi.firstErrorMessage(json) == null && json['media'] is Map) {
+        return MediaItem.fromJson(
+          Map<String, dynamic>.from(json['media'] as Map),
+        );
+      }
+    } on MediaException {
+      rethrow;
+    } catch (_) {}
+
+    json = await _api.postMultipart(
       ApiPaths.media,
       fields: fields,
-      files: {
-        'file': await MultipartFile.fromFile(filePath, filename: filename),
-      },
+      files: {'file': file},
     );
-    _throwIfError(json);
+    _throwIfError(json, uploadKind: kind);
 
     final media = json['media'];
     if (media is Map<String, dynamic>) {
@@ -263,9 +292,26 @@ class MediaService {
         .toList();
   }
 
-  void _throwIfError(Map<String, dynamic> json) {
+  void _throwIfError(
+    Map<String, dynamic> json, {
+    MediaUploadKind uploadKind = MediaUploadKind.unknown,
+  }) {
     final err = XenforoApi.firstErrorMessage(json);
-    if (err != null) throw MediaException(err);
+    if (err == null) return;
+    throw MediaException(_mapUploadError(err, uploadKind));
+  }
+
+  String _mapUploadError(String message, MediaUploadKind kind) {
+    final lower = message.toLowerCase();
+    if (lower.contains('permission') ||
+        lower.contains('permess') ||
+        lower.contains('no_permission')) {
+      if (kind != MediaUploadKind.unknown) {
+        return mediaUploadPermissionHint(kind);
+      }
+      return 'Non hai i permessi per caricare questo file nell\'album.';
+    }
+    return message;
   }
 }
 

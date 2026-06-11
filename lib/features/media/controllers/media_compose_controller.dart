@@ -84,10 +84,12 @@ class MediaComposeController extends GetxController {
 
     isSending.value = true;
     try {
+      final album = albums.firstWhereOrNull((a) => a.albumId == albumId);
       await _service.createMedia(
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         albumId: albumId,
+        categoryId: album?.categoryId ?? 0,
         tags: tagsCtrl.text.trim(),
         filePath: path,
         filename: name,
@@ -177,6 +179,7 @@ class AlbumCreateController extends GetxController {
           title: titleCtrl.text.trim(),
           description: descriptionCtrl.text.trim(),
           albumId: album.albumId,
+          categoryId: album.categoryId,
           filePath: coverPath,
           filename: coverName,
         );
