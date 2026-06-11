@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
+import 'package:kairete/core/utils/error_report_dialog.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
@@ -15,6 +16,8 @@ class MediaComposeController extends GetxController {
   final tagsCtrl = TextEditingController();
 
   final albums = <MediaAlbum>[].obs;
+  final categories = <MediaCategory>[].obs;
+  final selectedCategoryId = RxnInt();
   final selectedAlbumId = RxnInt();
   final pendingFile = RxnString();
   final pendingFilename = RxnString();
@@ -23,13 +26,24 @@ class MediaComposeController extends GetxController {
   final isSending = false.obs;
   final canSend = false.obs;
   final loadError = ''.obs;
+  final lastPublishError = ''.obs;
+
+  List<MediaAlbum> get visibleAlbums {
+    final categoryId = selectedCategoryId.value;
+    if (categoryId == null || categoryId <= 0) {
+      return albums;
+    }
+    return albums
+        .where((a) => a.categoryId == 0 || a.categoryId == categoryId)
+        .toList();
+  }
 
   @override
   void onInit() {
     super.onInit();
     titleCtrl.addListener(_onFieldsChanged);
     descriptionCtrl.addListener(_onFieldsChanged);
-    _loadAlbums();
+    _loadData();
   }
 
   @override
@@ -42,30 +56,67 @@ class MediaComposeController extends GetxController {
 
   void _onFieldsChanged() {
     canSend.value = titleCtrl.text.trim().isNotEmpty &&
+        (selectedCategoryId.value ?? 0) > 0 &&
         (selectedAlbumId.value ?? 0) > 0 &&
         pendingFile.value != null;
   }
 
-  Future<void> _loadAlbums() async {
+  Future<void> _loadData() async {
     isLoading.value = true;
     loadError.value = '';
     try {
-      albums.value = await _service.fetchAlbums();
-      if (albums.isNotEmpty) {
-        selectedAlbumId.value = albums.first.albumId;
+      final results = await Future.wait([
+        _service.fetchAlbums(),
+        _service.fetchCategories(),
+      ]);
+      albums.value = results[0] as List<MediaAlbum>;
+      categories.value = results[1] as List<MediaCategory>;
+
+      if (categories.isEmpty) {
+        loadError.value =
+            'Nessuna categoria Media Gallery disponibile. Verifica permessi XFMG sul forum.';
+        return;
       }
+
+      selectedCategoryId.value = categories.first.categoryId;
+      _syncAlbumSelection();
       _onFieldsChanged();
     } on MediaException catch (e) {
       loadError.value = e.message;
     } catch (_) {
-      loadError.value = 'Impossibile caricare gli album.';
+      loadError.value = 'Impossibile caricare album e categorie.';
     } finally {
       isLoading.value = false;
     }
   }
 
+  void _syncAlbumSelection() {
+    final visible = visibleAlbums;
+    final current = selectedAlbumId.value;
+    if (current != null &&
+        visible.any((album) => album.albumId == current)) {
+      return;
+    }
+    selectedAlbumId.value =
+        visible.isNotEmpty ? visible.first.albumId : null;
+  }
+
+  void setCategoryId(int? categoryId) {
+    selectedCategoryId.value = categoryId;
+    _syncAlbumSelection();
+    _onFieldsChanged();
+  }
+
   void setAlbumId(int? albumId) {
     selectedAlbumId.value = albumId;
+    if (albumId == null) {
+      _onFieldsChanged();
+      return;
+    }
+    final album = albums.firstWhereOrNull((a) => a.albumId == albumId);
+    if (album != null && album.categoryId > 0) {
+      selectedCategoryId.value = album.categoryId;
+    }
     _onFieldsChanged();
   }
 
@@ -81,29 +132,42 @@ class MediaComposeController extends GetxController {
   Future<void> publish() async {
     if (!canSend.value || isSending.value) return;
     final albumId = selectedAlbumId.value;
+    final categoryId = selectedCategoryId.value;
     final path = pendingFile.value;
     final name = pendingFilename.value;
-    if (albumId == null || albumId <= 0 || path == null || name == null) return;
+    if (albumId == null ||
+        albumId <= 0 ||
+        categoryId == null ||
+        categoryId <= 0 ||
+        path == null ||
+        name == null) {
+      return;
+    }
 
     isSending.value = true;
+    lastPublishError.value = '';
     try {
-      final album = albums.firstWhereOrNull((a) => a.albumId == albumId);
       final created = await _service.createMedia(
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         albumId: albumId,
-        categoryId: album?.categoryId ?? 0,
+        categoryId: categoryId,
         tags: tagsCtrl.text.trim(),
         filePath: path,
         filename: name,
       );
       await MediaNavigation.openPublishedMedia(created.mediaId);
     } on MediaException catch (e) {
-      Get.snackbar('Errore', e.message);
+      lastPublishError.value = e.message;
+      await showCopyableErrorDialog(title: 'Upload non riuscito', message: e.message);
     } on DioException catch (e) {
-      Get.snackbar('Errore', XenforoApi.connectionMessage(e));
+      final msg = XenforoApi.connectionMessage(e);
+      lastPublishError.value = msg;
+      await showCopyableErrorDialog(title: 'Upload non riuscito', message: msg);
     } catch (e) {
-      Get.snackbar('Errore', e.toString());
+      final msg = e.toString();
+      lastPublishError.value = msg;
+      await showCopyableErrorDialog(title: 'Upload non riuscito', message: msg);
     } finally {
       isSending.value = false;
     }
@@ -193,11 +257,14 @@ class AlbumCreateController extends GetxController {
       }
       Get.back(result: true);
     } on MediaException catch (e) {
-      Get.snackbar('Errore', e.message);
+      await showCopyableErrorDialog(title: 'Errore album', message: e.message);
     } on DioException catch (e) {
-      Get.snackbar('Errore', XenforoApi.connectionMessage(e));
+      await showCopyableErrorDialog(
+        title: 'Errore album',
+        message: XenforoApi.connectionMessage(e),
+      );
     } catch (e) {
-      Get.snackbar('Errore', e.toString());
+      await showCopyableErrorDialog(title: 'Errore album', message: e.toString());
     } finally {
       isSending.value = false;
     }

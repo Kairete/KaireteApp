@@ -49,6 +49,34 @@ class _MediaComposePageState extends State<MediaComposePage> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (c.lastPublishError.value.isNotEmpty) ...[
+              Material(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ultimo errore upload',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        c.lastPublishError.value,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: c.titleCtrl,
               decoration: const InputDecoration(
@@ -74,9 +102,30 @@ class _MediaComposePageState extends State<MediaComposePage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
-              value: c.selectedAlbumId.value,
+              value: c.selectedCategoryId.value,
+              decoration: const InputDecoration(
+                labelText: 'Categoria',
+                helperText:
+                    'Scegli la categoria XFMG (permessi video/foto/audio).',
+              ),
+              items: c.categories
+                  .map(
+                    (cat) => DropdownMenuItem(
+                      value: cat.categoryId,
+                      child: Text(cat.title),
+                    ),
+                  )
+                  .toList(),
+              onChanged: c.setCategoryId,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: c.visibleAlbums
+                      .any((a) => a.albumId == c.selectedAlbumId.value)
+                  ? c.selectedAlbumId.value
+                  : null,
               decoration: const InputDecoration(labelText: 'Album'),
-              items: c.albums
+              items: c.visibleAlbums
                   .map(
                     (a) => DropdownMenuItem(
                       value: a.albumId,

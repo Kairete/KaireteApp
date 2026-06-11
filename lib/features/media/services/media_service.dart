@@ -213,6 +213,7 @@ class MediaService {
       title: title,
       description: description,
       albumId: albumId,
+      categoryId: categoryId,
       tags: tags,
     );
 
@@ -276,6 +277,7 @@ class MediaService {
     required String title,
     required String description,
     required int albumId,
+    int categoryId = 0,
     required String tags,
   }) {
     final fields = <String, dynamic>{
@@ -283,6 +285,9 @@ class MediaService {
       'description': description.trim(),
       'album_id': albumId,
     };
+    if (categoryId > 0) {
+      fields['category_id'] = categoryId;
+    }
     if (tags.trim().isNotEmpty) {
       for (final tag in _splitTags(tags)) {
         fields['tags[]'] = tag;
