@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/core/utils/media_playback.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:video_player/video_player.dart';
@@ -33,7 +34,10 @@ class _MediaViewerPageState extends State<MediaViewerPage> {
       if (mounted) setState(() => _videoError = true);
       return;
     }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      httpHeaders: MediaPlayback.apiHeaders(),
+    );
     try {
       await controller.initialize();
       if (!mounted) {

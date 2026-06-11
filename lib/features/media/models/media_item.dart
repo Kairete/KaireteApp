@@ -1,3 +1,5 @@
+import 'package:kairete/core/utils/media_playback.dart';
+
 class MediaAuthor {
   MediaAuthor({
     required this.userId,
@@ -145,16 +147,29 @@ class MediaItem {
 
   String? get heroImageUrl {
     final thumb = thumbnailUrl?.trim();
-    if (thumb != null && thumb.isNotEmpty) return thumb;
+    if (thumb != null && thumb.isNotEmpty) {
+      return MediaPlayback.resolveAbsoluteUrl(thumb);
+    }
     final direct = mediaUrl?.trim();
-    if (direct != null && direct.isNotEmpty && !isPlayable) return direct;
+    if (direct != null && direct.isNotEmpty && !isPlayable) {
+      return MediaPlayback.resolveAbsoluteUrl(direct);
+    }
     return null;
   }
 
   String? get openMediaUrl {
     final direct = mediaUrl?.trim();
-    if (direct != null && direct.isNotEmpty) return direct;
-    return mediaEmbedUrl?.trim();
+    if (direct != null && direct.isNotEmpty) {
+      return MediaPlayback.resolveAbsoluteUrl(direct);
+    }
+    final embed = mediaEmbedUrl?.trim();
+    if (embed != null && embed.isNotEmpty) {
+      return MediaPlayback.resolveAbsoluteUrl(embed);
+    }
+    if (mediaId > 0 && isPlayable) {
+      return MediaPlayback.dataEndpointUrl(mediaId);
+    }
+    return null;
   }
 
   factory MediaItem.fromJson(Map<String, dynamic> json) {

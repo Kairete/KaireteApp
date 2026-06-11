@@ -53,7 +53,7 @@ Future<List<PickedAttachment>> pickMediaAttachments({bool allowMultiple = false}
   return _pickFiles(
     allowMultiple: allowMultiple,
     extensions: _mediaExtensions,
-    withData: false,
+    withData: true,
   );
 }
 

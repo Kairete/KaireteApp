@@ -231,7 +231,7 @@ class MediaService {
       filename,
     );
     final omniItem = _parseCreatedMedia(omniJson);
-    if (omniItem != null) return omniItem;
+    if (omniItem != null) return fetchMediaItem(omniItem.mediaId);
 
     final omniErr = XenforoApi.firstErrorMessage(omniJson);
     if (omniErr != null && !_shouldFallbackToNativeUpload(omniJson)) {
@@ -247,7 +247,7 @@ class MediaService {
     _throwIfError(nativeJson, uploadKind: kind);
 
     final nativeItem = _parseCreatedMedia(nativeJson);
-    if (nativeItem != null) return nativeItem;
+    if (nativeItem != null) return fetchMediaItem(nativeItem.mediaId);
     throw MediaException('Media creato ma risposta non valida.');
   }
 
