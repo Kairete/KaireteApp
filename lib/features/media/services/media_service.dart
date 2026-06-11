@@ -217,60 +217,83 @@ class MediaService {
       tags: tags,
     );
 
-    final omniJson = await _postUploadMultipart(
-      ApiPaths.newsfeedMediaUpload,
-      fields,
-      filePath,
-      filename,
-      kind: kind,
-    );
-    final omniItem = _parseCreatedMedia(omniJson);
-    if (omniItem != null) return fetchMediaItem(omniItem.mediaId);
+    // API nativa XFMG prima: gestisce upload/file senza il layer OmniFeed.
+    final paths = [ApiPaths.media, ApiPaths.newsfeedMediaUpload];
+    String? lastErr;
+    Map<String, dynamic>? lastJson;
 
-    var omniErr = XenforoApi.firstErrorMessage(omniJson);
-    if (_isMissingUploadError(omniJson, omniErr)) {
-      final retryJson = await _postUploadBase64(
-        ApiPaths.newsfeedMediaUpload,
+    for (final path in paths) {
+      final result = await _attemptUpload(
+        path,
         fields,
         filePath,
         filename,
         kind: kind,
       );
-      final retryItem = _parseCreatedMedia(retryJson);
-      if (retryItem != null) return fetchMediaItem(retryItem.mediaId);
-      omniErr = XenforoApi.firstErrorMessage(retryJson) ?? omniErr;
+      final createdId = _extractCreatedMediaId(result.json);
+      if (createdId != null) {
+        return fetchMediaItem(createdId);
+      }
+      lastErr = result.error ?? lastErr;
+      lastJson = result.json ?? lastJson;
     }
 
-    if (omniErr != null && !_shouldFallbackToNativeUpload(omniJson)) {
-      throw MediaException(_mapUploadError(omniErr, kind));
+    if (lastErr != null && lastErr.isNotEmpty) {
+      throw MediaException(_mapUploadError(lastErr, kind));
     }
-
-    var nativeJson = await _postUploadMultipart(
-      ApiPaths.media,
-      fields,
-      filePath,
-      filename,
-      kind: kind,
-    );
-    var nativeItem = _parseCreatedMedia(nativeJson);
-    if (nativeItem != null) return fetchMediaItem(nativeItem.mediaId);
-
-    var nativeErr = XenforoApi.firstErrorMessage(nativeJson);
-    if (_isMissingUploadError(nativeJson, nativeErr)) {
-      nativeJson = await _postUploadBase64(
-        ApiPaths.media,
-        fields,
-        filePath,
-        filename,
-        kind: kind,
-      );
-      nativeItem = _parseCreatedMedia(nativeJson);
-      if (nativeItem != null) return fetchMediaItem(nativeItem.mediaId);
-      nativeErr = XenforoApi.firstErrorMessage(nativeJson) ?? nativeErr;
+    if (lastJson != null) {
+      _throwIfError(lastJson, uploadKind: kind);
     }
-
-    _throwIfError(nativeJson, uploadKind: kind);
     throw MediaException('Media creato ma risposta non valida.');
+  }
+
+  Future<({Map<String, dynamic>? json, String? error})> _attemptUpload(
+    String path,
+    Map<String, dynamic> fields,
+    String filePath,
+    String filename, {
+    required MediaUploadKind kind,
+  }) async {
+    var json = await _postUploadMultipart(
+      path,
+      fields,
+      filePath,
+      filename,
+      kind: kind,
+    );
+    if (_extractCreatedMediaId(json) != null) {
+      return (json: json, error: null);
+    }
+
+    var err = XenforoApi.firstErrorMessage(json);
+    if (_isMissingUploadError(json, err)) {
+      json = await _postUploadBase64(
+        path,
+        fields,
+        filePath,
+        filename,
+        kind: kind,
+      );
+      if (_extractCreatedMediaId(json) != null) {
+        return (json: json, error: null);
+      }
+      err = XenforoApi.firstErrorMessage(json) ?? err;
+    }
+
+    return (json: json, error: err);
+  }
+
+  int? _extractCreatedMediaId(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    final item = _parseCreatedMedia(json);
+    if (item != null) return item.mediaId;
+    final directId = json['media_id'];
+    if (directId is int && directId > 0) return directId;
+    if (directId is String) {
+      final parsed = int.tryParse(directId);
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    return null;
   }
 
   Map<String, dynamic> _uploadFields({
@@ -410,17 +433,6 @@ class MediaService {
     if (media is! Map) return null;
     final item = MediaItem.fromJson(Map<String, dynamic>.from(media));
     return item.mediaId > 0 ? item : null;
-  }
-
-  bool _shouldFallbackToNativeUpload(Map<String, dynamic> json) {
-    final errors = json['errors'];
-    if (errors is! List || errors.isEmpty) return false;
-    final first = errors.first;
-    if (first is! Map) return false;
-    final code = first['code']?.toString() ?? '';
-    return code == 'requested_page_not_found' ||
-        code == 'endpoint_not_found' ||
-        code == 'api_scope_error';
   }
 
   Future<MediaAlbum> createAlbum({
