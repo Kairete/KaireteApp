@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/media/models/media_item.dart';
+import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class MediaFeedCard extends StatelessWidget {
@@ -32,67 +32,24 @@ class MediaFeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final author = item.author;
-    final albumTitle = item.album?.title?.trim();
-    final categoryTitle = item.category?.title?.trim();
-    final date = formatOmnifeedCardDate(item.mediaDate);
-    final hero = item.heroImageUrl;
+    final albumTitle = item.album?.title.trim();
+    final categoryTitle = item.category?.title.trim();
 
     return FeedCardShell(
-      header: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FeedCardAuthorHeader(
-            avatarUrl: author?.avatarUrl,
-            authorName: author?.username ?? author?.label,
-            moduleLabel: albumTitle?.isNotEmpty == true ? albumTitle : null,
-            dateLabel: null,
-            onAuthorTap: onAuthorTap,
-            onModuleTap: onAlbumTap,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                if (categoryTitle != null && categoryTitle.isNotEmpty) ...[
-                  const Text(
-                    ' - ',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: onCategoryTap,
-                    child: Text(
-                      categoryTitle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.accent,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+      header: FeedCardAuthorHeader(
+        avatarUrl: author?.avatarUrl,
+        authorName: author?.username ?? author?.label,
+        moduleLabel: albumTitle != null && albumTitle.isNotEmpty ? albumTitle : null,
+        dateLabel: formatOmnifeedCardDate(item.mediaDate),
+        categoryLabel: categoryTitle,
+        onAuthorTap: onAuthorTap,
+        onModuleTap: onAlbumTap,
+        onCategoryTap: onCategoryTap,
       ),
       body: InkWell(
         onTap: onOpen,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -104,37 +61,11 @@ class MediaFeedCard extends StatelessWidget {
                   color: AppTheme.accent,
                 ),
               ),
-              if (hero != null) ...[
+              if (item.heroImageUrl != null) ...[
                 const SizedBox(height: 8),
-                GestureDetector(
+                MediaThumbnail(
+                  item: item,
                   onTap: onThumbnailTap ?? onOpen,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: CachedNetworkImage(
-                          imageUrl: hero,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      ),
-                      if (item.isVideo)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          child: const Icon(
-                            Icons.play_circle_fill,
-                            color: Colors.white,
-                            size: 48,
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
               ],
               if (item.listPreviewBody.isNotEmpty) ...[

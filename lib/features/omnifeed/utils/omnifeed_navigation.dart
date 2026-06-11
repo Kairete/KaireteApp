@@ -88,7 +88,6 @@ class OmnifeedNavigation {
       () => MediaListPage(
         filterAlbumId: albumId,
         pageTitle: item.albumLabel ?? 'Album',
-        showActionBar: false,
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_comment.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 
@@ -21,6 +22,7 @@ class MediaService {
     final query = <String, dynamic>{
       'page': page,
       'limit': limit,
+      'with': 'Album,Category,User',
     };
     if (albumId != null) query['album_id'] = albumId;
     if (categoryId != null) query['category_id'] = categoryId;
@@ -33,7 +35,10 @@ class MediaService {
 
   Future<MediaItem> fetchMediaItem(int mediaId) async {
     await AppApi.instance.applySession();
-    var json = await _api.get('${ApiPaths.media}$mediaId/');
+    var json = await _api.get(
+      '${ApiPaths.media}$mediaId/',
+      query: {'with': 'Album,Category,User'},
+    );
     _throwIfError(json);
 
     final direct = json['media'];
@@ -77,6 +82,33 @@ class MediaService {
         .map((e) => MediaCategory.fromJson(Map<String, dynamic>.from(e)))
         .where((c) => c.categoryId > 0)
         .toList();
+  }
+
+  Future<MediaAlbumProfile> fetchAlbumProfile(int albumId) async {
+    await AppApi.instance.applySession();
+    final json = await _api.get('${ApiPaths.mediaAlbums}$albumId/');
+    _throwIfError(json);
+    final album = json['album'];
+    if (album is Map<String, dynamic>) {
+      return MediaAlbumProfile.fromJson(album);
+    }
+    throw MediaException('Album non trovato.');
+  }
+
+  Future<bool> watchAlbum(int albumId, {required bool stop}) async {
+    await AppApi.instance.applySession();
+    final json = await _api.post(
+      '${ApiPaths.mediaAlbums}$albumId/watch/',
+      body: stop ? {'stop': true} : null,
+    );
+    _throwIfError(json);
+    if (json['is_watched'] is bool) {
+      return json['is_watched'] as bool;
+    }
+    if (json['is_watching'] is bool) {
+      return json['is_watching'] as bool;
+    }
+    return !stop;
   }
 
   Future<MediaCommentsPage> fetchComments(int mediaId) async {

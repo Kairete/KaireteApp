@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/media/utils/media_navigation.dart';
+import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
@@ -44,73 +45,22 @@ class OmnifeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final author = item.author;
     final isMedia = item.contentType == 'xfmg_media';
-    final categoryTitle = item.categoryLabel?.trim();
     final date = formatOmnifeedCardDate(item.itemDate);
 
     return FeedCardShell(
-      header: isMedia
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FeedCardAuthorHeader(
-                  avatarUrl: author?.avatarUrl,
-                  authorName: author?.username ?? author?.label,
-                  moduleLabel: item.headerModuleLabel,
-                  dateLabel: null,
-                  onAuthorTap: onAuthorTap,
-                  onModuleTap: onMediaTap,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 4,
-                    children: [
-                      Text(
-                        date,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      if (categoryTitle != null && categoryTitle.isNotEmpty) ...[
-                        const Text(
-                          ' - ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: onMediaCategoryTap,
-                          child: Text(
-                            categoryTitle,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.accent,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            )
-          : FeedCardAuthorHeader(
-              avatarUrl: author?.avatarUrl,
-              authorName: author?.username ?? author?.label,
-              moduleLabel: item.headerModuleLabel,
-              dateLabel: date,
-              onAuthorTap: onAuthorTap,
-              onModuleTap: _moduleTap(),
-              trailing: showOwnerActions && (onEdit != null || onDelete != null)
-                  ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
-                  : const FeedCardMenuButton(),
-            ),
+      header: FeedCardAuthorHeader(
+        avatarUrl: author?.avatarUrl,
+        authorName: author?.username ?? author?.label,
+        moduleLabel: item.headerModuleLabel,
+        dateLabel: date,
+        categoryLabel: isMedia ? item.categoryLabel : null,
+        onAuthorTap: onAuthorTap,
+        onModuleTap: isMedia ? onMediaTap : _moduleTap(),
+        onCategoryTap: isMedia ? onMediaCategoryTap : null,
+        trailing: showOwnerActions && (onEdit != null || onDelete != null)
+            ? FeedCardOwnerMenu(onEdit: onEdit, onDelete: onDelete)
+            : const FeedCardMenuButton(),
+      ),
       body: InkWell(
         onTap: onOpen,
         child: Padding(
@@ -179,9 +129,11 @@ class OmnifeedCard extends StatelessWidget {
   }
 
   Widget _mediaBody() {
-    final hero = item.mediaHeroUrl;
+    final preview = item.toMediaPreview();
     final body = item.listPreviewBody;
     final title = item.moduleTitle;
+    void openViewer() => MediaNavigation.openViewer(preview);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -194,29 +146,17 @@ class OmnifeedCard extends StatelessWidget {
               color: AppTheme.accent,
             ),
           ),
-        if (hero != null) ...[
+        if (preview.heroImageUrl != null) ...[
           const SizedBox(height: 8),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: CachedNetworkImage(
-                  imageUrl: hero,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-              if (item.isMediaVideo)
-                const Icon(Icons.play_circle_fill, color: Colors.white, size: 48),
-            ],
+          MediaThumbnail(
+            item: preview,
+            onTap: preview.isVideo ? openViewer : onOpen,
           ),
         ],
         if (body.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            body.length <= 280 ? body : '${body.substring(0, 277).trimRight()}…',
+            body,
             style: const TextStyle(
               fontSize: 15,
               color: Colors.black,

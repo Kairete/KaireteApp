@@ -168,6 +168,71 @@ class FeedCardAuthorLine extends StatelessWidget {
   }
 }
 
+class _DateCategoryLine extends StatelessWidget {
+  const _DateCategoryLine({
+    required this.dateLabel,
+    this.categoryLabel,
+    this.onCategoryTap,
+  });
+
+  final String dateLabel;
+  final String? categoryLabel;
+  final VoidCallback? onCategoryTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = categoryLabel?.trim();
+    if (category == null || category.isEmpty) {
+      return Text(
+        dateLabel,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textSecondary,
+          height: 1.0,
+        ),
+      );
+    }
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 0,
+      children: [
+        Text(
+          dateLabel,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary,
+            height: 1.0,
+          ),
+        ),
+        const Text(
+          ' - ',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary,
+            height: 1.0,
+          ),
+        ),
+        InkWell(
+          onTap: onCategoryTap,
+          child: Text(
+            category,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.accent,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class FeedCardAuthorHeader extends StatelessWidget {
   const FeedCardAuthorHeader({
     super.key,
@@ -175,8 +240,10 @@ class FeedCardAuthorHeader extends StatelessWidget {
     this.authorName,
     this.moduleLabel,
     this.dateLabel,
+    this.categoryLabel,
     this.onAuthorTap,
     this.onModuleTap,
+    this.onCategoryTap,
     this.trailing = const FeedCardMenuButton(),
   });
 
@@ -184,8 +251,10 @@ class FeedCardAuthorHeader extends StatelessWidget {
   final String? authorName;
   final String? moduleLabel;
   final String? dateLabel;
+  final String? categoryLabel;
   final VoidCallback? onAuthorTap;
   final VoidCallback? onModuleTap;
+  final VoidCallback? onCategoryTap;
   final Widget trailing;
 
   @override
@@ -212,14 +281,10 @@ class FeedCardAuthorHeader extends StatelessWidget {
                 ),
                 if (dateLabel != null && dateLabel!.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    dateLabel!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                      height: 1.0,
-                    ),
+                  _DateCategoryLine(
+                    dateLabel: dateLabel!,
+                    categoryLabel: categoryLabel,
+                    onCategoryTap: onCategoryTap,
                   ),
                 ],
               ],

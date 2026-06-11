@@ -14,6 +14,7 @@ import 'package:kairete/features/media/pages/album_create_page.dart';
 import 'package:kairete/features/media/pages/media_compose_page.dart';
 import 'package:kairete/features/media/pages/media_list_page.dart';
 import 'package:kairete/features/media/services/media_service.dart';
+import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_viewer.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
@@ -120,7 +121,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
   void _openViewer() {
     final item = _item;
     if (item == null) return;
-    Get.to(() => MediaViewerPage(item: item));
+    MediaNavigation.openViewer(item);
   }
 
   void _openAlbumFilter() {
@@ -132,16 +133,21 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
       () => MediaListPage(
         filterAlbumId: albumId,
         pageTitle: item.album?.title ?? 'Album',
-        showActionBar: false,
       ),
     );
   }
 
-  String _metaDateLine(MediaItem item) {
-    final date = formatOmnifeedCardDate(item.mediaDate);
-    final category = item.category?.title ?? '';
-    if (category.isEmpty) return date;
-    return '$date - $category';
+  void _openCategoryFilter() {
+    final item = _item;
+    if (item == null) return;
+    final categoryId = item.category?.categoryId;
+    if (categoryId == null || categoryId <= 0) return;
+    Get.to(
+      () => MediaListPage(
+        filterCategoryId: categoryId,
+        pageTitle: item.category?.title ?? 'Categoria',
+      ),
+    );
   }
 
   @override
@@ -205,10 +211,13 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                 authorName: _item!.author?.username ??
                                     _item!.author?.label,
                                 moduleLabel: _item!.album?.title,
-                                dateLabel: _metaDateLine(_item!),
+                                dateLabel:
+                                    formatOmnifeedCardDate(_item!.mediaDate),
+                                categoryLabel: _item!.category?.title,
                                 onAuthorTap: () => OmnifeedNavigation
                                     .openUserProfile(_item!.author?.userId),
                                 onModuleTap: _openAlbumFilter,
+                                onCategoryTap: _openCategoryFilter,
                               ),
                               body: MediaDetailBody(
                                 item: _item!,

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/media/controllers/media_list_controller.dart';
+import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/pages/album_create_page.dart';
 import 'package:kairete/features/media/pages/media_compose_page.dart';
+import 'package:kairete/features/media/widgets/album_cover_header.dart';
 import 'package:kairete/features/media/widgets/media_action_bar.dart';
 import 'package:kairete/features/media/widgets/media_feed_card.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
@@ -35,17 +37,35 @@ class MediaListPage extends StatelessWidget {
       );
     }
     final controller = Get.find<MediaListController>(tag: tag);
+    final isAlbumView = filterAlbumId != null;
     final isFiltered = filterAlbumId != null || filterCategoryId != null;
+    final showBar = showActionBar && (!isFiltered || isAlbumView);
+
+    Widget buildCard(MediaItem item) {
+      return MediaFeedCard(
+        item: item,
+        onOpen: () => controller.openDetail(item),
+        onComment: () => controller.openDetail(item),
+        onReact: (reactionId) =>
+            controller.react(item, reactionId: reactionId),
+        onAuthorTap: () => controller.openAuthorProfile(item),
+        onAlbumTap: () => controller.openAlbumFilter(item),
+        onCategoryTap: () => controller.openCategoryFilter(item),
+        onThumbnailTap: () => controller.openViewer(item),
+        onTagTap: TagFeedNavigation.openTag,
+      );
+    }
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showActionBar && !isFiltered)
+        if (showBar)
           Obx(
             () => MediaActionBar(
               onTapRefresh: controller.refreshAll,
               onTapAddMedia: () async {
-                final created = await Get.to<bool>(() => const MediaComposePage());
+                final created =
+                    await Get.to<bool>(() => const MediaComposePage());
                 if (created == true) await controller.refreshAll();
               },
               onTapCreateAlbum: () async {
@@ -53,6 +73,10 @@ class MediaListPage extends StatelessWidget {
                     await Get.to<bool>(() => const AlbumCreatePage());
                 if (created == true) await controller.refreshAll();
               },
+              showJoin: isAlbumView && controller.canWatch.value,
+              isJoined: controller.isWatched.value,
+              joinLoading: controller.watchLoading.value,
+              onTapJoin: controller.toggleWatch,
               isRefreshing: controller.isLoading.value,
             ),
           ),
@@ -68,11 +92,17 @@ class MediaListPage extends StatelessWidget {
                 onRetry: controller.loadMedia,
               );
             }
+
+            final profile = controller.albumProfile.value;
+            final showCover = isAlbumView && profile != null;
+            final headerCount = showCover ? 1 : 0;
+
             if (controller.items.isEmpty) {
               return RefreshIndicator(
                 onRefresh: controller.refreshAll,
                 child: ListView(
                   children: [
+                    if (showCover) AlbumCoverHeader(profile: profile!),
                     SizedBox(
                       height: MediaQuery.sizeOf(context).height * 0.35,
                       child: const Center(child: Text('Nessun media.')),
@@ -81,25 +111,18 @@ class MediaListPage extends StatelessWidget {
                 ),
               );
             }
+
             return RefreshIndicator(
               onRefresh: controller.refreshAll,
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 16),
-                itemCount: controller.items.length,
+                itemCount: controller.items.length + headerCount,
                 itemBuilder: (_, i) {
-                  final item = controller.items[i];
-                  return MediaFeedCard(
-                    item: item,
-                    onOpen: () => controller.openDetail(item),
-                    onComment: () => controller.openDetail(item),
-                    onReact: (reactionId) =>
-                        controller.react(item, reactionId: reactionId),
-                    onAuthorTap: () => controller.openAuthorProfile(item),
-                    onAlbumTap: () => controller.openAlbumFilter(item),
-                    onCategoryTap: () => controller.openCategoryFilter(item),
-                    onThumbnailTap: () => controller.openDetail(item),
-                    onTagTap: TagFeedNavigation.openTag,
-                  );
+                  if (showCover && i == 0) {
+                    return AlbumCoverHeader(profile: profile!);
+                  }
+                  final item = controller.items[i - headerCount];
+                  return buildCard(item);
                 },
               ),
             );
@@ -117,24 +140,6 @@ class MediaListPage extends StatelessWidget {
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         title: Text(pageTitle ?? 'Media'),
-        actions: [
-          IconButton(
-            tooltip: 'Aggiungi media',
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-            onPressed: () async {
-              final created = await Get.to<bool>(() => const MediaComposePage());
-              if (created == true) await controller.refreshAll();
-            },
-          ),
-          IconButton(
-            tooltip: 'Crea album',
-            icon: const Icon(Icons.create_new_folder_outlined),
-            onPressed: () async {
-              final created = await Get.to<bool>(() => const AlbumCreatePage());
-              if (created == true) await controller.refreshAll();
-            },
-          ),
-        ],
       ),
       body: body,
     );

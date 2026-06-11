@@ -4,10 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/pages/media_detail_page.dart';
 import 'package:kairete/features/media/pages/media_list_page.dart';
 import 'package:kairete/features/media/services/media_service.dart';
+import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
 class MediaListController extends GetxController {
@@ -20,11 +22,53 @@ class MediaListController extends GetxController {
   final items = <MediaItem>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final albumProfile = Rxn<MediaAlbumProfile>();
+  final isWatched = false.obs;
+  final canWatch = true.obs;
+  final watchLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadMedia();
+    if (filterAlbumId != null) {
+      loadAlbumProfile();
+    }
+  }
+
+  Future<void> loadAlbumProfile() async {
+    final albumId = filterAlbumId;
+    if (albumId == null) return;
+    try {
+      final profile = await _service
+          .fetchAlbumProfile(albumId)
+          .timeout(const Duration(seconds: 15));
+      albumProfile.value = profile;
+      isWatched.value = profile.isWatched;
+      canWatch.value = profile.canWatch;
+    } catch (_) {
+      canWatch.value = false;
+    }
+  }
+
+  Future<void> toggleWatch() async {
+    final albumId = filterAlbumId;
+    if (albumId == null || !canWatch.value || watchLoading.value) return;
+    watchLoading.value = true;
+    final stop = isWatched.value;
+    try {
+      final watched = await _service.watchAlbum(albumId, stop: stop);
+      isWatched.value = watched;
+      AppToast.success(watched ? 'Album seguito.' : 'Watch rimosso.');
+    } on MediaException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile aggiornare il watch.');
+    } finally {
+      watchLoading.value = false;
+    }
   }
 
   Future<void> loadMedia() async {
@@ -52,11 +96,18 @@ class MediaListController extends GetxController {
     }
   }
 
-  Future<void> refreshAll() => loadMedia();
+  Future<void> refreshAll() async {
+    await Future.wait([
+      loadMedia(),
+      if (filterAlbumId != null) loadAlbumProfile(),
+    ]);
+  }
 
   void openDetail(MediaItem item) {
     Get.to(() => MediaDetailPage(mediaId: item.mediaId));
   }
+
+  void openViewer(MediaItem item) => MediaNavigation.openViewer(item);
 
   Future<void> react(MediaItem item, {int reactionId = 1}) async {
     try {

@@ -146,6 +146,38 @@ class OmnifeedItem {
       mediaType == 'video' ||
       (mediaUrl?.contains('.mp4') ?? false);
 
+  MediaItem toMediaPreview() {
+    final user = author;
+    return MediaItem(
+      mediaId: contentId ?? 0,
+      title: contentTitle,
+      description: messagePlainText,
+      mediaDate: itemDate,
+      mediaType: mediaType,
+      mediaUrl: mediaUrl,
+      thumbnailUrl: mediaThumbnailUrl,
+      author: user == null
+          ? null
+          : MediaAuthor(
+              userId: user.userId,
+              username: user.username,
+              avatarUrl: user.avatarUrl,
+              displayName: user.displayName,
+            ),
+      album: albumId != null && albumId! > 0
+          ? MediaAlbumRef(albumId: albumId!, title: albumLabel ?? '')
+          : null,
+      category: mediaCategoryId != null && mediaCategoryId! > 0
+          ? MediaCategoryRef(
+              categoryId: mediaCategoryId!,
+              title: categoryLabel ?? '',
+            )
+          : null,
+      tags: tags,
+      viewUrl: viewUrl,
+    );
+  }
+
   String? get mediaHeroUrl {
     final thumb = mediaThumbnailUrl?.trim();
     if (thumb != null && thumb.isNotEmpty) return thumb;
@@ -424,6 +456,15 @@ class OmnifeedItem {
         final id = source['album_id'] as int?;
         if (id != null && id > 0) albumId = id;
         if (albumTitle != null && albumId != null) break;
+      }
+    }
+    if (albumId == null && json['album_id'] is int && (json['album_id'] as int) > 0) {
+      albumId = json['album_id'] as int;
+    }
+    if ((albumTitle == null || albumTitle.isEmpty) && albumId != null) {
+      final container = json['container_name']?.toString().trim();
+      if (container != null && container.isNotEmpty) {
+        albumTitle = container;
       }
     }
 

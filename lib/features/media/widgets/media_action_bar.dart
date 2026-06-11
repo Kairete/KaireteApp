@@ -2,20 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/widgets/feed_refresh_button.dart';
 
-/// Barra azioni media: aggiungi media e crea album.
+/// Barra azioni media: aggiungi media, crea album, join/watch opzionale.
 class MediaActionBar extends StatelessWidget {
   const MediaActionBar({
     super.key,
     this.onTapRefresh,
     this.onTapAddMedia,
     this.onTapCreateAlbum,
+    this.onTapJoin,
     this.isRefreshing = false,
+    this.showJoin = false,
+    this.isJoined = false,
+    this.joinLoading = false,
   });
 
   final VoidCallback? onTapRefresh;
   final VoidCallback? onTapAddMedia;
   final VoidCallback? onTapCreateAlbum;
+  final VoidCallback? onTapJoin;
   final bool isRefreshing;
+  final bool showJoin;
+  final bool isJoined;
+  final bool joinLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +53,14 @@ class MediaActionBar extends StatelessWidget {
                 onTap: onTapCreateAlbum,
               ),
             ),
+            if (showJoin) ...[
+              const SizedBox(width: 8),
+              _JoinChip(
+                isJoined: isJoined,
+                isLoading: joinLoading,
+                onTap: onTapJoin,
+              ),
+            ],
             const SizedBox(width: 8),
             FeedRefreshButton(
               onTap: onTapRefresh,
@@ -101,6 +117,69 @@ class _ActionChip extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JoinChip extends StatelessWidget {
+  const _JoinChip({
+    required this.isJoined,
+    required this.isLoading,
+    this.onTap,
+  });
+
+  final bool isJoined;
+  final bool isLoading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(4),
+      child: InkWell(
+        onTap: isLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isJoined ? AppTheme.primary : AppTheme.cardBorder,
+            ),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isJoined
+                          ? Icons.notifications_active
+                          : Icons.notifications_none_outlined,
+                      size: 18,
+                      color:
+                          isJoined ? AppTheme.primary : AppTheme.textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isJoined ? 'Unwatch' : 'Join',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isJoined
+                            ? AppTheme.primary
+                            : AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

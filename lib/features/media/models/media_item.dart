@@ -151,9 +151,17 @@ class MediaItem {
     if (albumRaw is Map<String, dynamic>) {
       album = MediaAlbumRef.fromJson(albumRaw);
     } else if (json['album_id'] is int && json['album_id'] as int > 0) {
+      final containerName = json['container_name']?.toString().trim() ?? '';
       album = MediaAlbumRef(
         albumId: json['album_id'] as int,
-        title: json['container_name']?.toString() ?? '',
+        title: containerName,
+      );
+    } else if (json['container_type']?.toString() == 'album' &&
+        json['container_id'] is int &&
+        (json['container_id'] as int) > 0) {
+      album = MediaAlbumRef(
+        albumId: json['container_id'] as int,
+        title: json['container_name']?.toString().trim() ?? '',
       );
     }
 
@@ -164,7 +172,7 @@ class MediaItem {
     } else if (json['category_id'] is int && json['category_id'] as int > 0) {
       category = MediaCategoryRef(
         categoryId: json['category_id'] as int,
-        title: json['category_title']?.toString() ?? '',
+        title: json['category_title']?.toString().trim() ?? '',
       );
     }
 
