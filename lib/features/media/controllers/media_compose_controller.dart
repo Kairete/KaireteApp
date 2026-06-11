@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/services/media_service.dart';
@@ -97,8 +99,10 @@ class MediaComposeController extends GetxController {
       Get.back(result: true);
     } on MediaException catch (e) {
       Get.snackbar('Errore', e.message);
-    } catch (_) {
-      Get.snackbar('Errore', 'Pubblicazione media non riuscita.');
+    } on DioException catch (e) {
+      Get.snackbar('Errore', XenforoApi.connectionMessage(e));
+    } catch (e) {
+      Get.snackbar('Errore', e.toString());
     } finally {
       isSending.value = false;
     }
@@ -187,8 +191,10 @@ class AlbumCreateController extends GetxController {
       Get.back(result: true);
     } on MediaException catch (e) {
       Get.snackbar('Errore', e.message);
-    } catch (_) {
-      Get.snackbar('Errore', 'Creazione album non riuscita.');
+    } on DioException catch (e) {
+      Get.snackbar('Errore', XenforoApi.connectionMessage(e));
+    } catch (e) {
+      Get.snackbar('Errore', e.toString());
     } finally {
       isSending.value = false;
     }

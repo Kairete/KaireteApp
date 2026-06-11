@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
@@ -196,13 +198,76 @@ class MediaService {
     required String filename,
   }) async {
     await AppApi.instance.applySession();
+    if (!File(filePath).existsSync()) {
+      throw MediaException(
+        'File allegato non trovato. Seleziona di nuovo foto, video o audio.',
+      );
+    }
+
     final kind = mediaUploadKindFromFilename(filename);
+    final omniFields = _uploadFields(
+      title: title,
+      description: description,
+      albumId: albumId,
+      categoryId: categoryId,
+      tags: tags,
+      kind: kind,
+      includeMediaType: true,
+    );
+    final nativeFields = _uploadFields(
+      title: title,
+      description: description,
+      albumId: albumId,
+      categoryId: categoryId,
+      tags: tags,
+      kind: kind,
+      includeMediaType: false,
+    );
+
+    final omniJson = await _postUpload(
+      ApiPaths.newsfeedMediaUpload,
+      omniFields,
+      filePath,
+      filename,
+    );
+    final omniItem = _parseCreatedMedia(omniJson);
+    if (omniItem != null) return omniItem;
+
+    final omniErr = XenforoApi.firstErrorMessage(omniJson);
+    if (omniErr != null && !_shouldFallbackToNativeUpload(omniJson)) {
+      throw MediaException(_mapUploadError(omniErr, kind));
+    }
+
+    final nativeJson = await _postUpload(
+      ApiPaths.media,
+      nativeFields,
+      filePath,
+      filename,
+    );
+    _throwIfError(nativeJson, uploadKind: kind);
+
+    final nativeItem = _parseCreatedMedia(nativeJson);
+    if (nativeItem != null) return nativeItem;
+    throw MediaException('Media creato ma risposta non valida.');
+  }
+
+  Map<String, dynamic> _uploadFields({
+    required String title,
+    required String description,
+    required int albumId,
+    required int categoryId,
+    required String tags,
+    required MediaUploadKind kind,
+    required bool includeMediaType,
+  }) {
     final fields = <String, dynamic>{
       'title': title.trim(),
       'description': description.trim(),
       'album_id': albumId,
-      'media_type': mediaUploadTypeField(kind),
     };
+    if (includeMediaType) {
+      fields['media_type'] = mediaUploadTypeField(kind);
+    }
     if (categoryId > 0) {
       fields['category_id'] = categoryId;
     }
@@ -211,42 +276,53 @@ class MediaService {
         fields['tags[]'] = tag;
       }
     }
+    return fields;
+  }
 
+  Future<Map<String, dynamic>> _postUpload(
+    String path,
+    Map<String, dynamic> fields,
+    String filePath,
+    String filename,
+  ) async {
+    try {
+      return await _api.postMultipart(
+        path,
+        fields: fields,
+        files: {
+          'file': await _buildUploadFile(filePath, filename),
+        },
+      );
+    } on DioException catch (e) {
+      throw MediaException(XenforoApi.connectionMessage(e));
+    }
+  }
+
+  Future<MultipartFile> _buildUploadFile(String filePath, String filename) async {
     final mime = mediaUploadMimeType(filename);
-    final file = await MultipartFile.fromFile(
+    return MultipartFile.fromFile(
       filePath,
       filename: filename,
       contentType: mime == null ? null : MediaType.parse(mime),
     );
+  }
 
-    Map<String, dynamic> json;
-    try {
-      json = await _api.postMultipart(
-        ApiPaths.newsfeedMediaUpload,
-        fields: fields,
-        files: {'file': file},
-      );
-      if (XenforoApi.firstErrorMessage(json) == null && json['media'] is Map) {
-        return MediaItem.fromJson(
-          Map<String, dynamic>.from(json['media'] as Map),
-        );
-      }
-    } on MediaException {
-      rethrow;
-    } catch (_) {}
-
-    json = await _api.postMultipart(
-      ApiPaths.media,
-      fields: fields,
-      files: {'file': file},
-    );
-    _throwIfError(json, uploadKind: kind);
-
+  MediaItem? _parseCreatedMedia(Map<String, dynamic> json) {
     final media = json['media'];
-    if (media is Map<String, dynamic>) {
-      return MediaItem.fromJson(media);
-    }
-    throw MediaException('Media creato ma risposta non valida.');
+    if (media is! Map) return null;
+    final item = MediaItem.fromJson(Map<String, dynamic>.from(media));
+    return item.mediaId > 0 ? item : null;
+  }
+
+  bool _shouldFallbackToNativeUpload(Map<String, dynamic> json) {
+    final errors = json['errors'];
+    if (errors is! List || errors.isEmpty) return true;
+    final first = errors.first;
+    if (first is! Map) return true;
+    final code = first['code']?.toString() ?? '';
+    return code == 'requested_page_not_found' ||
+        code == 'endpoint_not_found' ||
+        code == 'api_scope_error';
   }
 
   Future<MediaAlbum> createAlbum({

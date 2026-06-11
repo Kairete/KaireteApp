@@ -199,8 +199,8 @@ class MediaItem {
     }
 
     return MediaItem(
-      mediaId: json['media_id'] as int? ?? 0,
-      title: json['title']?.toString(),
+      mediaId: json['media_id'] as int? ?? json['content_id'] as int? ?? 0,
+      title: json['title']?.toString() ?? json['ContentTitle']?.toString(),
       description: json['description']?.toString(),
       mediaDate: json['media_date'] as int?,
       mediaType: json['media_type']?.toString(),
