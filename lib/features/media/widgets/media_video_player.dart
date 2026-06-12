@@ -106,7 +106,10 @@ class _MediaVideoPlayerState extends State<MediaVideoPlayer> {
     if (controller == null || !controller.value.isInitialized) return;
     final duration = controller.value.duration;
     if (duration.inMilliseconds <= 0) return;
-    final target = duration * fraction.clamp(0.0, 1.0);
+    final target = Duration(
+      milliseconds:
+          (duration.inMilliseconds * fraction.clamp(0.0, 1.0)).round(),
+    );
     await controller.seekTo(target);
     if (mounted) setState(() {});
   }

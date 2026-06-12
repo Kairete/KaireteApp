@@ -562,7 +562,7 @@ class OmnifeedItem {
     Map<String, dynamic> json,
     Map<String, dynamic>? mediaPayload,
   ) {
-    for (final source in [json, ?mediaPayload]) {
+    for (final source in [json, if (mediaPayload != null) mediaPayload]) {
       if (source == null) continue;
       for (final key in [
         'media_duration',
