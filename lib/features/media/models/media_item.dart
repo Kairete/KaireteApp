@@ -86,6 +86,7 @@ class MediaItem {
     this.category,
     this.tags = const [],
     this.viewUrl,
+    this.durationSeconds,
   });
 
   final int mediaId;
@@ -105,6 +106,7 @@ class MediaItem {
   final MediaCategoryRef? category;
   final List<String> tags;
   final String? viewUrl;
+  final int? durationSeconds;
 
   bool get isVideo =>
       mediaType == 'video' ||
@@ -254,7 +256,22 @@ class MediaItem {
       category: category,
       tags: _parseTags(json['tags']),
       viewUrl: json['view_url']?.toString(),
+      durationSeconds: _parseDurationSeconds(json),
     );
+  }
+
+  static int? _parseDurationSeconds(Map<String, dynamic> json) {
+    for (final key in [
+      'media_duration',
+      'duration',
+      'video_duration',
+      'media_duration_seconds',
+    ]) {
+      final value = json[key];
+      if (value is int && value > 0) return value;
+      if (value is num && value > 0) return value.round();
+    }
+    return null;
   }
 
   static List<String> _parseTags(dynamic raw) {

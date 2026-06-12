@@ -55,6 +55,7 @@ class OmnifeedItem {
     this.mediaThumbnailUrl,
     this.mediaUrl,
     this.mediaType,
+    this.mediaDurationSeconds,
     this.viewUrl,
     this.groupId,
     this.tags = const [],
@@ -82,6 +83,7 @@ class OmnifeedItem {
   final String? mediaThumbnailUrl;
   final String? mediaUrl;
   final String? mediaType;
+  final int? mediaDurationSeconds;
   final String? viewUrl;
   final int? groupId;
   final List<String> tags;
@@ -192,6 +194,7 @@ class OmnifeedItem {
           : null,
       tags: tags,
       viewUrl: viewUrl,
+      durationSeconds: mediaDurationSeconds,
     );
   }
 
@@ -297,6 +300,7 @@ class OmnifeedItem {
       mediaThumbnailUrl: entry.thumbnailUrl,
       mediaUrl: entry.mediaUrl,
       mediaType: entry.mediaType,
+      mediaDurationSeconds: entry.durationSeconds,
       viewUrl: entry.viewUrl,
       tags: entry.tags,
     );
@@ -515,6 +519,7 @@ class OmnifeedItem {
     final mediaKind = json['media_type']?.toString() ??
         content?['media_type']?.toString() ??
         mediaPayload?['media_type']?.toString();
+    final mediaDuration = _parseMediaDuration(json, mediaPayload);
 
     return OmnifeedItem(
       itemId: json['item_id'] as int? ?? 0,
@@ -545,11 +550,32 @@ class OmnifeedItem {
       mediaThumbnailUrl: mediaThumb,
       mediaUrl: mediaDirect,
       mediaType: mediaKind,
+      mediaDurationSeconds: mediaDuration,
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: _parseTags(json['tags']),
       attachments: FeedAttachment.parseList(json['Attachments']),
     );
+  }
+
+  static int? _parseMediaDuration(
+    Map<String, dynamic> json,
+    Map<String, dynamic>? mediaPayload,
+  ) {
+    for (final source in [json, ?mediaPayload]) {
+      if (source == null) continue;
+      for (final key in [
+        'media_duration',
+        'duration',
+        'video_duration',
+        'media_duration_seconds',
+      ]) {
+        final value = source[key];
+        if (value is int && value > 0) return value;
+        if (value is num && value > 0) return value.round();
+      }
+    }
+    return null;
   }
 
   static List<String> _parseTags(dynamic raw) {
@@ -587,6 +613,7 @@ class OmnifeedItem {
       mediaThumbnailUrl: mediaThumbnailUrl,
       mediaUrl: mediaUrl,
       mediaType: mediaType,
+      mediaDurationSeconds: mediaDurationSeconds,
       viewUrl: viewUrl,
       groupId: groupId,
       tags: tags,
@@ -618,6 +645,9 @@ class OmnifeedItem {
       mediaThumbnailUrl: _pickText(mediaThumbnailUrl, other.mediaThumbnailUrl),
       mediaUrl: _pickText(mediaUrl, other.mediaUrl),
       mediaType: _pickText(mediaType, other.mediaType),
+      mediaDurationSeconds: (mediaDurationSeconds ?? 0) > 0
+          ? mediaDurationSeconds
+          : other.mediaDurationSeconds,
       viewUrl: _pickText(viewUrl, other.viewUrl),
       groupId: (groupId ?? 0) > 0 ? groupId : other.groupId,
       tags: tags.isNotEmpty ? tags : other.tags,
@@ -662,6 +692,9 @@ class OmnifeedItem {
           _pickText(mediaThumbnailUrl, media.thumbnailUrl ?? media.heroImageUrl),
       mediaUrl: _pickText(mediaUrl, media.mediaUrl),
       mediaType: _pickText(mediaType, media.mediaType),
+      mediaDurationSeconds: (mediaDurationSeconds ?? 0) > 0
+          ? mediaDurationSeconds
+          : media.durationSeconds,
       viewUrl: _pickText(viewUrl, media.viewUrl),
       groupId: groupId,
       tags: tags.isNotEmpty ? tags : media.tags,

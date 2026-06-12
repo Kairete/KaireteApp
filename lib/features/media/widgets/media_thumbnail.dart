@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:kairete/core/utils/media_duration_format.dart';
 import 'package:kairete/core/utils/media_playback.dart';
 import 'package:kairete/features/media/models/media_item.dart';
+import 'package:kairete/features/media/services/media_duration_cache.dart';
 
-class MediaThumbnail extends StatelessWidget {
+class MediaThumbnail extends StatefulWidget {
   const MediaThumbnail({
     super.key,
     required this.item,
@@ -16,36 +18,118 @@ class MediaThumbnail extends StatelessWidget {
   final double borderRadius;
 
   @override
+  State<MediaThumbnail> createState() => _MediaThumbnailState();
+}
+
+class _MediaThumbnailState extends State<MediaThumbnail> {
+  int? _durationSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDuration();
+  }
+
+  @override
+  void didUpdateWidget(covariant MediaThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.mediaId != widget.item.mediaId) {
+      _loadDuration();
+    }
+  }
+
+  Future<void> _loadDuration() async {
+    if (!widget.item.isVideo) return;
+    final seconds = await MediaDurationCache.instance.resolve(widget.item);
+    if (!mounted || seconds == null || seconds <= 0) return;
+    setState(() => _durationSeconds = seconds);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
     final hero = item.heroImageUrl;
     if (!item.isPlayable && (hero == null || hero.isEmpty)) {
       return const SizedBox.shrink();
     }
 
+    final durationLabel = _durationLabel();
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Stack(
         alignment: Alignment.center,
         children: [
           if (hero != null && hero.isNotEmpty)
             ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadius),
+              borderRadius: BorderRadius.circular(widget.borderRadius),
               child: CachedNetworkImage(
                 imageUrl: hero,
-                httpHeaders:
-                    MediaPlayback.needsApiAuth(hero) ? MediaPlayback.apiHeaders() : null,
+                httpHeaders: MediaPlayback.needsApiAuth(hero)
+                    ? MediaPlayback.apiHeaders()
+                    : null,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorWidget: (_, __, ___) => _PlayablePlaceholder(
                   item: item,
-                  borderRadius: borderRadius,
+                  borderRadius: widget.borderRadius,
                 ),
               ),
             )
           else
-            _PlayablePlaceholder(item: item, borderRadius: borderRadius),
-          if (item.isPlayable) _PlayOverlay(onTap: onTap, borderRadius: borderRadius),
+            _PlayablePlaceholder(
+              item: item,
+              borderRadius: widget.borderRadius,
+            ),
+          if (item.isPlayable)
+            _PlayOverlay(
+              onTap: widget.onTap,
+              borderRadius: widget.borderRadius,
+            ),
+          if (durationLabel != null)
+            Positioned(
+              right: 8,
+              bottom: 8,
+              child: _DurationBadge(label: durationLabel),
+            ),
         ],
+      ),
+    );
+  }
+
+  String? _durationLabel() {
+    final stored = widget.item.durationSeconds;
+    if (stored != null && stored > 0) {
+      return MediaDurationFormat.formatSeconds(stored);
+    }
+    if (_durationSeconds != null && _durationSeconds! > 0) {
+      return MediaDurationFormat.formatSeconds(_durationSeconds);
+    }
+    return null;
+  }
+}
+
+class _DurationBadge extends StatelessWidget {
+  const _DurationBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.72),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
       ),
     );
   }
