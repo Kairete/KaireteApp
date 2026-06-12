@@ -16,6 +16,9 @@ class MediaService {
   XenforoApi get _api => AppApi.instance.xenforo;
   final ReactionService _reactions = ReactionService();
 
+  /// Fallback base64 solo per immagini piccole se multipart non accetta il file.
+  static const _base64FallbackMaxBytes = 10 * 1024 * 1024;
+
   Future<List<MediaItem>> fetchMedia({
     int? albumId,
     int? categoryId,
@@ -250,6 +253,9 @@ class MediaService {
     required MediaUploadKind kind,
     bool nativeFileOnly = false,
   }) async {
+    final fileSize = await File(filePath).length();
+    final uploadTimeout = _uploadTimeoutForBytes(fileSize);
+
     var json = await _postUploadMultipart(
       path,
       fields,
@@ -257,13 +263,16 @@ class MediaService {
       filename,
       kind: kind,
       nativeFileOnly: nativeFileOnly,
+      uploadTimeout: uploadTimeout,
     );
     if (_extractCreatedMediaId(json) != null) {
       return (json: json, error: null);
     }
 
     var err = XenforoApi.firstErrorMessage(json);
-    if (_isMissingUploadError(json, err)) {
+    if (_isMissingUploadError(json, err) &&
+        kind == MediaUploadKind.image &&
+        fileSize <= _base64FallbackMaxBytes) {
       json = await _postUploadBase64(
         path,
         fields,
@@ -278,6 +287,13 @@ class MediaService {
     }
 
     return (json: json, error: err);
+  }
+
+  Duration _uploadTimeoutForBytes(int bytes) {
+    if (bytes >= 100 * 1024 * 1024) return const Duration(minutes: 45);
+    if (bytes >= 50 * 1024 * 1024) return const Duration(minutes: 30);
+    if (bytes >= 10 * 1024 * 1024) return const Duration(minutes: 15);
+    return const Duration(minutes: 5);
   }
 
   int? _extractCreatedMediaId(Map<String, dynamic>? json) {
@@ -323,6 +339,7 @@ class MediaService {
     String filename, {
     required MediaUploadKind kind,
     bool nativeFileOnly = false,
+    Duration uploadTimeout = const Duration(minutes: 5),
   }) async {
     try {
       final file = _buildUploadFile(filePath, filename, kind);
@@ -336,6 +353,8 @@ class MediaService {
         path,
         fields: fields,
         files: files,
+        sendTimeout: uploadTimeout,
+        receiveTimeout: uploadTimeout,
       );
     } on DioException catch (e) {
       final data = e.response?.data;
@@ -353,13 +372,12 @@ class MediaService {
     String filename, {
     required MediaUploadKind kind,
   }) async {
-    const maxBytes = 25 * 1024 * 1024;
     final bytes = await File(filePath).readAsBytes();
-    if (bytes.length > maxBytes) {
+    if (bytes.length > _base64FallbackMaxBytes) {
       throw MediaException(
-        'Video troppo grande (${(bytes.length / (1024 * 1024)).toStringAsFixed(1)} MB). '
-        'Chiedi all\'hosting di aumentare upload_max_filesize e post_max_size in PHP '
-        '(consigliato almeno 128M).',
+        'File troppo grande per il fallback base64 '
+        '(${(bytes.length / (1024 * 1024)).toStringAsFixed(1)} MB). '
+        'Usa solo upload multipart.',
       );
     }
     final safeName = _safeUploadFilename(filename, kind);

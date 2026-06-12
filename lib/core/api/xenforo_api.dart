@@ -45,6 +45,8 @@ class XenforoApi {
     Map<String, dynamic>? fields,
     Map<String, dynamic>? query,
     Map<String, MultipartFile>? files,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
   }) async {
     final form = FormData();
     files?.forEach((key, file) {
@@ -58,8 +60,8 @@ class XenforoApi {
       data: form,
       queryParameters: query,
       options: Options(
-        sendTimeout: const Duration(minutes: 5),
-        receiveTimeout: const Duration(minutes: 5),
+        sendTimeout: sendTimeout ?? const Duration(minutes: 5),
+        receiveTimeout: receiveTimeout ?? const Duration(minutes: 5),
         followRedirects: false,
         validateStatus: (status) => status != null && status < 500,
       ),

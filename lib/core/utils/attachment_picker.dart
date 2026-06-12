@@ -53,7 +53,7 @@ Future<List<PickedAttachment>> pickMediaAttachments({bool allowMultiple = false}
   return _pickFiles(
     allowMultiple: allowMultiple,
     extensions: _mediaExtensions,
-    withData: true,
+    withData: false,
   );
 }
 
@@ -75,10 +75,7 @@ Future<List<PickedAttachment>> _pickFiles({
     final name = file.name.trim().isNotEmpty ? file.name : 'allegato';
     final path = file.path;
     if (path != null && path.isNotEmpty && File(path).existsSync()) {
-      final stablePath = withData
-          ? path
-          : await _copyToAppTemp(path, name);
-      picked.add(PickedAttachment(path: stablePath, displayName: name));
+      picked.add(PickedAttachment(path: path, displayName: name));
       continue;
     }
     final bytes = file.bytes;
@@ -88,15 +85,6 @@ Future<List<PickedAttachment>> _pickFiles({
     }
   }
   return picked;
-}
-
-Future<String> _copyToAppTemp(String sourcePath, String name) async {
-  final safeName = name.replaceAll(RegExp(r'[^\w.\-]+'), '_');
-  final dest = File(
-    '${Directory.systemTemp.path}${Platform.pathSeparator}kairete_upload_${DateTime.now().millisecondsSinceEpoch}_$safeName',
-  );
-  await File(sourcePath).copy(dest.path);
-  return dest.path;
 }
 
 Future<String> _writeTempFile(List<int> bytes, String name) async {
