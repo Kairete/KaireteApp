@@ -24,6 +24,8 @@ class OmnifeedService {
         'mode': mode,
         'sort': sort,
         'page': page,
+        if (AppConfig.isTenantApp && AppConfig.tenantId > 0)
+          'tenant_id': AppConfig.tenantId,
       },
     );
     _throwIfError(json);

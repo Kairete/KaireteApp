@@ -21,7 +21,7 @@ class FeedRefreshButton extends StatelessWidget {
         : const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
 
     return Material(
-      color: AppTheme.primary,
+      color: AppTheme.brandPrimary,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         onTap: isLoading ? null : onTap,
@@ -30,7 +30,7 @@ class FeedRefreshButton extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF0F4A35)),
+            border: Border.all(color: AppTheme.brandAppBarBorder),
           ),
           child: isLoading
               ? const SizedBox(

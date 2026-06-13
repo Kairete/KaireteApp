@@ -36,6 +36,12 @@ class XenforoApi {
     }
   }
 
+  /// Dopo [AppBranding.ensureFromPackage] aggiorna header app/tenant.
+  void syncAppIdentity() {
+    _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
+    _applyTenantHeader();
+  }
+
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,

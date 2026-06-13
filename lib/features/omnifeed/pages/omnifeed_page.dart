@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
@@ -28,7 +29,9 @@ class OmnifeedPage extends StatelessWidget {
         Expanded(
           child: Obx(() {
             if (c.isLoading.value && c.items.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: AppTheme.brandAccent),
+              );
             }
             if (c.errorMessage.value.isNotEmpty && c.items.isEmpty) {
               return _ErrorState(

@@ -96,10 +96,10 @@ class OmnifeedCard extends StatelessWidget {
         if (item.showsModuleTitle) ...[
           Text(
             item.moduleTitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
-              color: AppTheme.accent,
+              color: AppTheme.brandAccent,
             ),
           ),
           if (item.listPreviewBody.isNotEmpty) const SizedBox(height: 6),
@@ -140,10 +140,10 @@ class OmnifeedCard extends StatelessWidget {
         if (title.isNotEmpty)
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
-              color: AppTheme.accent,
+              color: AppTheme.brandAccent,
             ),
           ),
         if (preview.heroImageUrl != null || preview.isPlayable) ...[

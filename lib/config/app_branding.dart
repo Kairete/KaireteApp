@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/config/tenant_apps.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Profilo visivo hub o community (stesso layout, colori e nome app diversi).
 class AppBrandingProfile {
@@ -69,5 +70,19 @@ class AppBranding {
       return;
     }
     _current = AppBrandingProfile.hub();
+  }
+
+  /// Flavor Android juveSocial ha package dedicato anche senza dart-define.
+  static Future<void> ensureFromPackage() async {
+    if (_current.isTenantApp) return;
+    try {
+      final info = await PackageInfo.fromPlatform();
+      for (final tenant in TenantApps.registry) {
+        if (info.packageName == tenant.mobileAppId) {
+          _current = AppBrandingProfile.fromTenant(tenant);
+          return;
+        }
+      }
+    } catch (_) {}
   }
 }

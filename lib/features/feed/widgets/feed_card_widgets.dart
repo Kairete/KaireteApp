@@ -95,10 +95,10 @@ class FeedCardAvatar extends StatelessWidget {
     } else {
       avatar = CircleAvatar(
         radius: _size / 2,
-        backgroundColor: AppTheme.primary.withOpacity(0.12),
+        backgroundColor: AppTheme.brandPrimary.withOpacity(0.12),
         child: Text(
           initial,
-          style: const TextStyle(color: AppTheme.primary, fontSize: 13),
+          style: TextStyle(color: AppTheme.brandPrimary, fontSize: 13),
         ),
       );
     }
@@ -143,13 +143,13 @@ class FeedCardAuthorLine extends StatelessWidget {
           ),
         ),
         if (moduleLabel != null && moduleLabel!.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               '>',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primary,
+                color: AppTheme.brandPrimary,
                 fontSize: 14,
               ),
             ),
@@ -158,9 +158,9 @@ class FeedCardAuthorLine extends StatelessWidget {
             child: _AuthorTapLabel(
               label: moduleLabel!,
               onTap: onModuleTap,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primary,
+                color: AppTheme.brandPrimary,
                 fontSize: 14,
               ),
             ),
@@ -223,10 +223,10 @@ class _DateCategoryLine extends StatelessWidget {
           onTap: onCategoryTap,
           child: Text(
             category,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppTheme.accent,
+              color: AppTheme.brandAccent,
               height: 1.0,
             ),
           ),
@@ -478,7 +478,7 @@ class _FeedActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.primary,
+      color: AppTheme.brandPrimary,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         onTap: onTap,
@@ -487,7 +487,7 @@ class _FeedActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF0F4A35)),
+            border: Border.all(color: AppTheme.brandAppBarBorder),
           ),
           child: Center(child: child),
         ),
@@ -705,7 +705,7 @@ class _FeedCommentIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.primary,
+      color: AppTheme.brandPrimary,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         onTap: onTap,
@@ -714,7 +714,7 @@ class _FeedCommentIconButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF0F4A35)),
+            border: Border.all(color: AppTheme.brandAppBarBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -776,9 +776,9 @@ class FeedCardTagsRow extends StatelessWidget {
                 ),
                 child: Text(
                   tag.startsWith('#') ? tag : '#$tag',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.primary,
+                    color: AppTheme.brandPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

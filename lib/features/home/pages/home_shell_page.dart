@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/config/app_build.dart';
+import 'package:kairete/config/app_branding.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/tenant/tenant_bootstrap.dart';
@@ -86,6 +87,8 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTenant = AppConfig.isTenantApp;
+
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
       appBar: AppBar(
@@ -99,11 +102,12 @@ class _HomeShellPageState extends State<HomeShellPage> {
           bottom: BorderSide(color: AppTheme.brandAppBarBorder, width: 1),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Forum',
-            icon: const Icon(Icons.forum_outlined),
-            onPressed: _openForum,
-          ),
+          if (!isTenant)
+            IconButton(
+              tooltip: 'Forum',
+              icon: const Icon(Icons.forum_outlined),
+              onPressed: _openForum,
+            ),
           Obx(() {
             final badge = Get.isRegistered<AlertsBadgeController>()
                 ? Get.find<AlertsBadgeController>().unreadCount.value
@@ -175,19 +179,42 @@ class _HomeShellPageState extends State<HomeShellPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OmnifeedFeedTabs(
-            selectedIndex: _tabIndex,
-            onSelected: (i) => setState(() => _tabIndex = i),
-            hiddenTabs: _hiddenTabIndexes(),
-          ),
-          if (_tabIndex != 2 && _tabIndex != 3)
+          if (!isTenant)
+            OmnifeedFeedTabs(
+              selectedIndex: _tabIndex,
+              onSelected: (i) => setState(() => _tabIndex = i),
+              hiddenTabs: _hiddenTabIndexes(),
+            )
+          else
+            DecoratedBox(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  AppBranding.current.appName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.brandAccent,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          if (isTenant || (_tabIndex != 2 && _tabIndex != 3))
             Obx(
               () => OmnifeedComposeBar(
-                mode: _tabIndex == 0
+                mode: isTenant || _tabIndex == 0
                     ? OmnifeedComposeBarMode.newsfeed
                     : OmnifeedComposeBarMode.blog,
-                onTapCompose: _tabIndex == 0 ? _feed.openCompose : null,
-                onTapRefresh: _tabIndex == 0
+                onTapCompose: isTenant || _tabIndex == 0 ? _feed.openCompose : null,
+                onTapRefresh: isTenant || _tabIndex == 0
                     ? _feed.loadFeed
                     : _tabIndex == 1
                         ? () async {
@@ -198,7 +225,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
                             }
                           }
                         : null,
-                isRefreshing: _tabIndex == 0
+                isRefreshing: isTenant || _tabIndex == 0
                     ? _feed.isLoading.value
                     : _tabIndex == 1 &&
                             Get.isRegistered<BlogListController>(tag: 'blog_0_0')
@@ -206,14 +233,15 @@ class _HomeShellPageState extends State<HomeShellPage> {
                             .isLoading
                             .value
                         : false,
-                onTapBlog: _feed.openBlogCompose,
-                onTapCreateBlog: _tabIndex == 1 ? _openCreateBlog : null,
+                onTapBlog: isTenant ? null : _feed.openBlogCompose,
+                onTapCreateBlog:
+                    !isTenant && _tabIndex == 1 ? _openCreateBlog : null,
               ),
             ),
           Expanded(
             child: ColoredBox(
               color: AppTheme.feedFooterBg,
-              child: _tabIndex == 0
+              child: isTenant || _tabIndex == 0
                   ? const OmnifeedPage()
                   : _tabIndex == 1
                       ? BlogListPage()

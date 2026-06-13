@@ -145,7 +145,7 @@ class _BlogLayout extends StatelessWidget {
               label: 'Crea blog',
               background: const Color(0xFFE8F5EE),
               border: const Color(0xFF1B8F5A),
-              foreground: AppTheme.primary,
+              foreground: AppTheme.brandPrimary,
             ),
           ),
       ],
