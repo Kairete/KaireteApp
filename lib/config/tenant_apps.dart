@@ -50,6 +50,9 @@ class TenantApps {
     logoAssetPath: 'assets/branding/juve_social/logo.png',
     gradleFlavorName: 'juveSocial',
     fallbackNewsfeedGroupId: 4,
+    // Solo emergenza se tenant-scope / ms-tenants non rispondono.
+    fallbackForumNodeIds: [6, 8, 9, 10, 11, 12],
+    fallbackBlogCategoryIds: [1, 2],
   );
 
   static const List<TenantAppDefinition> registry = [juveSocial];

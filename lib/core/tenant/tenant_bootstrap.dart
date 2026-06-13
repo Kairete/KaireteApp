@@ -43,6 +43,20 @@ class TenantBootstrap {
   bool tabEnabled(String tab) => tabs.contains(tab);
 
   TenantBootstrap mergeFrom(TenantBootstrap other) {
+    final mergedScope = Map<String, dynamic>.from(scope);
+    for (final key in [
+      'forumNodeIds',
+      'blogIds',
+      'blogCategoryIds',
+      'mediaCategoryIds',
+      'mediaAlbumIds',
+      'groupId',
+    ]) {
+      if (other.scope.containsKey(key)) {
+        mergedScope[key] = other.scope[key];
+      }
+    }
+
     return TenantBootstrap(
       tenantId: tenantId > 0 ? tenantId : other.tenantId,
       title: other.title.isNotEmpty ? other.title : title,
@@ -51,7 +65,7 @@ class TenantBootstrap {
           ? other.newsfeedGroupId
           : newsfeedGroupId,
       tabs: other.tabs.isNotEmpty ? other.tabs : tabs,
-      scope: other.scope,
+      scope: mergedScope,
     );
   }
 

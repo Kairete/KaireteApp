@@ -10,6 +10,14 @@ import 'package:kairete/core/tenant/tenant_bootstrap.dart';
 class TenantService {
   XenforoApi get _api => AppApi.instance.xenforo;
 
+  static const _moduleScopeKeys = [
+    'forumNodeIds',
+    'blogIds',
+    'blogCategoryIds',
+    'mediaCategoryIds',
+    'mediaAlbumIds',
+  ];
+
   Future<TenantBootstrap> loadBootstrap({int? tenantId}) async {
     final id = tenantId ?? AppConfig.tenantId;
     if (id <= 0) {
@@ -18,6 +26,7 @@ class TenantService {
     await AppApi.instance.applySession();
 
     Object? lastError;
+    TenantBootstrap? loaded;
 
     for (final loader in [
       () => _loadScopeFromOmniFeedTenantScope(id),
@@ -27,7 +36,10 @@ class TenantService {
     ]) {
       try {
         final bootstrap = await loader();
-        if (bootstrap != null) return bootstrap;
+        if (bootstrap != null) {
+          loaded = bootstrap;
+          break;
+        }
       } on TenantException catch (e) {
         lastError = e;
       } on DioException catch (e) {
@@ -37,16 +49,16 @@ class TenantService {
       }
     }
 
-    final fallback = _embeddedFallbackBootstrap(id);
-    if (fallback != null) {
-      return fallback;
+    loaded ??= _embeddedFallbackBootstrap(id);
+    if (loaded == null) {
+      if (lastError is TenantException) throw lastError;
+      if (lastError is DioException) {
+        throw TenantException(XenforoApi.connectionMessage(lastError));
+      }
+      throw TenantException('Bootstrap tenant non disponibile.');
     }
 
-    if (lastError is TenantException) throw lastError;
-    if (lastError is DioException) {
-      throw TenantException(XenforoApi.connectionMessage(lastError));
-    }
-    throw TenantException('Bootstrap tenant non disponibile.');
+    return _finalizeBootstrap(loaded, id);
   }
 
   /// Aggiorna scope/tabs dal server (mapping ACP live, senza nuova APK).
@@ -61,6 +73,7 @@ class TenantService {
       return false;
     }
 
+    var synced = false;
     for (final loader in [
       () => _loadScopeFromOmniFeedTenantScope(id),
       () => _loadBootstrapFromMsTenantsQuery(id),
@@ -70,12 +83,63 @@ class TenantService {
       try {
         final incoming = await loader();
         if (incoming != null && _applyIncomingBootstrap(incoming)) {
-          return true;
+          synced = true;
         }
       } catch (_) {}
     }
 
-    return false;
+    _applyEmbeddedModuleFallbackIfNeeded(id);
+    return synced;
+  }
+
+  TenantBootstrap _finalizeBootstrap(TenantBootstrap bootstrap, int id) {
+    var result = bootstrap;
+    final current = TenantRuntime.bootstrap;
+    if (current != null) {
+      result = current.mergeFrom(bootstrap);
+    }
+    result = _withEmbeddedModuleFallback(result, id);
+    TenantRuntime.bootstrap = result;
+    return result;
+  }
+
+  void _applyEmbeddedModuleFallbackIfNeeded(int id) {
+    final current = TenantRuntime.bootstrap;
+    if (current == null) return;
+    TenantRuntime.bootstrap = _withEmbeddedModuleFallback(current, id);
+  }
+
+  TenantBootstrap _withEmbeddedModuleFallback(TenantBootstrap bootstrap, int id) {
+    final embedded = _embeddedModuleScope(id);
+    if (embedded == null) return bootstrap;
+
+    final scope = Map<String, dynamic>.from(bootstrap.scope);
+    for (final key in _moduleScopeKeys) {
+      if (_scopeIntList(scope, key).isNotEmpty) continue;
+      if (embedded.scope.containsKey(key)) {
+        scope[key] = embedded.scope[key];
+      }
+    }
+    if (_scopeInt(scope, 'groupId') <= 0 && embedded.newsfeedGroupId > 0) {
+      scope['groupId'] = embedded.newsfeedGroupId;
+    }
+
+    return TenantBootstrap(
+      tenantId: bootstrap.tenantId,
+      title: bootstrap.title,
+      slug: bootstrap.slug,
+      newsfeedGroupId: bootstrap.newsfeedGroupId > 0
+          ? bootstrap.newsfeedGroupId
+          : embedded.newsfeedGroupId,
+      tabs: bootstrap.tabs.isNotEmpty ? bootstrap.tabs : embedded.tabs,
+      scope: scope,
+    );
+  }
+
+  int _scopeInt(Map<String, dynamic> scope, String key) {
+    final raw = scope[key];
+    if (raw is int && raw > 0) return raw;
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
   }
 
   bool _applyIncomingBootstrap(TenantBootstrap incoming) {
@@ -93,30 +157,51 @@ class TenantService {
   }
 
   bool _scopePayloadPresent(Map<String, dynamic> scope) {
-    for (final key in [
-      'forumNodeIds',
-      'blogIds',
-      'blogCategoryIds',
-      'mediaCategoryIds',
-      'mediaAlbumIds',
-      'groupId',
-    ]) {
+    for (final key in [..._moduleScopeKeys, 'groupId']) {
       if (scope.containsKey(key)) return true;
     }
     return false;
   }
 
+  List<int> _scopeIntList(Map<String, dynamic> scope, String key) {
+    final raw = scope[key];
+    if (raw is! List) return const [];
+    return raw
+        .map((v) => v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0)
+        .where((id) => id > 0)
+        .toList();
+  }
+
   Future<TenantBootstrap?> _loadScopeFromOmniFeedTenantScope(int id) async {
-    final json = await _api.get(
-      ApiPaths.newsfeedTenantScope,
-      query: {'tenant_id': id},
-    );
-    final err = XenforoApi.firstErrorMessage(json);
-    if (err != null) {
-      if (TenantApiHelpers.isMissingEndpoint(err)) return null;
-      throw TenantException(err);
+    try {
+      final json = await _api.get(
+        ApiPaths.newsfeedTenantScope,
+        query: {'tenant_id': id},
+      );
+      final err = XenforoApi.firstErrorMessage(json);
+      if (err != null) {
+        if (_isScopeLoaderSoftError(err)) return null;
+        throw TenantException(err);
+      }
+      return _bootstrapFromScopePayload(json, id);
+    } on DioException catch (e) {
+      if (_isScopeLoaderSoftStatus(e.response?.statusCode)) return null;
+      rethrow;
     }
-    return _bootstrapFromScopePayload(json, id);
+  }
+
+  bool _isScopeLoaderSoftError(String? message) {
+    if (message == null || message.isEmpty) return false;
+    if (TenantApiHelpers.isMissingEndpoint(message)) return true;
+    final lower = message.toLowerCase();
+    return lower.contains('server error') ||
+        lower.contains('unexpected error') ||
+        lower.contains('try again');
+  }
+
+  bool _isScopeLoaderSoftStatus(int? statusCode) {
+    if (statusCode == null) return false;
+    return statusCode == 404 || statusCode >= 500;
   }
 
   Future<TenantBootstrap?> _loadBootstrapFromMsTenantsQuery(int id) async {
@@ -129,6 +214,9 @@ class TenantService {
     } on TenantException catch (e) {
       if (TenantApiHelpers.isMissingEndpoint(e.message)) return null;
       rethrow;
+    } on DioException catch (e) {
+      if (_isScopeLoaderSoftStatus(e.response?.statusCode)) return null;
+      rethrow;
     }
   }
 
@@ -139,34 +227,43 @@ class TenantService {
     } on TenantException catch (e) {
       if (TenantApiHelpers.isMissingEndpoint(e.message)) return null;
       rethrow;
+    } on DioException catch (e) {
+      if (_isScopeLoaderSoftStatus(e.response?.statusCode)) return null;
+      rethrow;
     }
   }
 
   Future<TenantBootstrap?> _loadBootstrapFromTenantsList(int id) async {
-    final json = await _api.get(ApiPaths.msTenants);
-    final err = XenforoApi.firstErrorMessage(json);
-    if (err != null) {
-      if (TenantApiHelpers.isMissingEndpoint(err)) return null;
-      throw TenantException(err);
-    }
+    try {
+      final json = await _api.get(ApiPaths.msTenants);
+      final err = XenforoApi.firstErrorMessage(json);
+      if (err != null) {
+        if (TenantApiHelpers.isMissingEndpoint(err)) return null;
+        throw TenantException(err);
+      }
 
-    final tenants = json['tenants'] as List<dynamic>? ?? [];
-    for (final raw in tenants) {
-      if (raw is! Map<String, dynamic>) continue;
-      final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
-      if (tid != id) continue;
+      final tenants = json['tenants'] as List<dynamic>? ?? [];
+      for (final raw in tenants) {
+        if (raw is! Map<String, dynamic>) continue;
+        final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
+        if (tid != id) continue;
 
-      final scopeRaw = raw['scope'];
-      if (scopeRaw is! Map) continue;
+        final scopeRaw = raw['scope'];
+        if (scopeRaw is! Map) continue;
 
-      return TenantBootstrap.fromJson({
-        'tenant_id': tid,
-        'title': raw['title']?.toString() ?? '',
-        'slug': raw['slug']?.toString() ?? '',
-        'newsfeed_group_id': raw['newsfeed_group_id'] ?? scopeRaw['groupId'] ?? 0,
-        'scope': Map<String, dynamic>.from(scopeRaw),
-        'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
-      });
+        return TenantBootstrap.fromJson({
+          'tenant_id': tid,
+          'title': raw['title']?.toString() ?? '',
+          'slug': raw['slug']?.toString() ?? '',
+          'newsfeed_group_id':
+              raw['newsfeed_group_id'] ?? scopeRaw['groupId'] ?? 0,
+          'scope': Map<String, dynamic>.from(scopeRaw),
+          'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
+        });
+      }
+    } on DioException catch (e) {
+      if (_isScopeLoaderSoftStatus(e.response?.statusCode)) return null;
+      rethrow;
     }
 
     return null;
@@ -221,7 +318,9 @@ class TenantService {
   TenantBootstrap? _embeddedFallbackBootstrap(int id) {
     final def = TenantApps.byTenantId(id);
     if (def == null) return null;
-    if (def.fallbackNewsfeedGroupId <= 0) return null;
+    if (def.fallbackNewsfeedGroupId <= 0 && !_hasEmbeddedModules(def)) {
+      return null;
+    }
 
     return TenantBootstrap(
       tenantId: id,
@@ -229,10 +328,41 @@ class TenantService {
       slug: def.slug,
       newsfeedGroupId: def.fallbackNewsfeedGroupId,
       tabs: const ['feed', 'blog', 'forum'],
-      scope: {
-        'groupId': def.fallbackNewsfeedGroupId,
-      },
+      scope: _embeddedScopeMap(def),
     );
+  }
+
+  TenantBootstrap? _embeddedModuleScope(int id) {
+    final def = TenantApps.byTenantId(id);
+    if (def == null || !_hasEmbeddedModules(def)) return null;
+
+    return TenantBootstrap(
+      tenantId: id,
+      title: def.appName,
+      slug: def.slug,
+      newsfeedGroupId: def.fallbackNewsfeedGroupId,
+      tabs: const ['feed', 'blog', 'forum'],
+      scope: _embeddedScopeMap(def),
+    );
+  }
+
+  bool _hasEmbeddedModules(TenantAppDefinition def) {
+    return def.fallbackForumNodeIds.isNotEmpty ||
+        def.fallbackBlogIds.isNotEmpty ||
+        def.fallbackBlogCategoryIds.isNotEmpty ||
+        def.fallbackNewsfeedGroupId > 0;
+  }
+
+  Map<String, dynamic> _embeddedScopeMap(TenantAppDefinition def) {
+    return {
+      if (def.fallbackForumNodeIds.isNotEmpty)
+        'forumNodeIds': def.fallbackForumNodeIds,
+      if (def.fallbackBlogIds.isNotEmpty) 'blogIds': def.fallbackBlogIds,
+      if (def.fallbackBlogCategoryIds.isNotEmpty)
+        'blogCategoryIds': def.fallbackBlogCategoryIds,
+      if (def.fallbackNewsfeedGroupId > 0)
+        'groupId': def.fallbackNewsfeedGroupId,
+    };
   }
 
   Future<void> ensureTenantReady({bool forceReload = false}) async {
@@ -246,6 +376,7 @@ class TenantService {
       return;
     }
     await syncScopeFromServer();
+    _applyEmbeddedModuleFallbackIfNeeded(AppConfig.tenantId);
   }
 
   Future<void> refreshBootstrap() async {
