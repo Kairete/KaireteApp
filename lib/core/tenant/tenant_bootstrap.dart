@@ -19,7 +19,9 @@ class TenantBootstrap {
       }
     }
     final scopeRaw = json['scope'];
-    final scope = scopeRaw is Map<String, dynamic> ? scopeRaw : const {};
+    final scope = scopeRaw is Map
+        ? Map<String, dynamic>.from(scopeRaw)
+        : const <String, dynamic>{};
 
     return TenantBootstrap(
       tenantId: _int(json['tenant_id']),

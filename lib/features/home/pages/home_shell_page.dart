@@ -89,14 +89,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
       appBar: AppBar(
-        backgroundColor: AppTheme.primary,
+        backgroundColor: AppTheme.brandPrimary,
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(AppBuild.appBarTitle),
         shape: Border(
-          bottom: BorderSide(color: AppTheme.appBarBorderBottom, width: 1),
+          bottom: BorderSide(color: AppTheme.brandAppBarBorder, width: 1),
         ),
         actions: [
           IconButton(

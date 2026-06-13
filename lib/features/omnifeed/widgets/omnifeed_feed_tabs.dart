@@ -45,7 +45,7 @@ class OmnifeedFeedTabs extends StatelessWidget {
                   const SizedBox(height: 6),
                   Icon(
                     tab.icon,
-                    color: AppTheme.primary,
+                    color: AppTheme.brandPrimary,
                     size: 22,
                   ),
                   const SizedBox(height: 4),
@@ -57,13 +57,13 @@ class OmnifeedFeedTabs extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                      color: AppTheme.primary,
+                      color: AppTheme.brandPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     height: 3,
-                    color: active ? AppTheme.primary : Colors.transparent,
+                    color: active ? AppTheme.brandPrimary : Colors.transparent,
                   ),
                 ],
               ),

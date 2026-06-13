@@ -4,9 +4,15 @@ import 'package:kairete/config/app_branding.dart';
 class AppTheme {
   AppTheme._();
 
-  static Color primary = AppBranding.current.primary;
-  static Color accent = AppBranding.current.accent;
-  static Color appBarBorderBottom = AppBranding.current.appBarBorderBottom;
+  /// Colori hub (const — usati dove serve `const` in compile-time).
+  static const Color primary = Color(0xFF176249);
+  static const Color accent = Color(0xFFC45C3E);
+  static const Color appBarBorderBottom = Color(0xFF0F4A35);
+
+  /// Brand attivo (hub o tenant), aggiornato da [applyBranding].
+  static Color brandPrimary = primary;
+  static Color brandAccent = accent;
+  static Color brandAppBarBorder = appBarBorderBottom;
 
   static const Color headerBg = Color(0xFFE8EAED);
   static const Color footerBg = Color(0xFFE8EAED);
@@ -21,21 +27,21 @@ class AppTheme {
   static const Color authorName = Color(0xFF1A237E);
 
   static void applyBranding(AppBrandingProfile profile) {
-    primary = profile.primary;
-    accent = profile.accent;
-    appBarBorderBottom = profile.appBarBorderBottom;
+    brandPrimary = profile.primary;
+    brandAccent = profile.accent;
+    brandAppBarBorder = profile.appBarBorderBottom;
   }
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: primary,
-          primary: primary,
-          secondary: accent,
+          seedColor: brandPrimary,
+          primary: brandPrimary,
+          secondary: brandAccent,
         ),
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
-          backgroundColor: primary,
+          backgroundColor: brandPrimary,
           foregroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
@@ -48,7 +54,7 @@ class AppTheme {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: primary,
+            backgroundColor: brandPrimary,
             minimumSize: const Size.fromHeight(48),
           ),
         ),
