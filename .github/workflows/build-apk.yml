@@ -21,10 +21,6 @@ on:
   push:
     branches: [main, master]
 
-concurrency:
-  group: build-apk-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.app_variant || 'hub' }}
-  cancel-in-progress: true
-
 permissions:
   contents: write
 
@@ -34,24 +30,40 @@ env:
   APK_PUBLIC_BASE: https://www.kairete.it
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MATRIX=$(printf '[{"app_variant":"%s","tenant_id":"%s","do_ftp":"%s"}]' \
+              "${{ inputs.app_variant }}" "${{ inputs.tenant_id }}" "${{ inputs.upload_ftp }}")
+          else
+            MATRIX='[{"app_variant":"hub","tenant_id":"","do_ftp":"true"},{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true"}]'
+          fi
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    concurrency:
+      group: build-apk-${{ github.ref }}-${{ matrix.cfg.app_variant }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Resolve build variant
-        id: variant
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VARIANT="${{ inputs.app_variant }}"
-            TENANT_ID="${{ inputs.tenant_id }}"
-            DO_FTP="${{ inputs.upload_ftp }}"
-          else
-            VARIANT="hub"
-            TENANT_ID=""
-            DO_FTP="true"
-          fi
+          VARIANT="${{ matrix.cfg.app_variant }}"
+          TENANT_ID="${{ matrix.cfg.tenant_id }}"
+          DO_FTP="${{ matrix.cfg.do_ftp }}"
           echo "APP_VARIANT=$VARIANT" >> "$GITHUB_ENV"
           echo "TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
           echo "DO_FTP=$DO_FTP" >> "$GITHUB_ENV"
@@ -64,7 +76,6 @@ jobs:
             echo "APK_BASENAME=Kairete" >> "$GITHUB_ENV"
             echo "VERSION_FILE=app-version.txt" >> "$GITHUB_ENV"
           fi
-          echo "variant=$VARIANT" >> "$GITHUB_OUTPUT"
 
       - name: Read build label
         run: |
@@ -72,7 +83,7 @@ jobs:
           STAMP=$(grep "static const stamp" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
           echo "BUILD_LABEL=$LABEL" >> "$GITHUB_ENV"
           echo "BUILD_STAMP=$STAMP" >> "$GITHUB_ENV"
-          echo "Build label: $LABEL ($STAMP) variant=${{ steps.variant.outputs.variant }}"
+          echo "Build label: $LABEL ($STAMP) variant=$APP_VARIANT"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -151,7 +162,7 @@ jobs:
             - **FTP:** ${{ env.APK_PUBLIC_BASE }}/Kairete-debug.apk
             - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
 
-            Per Juve Social: Actions → Build APK → `juve_social`.
+            Juve Social: https://github.com/${{ github.repository }}/releases/tag/juve-social-latest
           make_latest: true
           files: |
             Kairete-debug.apk
