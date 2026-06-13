@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/core/tenant/tenant_api_helpers.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 
@@ -21,17 +25,57 @@ class ForumService {
   }
 
   Future<List<ForumNodeGroup>> _fetchTenantMappedForums() async {
-    final json = await _api.get(
-      ApiPaths.msTenantMappedForums(AppConfig.tenantId),
-      query: {'tenant_id': AppConfig.tenantId},
-    );
-    _throwIfError(json);
-    final nodes = json['nodes'] as List<dynamic>? ?? [];
+    await TenantService().ensureTenantReady();
+    try {
+      final json = await _api.get(
+        ApiPaths.msTenantMappedForums(AppConfig.tenantId),
+        query: {'tenant_id': AppConfig.tenantId},
+      );
+      final err = XenforoApi.firstErrorMessage(json);
+      if (err != null && TenantApiHelpers.isMissingEndpoint(err)) {
+        return _fetchScopedForumGroups();
+      }
+      _throwIfError(json);
+      return _forumGroupsFromNodes(json['nodes']);
+    } on DioException catch (e) {
+      final apiMsg = e.response?.data is Map<String, dynamic>
+          ? XenforoApi.firstErrorMessage(
+              e.response!.data as Map<String, dynamic>,
+            )
+          : null;
+      if (TenantApiHelpers.isMissingEndpoint(apiMsg)) {
+        return _fetchScopedForumGroups();
+      }
+      rethrow;
+    }
+  }
+
+  List<ForumNodeGroup> _forumGroupsFromNodes(dynamic rawNodes) {
+    final nodes = rawNodes as List<dynamic>? ?? [];
     final forums = nodes
         .whereType<Map<String, dynamic>>()
         .map(ForumNode.fromJson)
         .where((n) => n.nodeTypeId == 'Forum')
         .toList();
+    if (forums.isEmpty) return [];
+    return [ForumNodeGroup(categoryId: 0, title: 'Forum', forums: forums)];
+  }
+
+  Future<List<ForumNodeGroup>> _fetchScopedForumGroups() async {
+    final allowed = TenantScope.forumNodeIds.toSet();
+    if (allowed.isEmpty) {
+      throw ForumException('Nessun forum mappato per questa community.');
+    }
+
+    final json = await _api.get(ApiPaths.nodes, query: {'limit': 200});
+    _throwIfError(json);
+    final groups = ForumNodesPage.fromJson(json).groups;
+    final forums = <ForumNode>[];
+    for (final group in groups) {
+      for (final forum in group.forums) {
+        if (allowed.contains(forum.nodeId)) forums.add(forum);
+      }
+    }
     if (forums.isEmpty) return [];
     return [ForumNodeGroup(categoryId: 0, title: 'Forum', forums: forums)];
   }

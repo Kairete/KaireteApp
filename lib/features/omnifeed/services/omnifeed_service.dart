@@ -4,7 +4,9 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/core/tenant/tenant_api_helpers.dart';
 import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
@@ -64,19 +66,29 @@ class OmnifeedService {
     required String sort,
     required int page,
   }) async {
+    await TenantService().ensureTenantReady();
     final tenantId = AppConfig.tenantId;
     Object? lastError;
 
-    for (final loader in [
+    final loaders = <Future<OmnifeedFeed> Function()>[];
+    if (TenantScope.groupId > 0) {
+      loaders.add(() => _loadTenantFeedFromGroupOnly(page: page));
+    }
+    loaders.addAll([
       () => _loadTenantFeedFromMultisite(tenantId, sort: sort, page: page),
       () => _loadTenantFeedFromOmniFeed(sort: sort, page: page),
-      () => _loadTenantFeedFromGroupOnly(page: page),
-    ]) {
+    ]);
+
+    for (final loader in loaders) {
       try {
-        final feed = await loader();
-        return feed;
+        return await loader();
       } on OmnifeedException catch (e) {
-        lastError = e;
+        if (!TenantApiHelpers.isMissingEndpoint(e.message) &&
+            !e.message.contains('non configurato')) {
+          lastError = e;
+        } else {
+          lastError ??= e;
+        }
       } on DioException catch (e) {
         lastError = e;
       } catch (e) {
@@ -84,13 +96,13 @@ class OmnifeedService {
       }
     }
 
-    if (lastError is OmnifeedException) {
-      throw lastError;
-    }
+    if (lastError is OmnifeedException) throw lastError;
     if (lastError is DioException) {
       throw OmnifeedException(XenforoApi.connectionMessage(lastError));
     }
-    throw OmnifeedException('Impossibile caricare il feed community.');
+    throw OmnifeedException(
+      'Feed non disponibile. Aggiorna Multisite 1.9.99+ su kairete.it.',
+    );
   }
 
   Future<OmnifeedFeed> _loadTenantFeedFromMultisite(
@@ -107,6 +119,10 @@ class OmnifeedService {
         'limit': 20,
       },
     );
+    final err = XenforoApi.firstErrorMessage(json);
+    if (err != null && TenantApiHelpers.isMissingEndpoint(err)) {
+      throw OmnifeedException(err);
+    }
     _throwIfError(json);
     var items = OmnifeedFeed.fromJson(json).items;
     items = await enrichMediaAlbumHeaders(items);
@@ -135,7 +151,7 @@ class OmnifeedService {
   Future<OmnifeedFeed> _loadTenantFeedFromGroupOnly({required int page}) async {
     final groupId = TenantScope.groupId;
     if (groupId <= 0) {
-      throw OmnifeedException('Gruppo community non configurato.');
+      throw OmnifeedException('Gruppo community non configurato nel bootstrap.');
     }
     final postsPage = await GroupsService().fetchPosts(groupId, page: page);
     final items = postsPage.posts

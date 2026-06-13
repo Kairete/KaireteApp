@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/content_owner_service.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
@@ -63,6 +64,9 @@ class OmnifeedController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      if (AppConfig.isTenantApp) {
+        await TenantService().ensureTenantReady();
+      }
       final feed = await _service
           .fetchFeed(mode: _feedMode, sort: _feedSort)
           .timeout(

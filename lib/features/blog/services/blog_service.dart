@@ -6,6 +6,9 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/core/tenant/tenant_api_helpers.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/blog/models/blog_comment.dart';
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
@@ -36,15 +39,68 @@ class BlogService {
   }
 
   Future<List<BlogEntry>> _fetchTenantMappedEntries() async {
-    final json = await _api.get(
-      ApiPaths.msTenantMappedBlogEntries(AppConfig.tenantId),
-      query: {
-        'tenant_id': AppConfig.tenantId,
-        'limit': 50,
-      },
-    );
-    _throwIfError(json);
-    return BlogEntriesPage.fromJson(json).entries;
+    await TenantService().ensureTenantReady();
+    try {
+      final json = await _api.get(
+        ApiPaths.msTenantMappedBlogEntries(AppConfig.tenantId),
+        query: {
+          'tenant_id': AppConfig.tenantId,
+          'limit': 50,
+        },
+      );
+      final err = XenforoApi.firstErrorMessage(json);
+      if (err != null && TenantApiHelpers.isMissingEndpoint(err)) {
+        return _fetchScopedBlogEntries();
+      }
+      _throwIfError(json);
+      return BlogEntriesPage.fromJson(json).entries;
+    } on DioException catch (e) {
+      final apiMsg = e.response?.data is Map<String, dynamic>
+          ? XenforoApi.firstErrorMessage(
+              e.response!.data as Map<String, dynamic>,
+            )
+          : null;
+      if (TenantApiHelpers.isMissingEndpoint(apiMsg)) {
+        return _fetchScopedBlogEntries();
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<BlogEntry>> _fetchScopedBlogEntries() async {
+    final blogIds = TenantScope.blogIds;
+    final categoryIds = TenantScope.blogCategoryIds;
+    if (blogIds.isEmpty && categoryIds.isEmpty) {
+      throw BlogException('Nessun blog mappato per questa community.');
+    }
+
+    final merged = <BlogEntry>[];
+    for (final blogId in blogIds) {
+      final json = await _api.get(
+        ApiPaths.blogEntries,
+        query: {'blog_ids[]': blogId, 'limit': 50},
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        merged.addAll(BlogEntriesPage.fromJson(json).entries);
+      }
+    }
+    for (final categoryId in categoryIds) {
+      final json = await _api.get(
+        ApiPaths.blogEntries,
+        query: {'category_ids[]': categoryId, 'limit': 50},
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        merged.addAll(BlogEntriesPage.fromJson(json).entries);
+      }
+    }
+
+    final seen = <int>{};
+    final unique = <BlogEntry>[];
+    for (final entry in merged) {
+      if (seen.add(entry.blogEntryId)) unique.add(entry);
+    }
+    unique.sort((a, b) => (b.postDate ?? 0).compareTo(a.postDate ?? 0));
+    return unique;
   }
 
   Future<BlogEntry> fetchEntry(int blogEntryId) async {
