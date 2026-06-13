@@ -1,5 +1,7 @@
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/features/groups/models/group_post.dart';
@@ -12,6 +14,10 @@ class GroupsService {
 
   Future<SocialGroupsPage> fetchGroups({int page = 1}) async {
     await AppApi.instance.applySession();
+    if (AppConfig.isTenantApp && TenantScope.groupId > 0) {
+      final group = await fetchGroup(TenantScope.groupId);
+      return SocialGroupsPage(groups: [group]);
+    }
     final json = await _api.get(
       ApiPaths.socialGroups,
       query: {'page': page, 'limit': 20},

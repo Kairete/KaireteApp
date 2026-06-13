@@ -1,3 +1,4 @@
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -27,6 +28,10 @@ class ProfileService {
   }) async {
     await AppApi.instance.applySession();
 
+    if (AppConfig.isTenantApp && AppConfig.tenantId > 0) {
+      return _fetchTenantMappedUserFeed(userId, page: page);
+    }
+
     final sources = await Future.wait([
       _fetchUserFeedFromApi(userId, page: page, sort: sort),
       _fetchAuthoredProfilePosts(userId, page: page),
@@ -41,6 +46,26 @@ class ProfileService {
         _mergeAuthoredItems(sources, userId),
       ),
     );
+  }
+
+  Future<OmnifeedFeed> _fetchTenantMappedUserFeed(
+    int userId, {
+    required int page,
+  }) async {
+    try {
+      final json = await _api.get(
+        ApiPaths.msTenantMappedUserFeed(AppConfig.tenantId, userId),
+        query: {
+          'page': page,
+          'limit': 20,
+          'tenant_id': AppConfig.tenantId,
+        },
+      );
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        return OmnifeedFeed.fromJson(json);
+      }
+    } catch (_) {}
+    return OmnifeedFeed(items: []);
   }
 
   Future<List<OmnifeedItem>> _fetchUserFeedFromApi(

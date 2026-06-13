@@ -10,6 +10,12 @@ class ApiPaths {
   static const msTenants = 'api/ms-tenants';
   static String msTenantBootstrap(int tenantId) =>
       'api/ms-tenants/$tenantId/bootstrap';
+  static String msTenantMappedUserFeed(int tenantId, int userId) =>
+      'api/ms-tenants/$tenantId/users/$userId/mapped-feed';
+  static String msTenantMappedForums(int tenantId) =>
+      'api/ms-tenants/$tenantId/forums';
+  static String msTenantMappedBlogEntries(int tenantId) =>
+      'api/ms-tenants/$tenantId/blog-entries';
   static const mobileDeviceSessions = 'api/mobile/device-sessions';
   static const mobileDeviceSessionsRestore =
       'api/mobile/device-sessions/restore-by-device';

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<api_routes>
+	<route route_type="api" route_prefix="ms-tenants" sub_name="" format="" controller="Kairete\Multisite:Tenant"/>
+	<route route_type="api" route_prefix="ms-tenants" sub_name="-" format=":+int&lt;tenant_id&gt;/bootstrap" controller="Kairete\Multisite:Tenant" action_prefix="Bootstrap"/>
+	<route route_type="api" route_prefix="ms-tenants" sub_name="-" format=":+int&lt;tenant_id&gt;/users/:+int&lt;user_id&gt;/mapped-feed" controller="Kairete\Multisite:Tenant" action_prefix="MappedUserFeed"/>
+	<route route_type="api" route_prefix="ms-tenants" sub_name="-" format=":+int&lt;tenant_id&gt;/forums" controller="Kairete\Multisite:Tenant" action_prefix="MappedForums"/>
+	<route route_type="api" route_prefix="ms-tenants" sub_name="-" format=":+int&lt;tenant_id&gt;/blog-entries" controller="Kairete\Multisite:Tenant" action_prefix="MappedBlogEntries"/>
+	<route route_type="api" route_prefix="mobile/device-sessions" sub_name="" format="" controller="Kairete\Multisite:MobileAuth"/>
+	<route route_type="api" route_prefix="mobile/device-sessions" sub_name="restore-by-device" format="" controller="Kairete\Multisite:MobileAuth" action_prefix="RestoreByDevice"/>
+</api_routes>

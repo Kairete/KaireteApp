@@ -1,0 +1,17 @@
+{
+    "addon_id": "Kairete/Multisite",
+    "legacy_addon_id": "",
+    "title": "Kairete Multisite",
+    "description": "Piattaforma multi-dominio: sottocommunity, mapping e pannello admin.",
+    "version_id": 1000196,
+    "version_string": "1.9.96 Alpha",
+    "dev": "Kairete",
+    "dev_url": "",
+    "faq_url": "",
+    "support_url": "",
+    "extra_urls": [],
+    "require": {
+        "XF": [2030370, "XenForo 2.3.0"]
+    },
+    "icon": ""
+}

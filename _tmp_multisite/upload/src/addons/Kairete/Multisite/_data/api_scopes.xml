@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<api_scopes>
+	<api_scope api_scope_id="ms_tenant:read" display_order="10">Leggere tenant Multisite (app mobile)</api_scope>
+	<api_scope api_scope_id="ms_mobile_auth:write" display_order="20">Sessioni device mobile Multisite</api_scope>
+</api_scopes>

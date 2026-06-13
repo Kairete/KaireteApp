@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -19,11 +20,29 @@ class BlogService {
     int? categoryId,
   }) async {
     await AppApi.instance.applySession();
+    if (AppConfig.isTenantApp &&
+        AppConfig.tenantId > 0 &&
+        blogId == null &&
+        categoryId == null) {
+      return _fetchTenantMappedEntries();
+    }
     final query = <String, dynamic>{};
     if (blogId != null) query['blog_ids[]'] = blogId;
     if (categoryId != null) query['category_ids[]'] = categoryId;
 
     final json = await _api.get(ApiPaths.blogEntries, query: query);
+    _throwIfError(json);
+    return BlogEntriesPage.fromJson(json).entries;
+  }
+
+  Future<List<BlogEntry>> _fetchTenantMappedEntries() async {
+    final json = await _api.get(
+      ApiPaths.msTenantMappedBlogEntries(AppConfig.tenantId),
+      query: {
+        'tenant_id': AppConfig.tenantId,
+        'limit': 50,
+      },
+    );
     _throwIfError(json);
     return BlogEntriesPage.fromJson(json).entries;
   }

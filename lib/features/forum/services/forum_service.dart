@@ -1,3 +1,4 @@
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -11,9 +12,28 @@ class ForumService {
 
   Future<List<ForumNodeGroup>> fetchForumGroups() async {
     await AppApi.instance.applySession();
+    if (AppConfig.isTenantApp && AppConfig.tenantId > 0) {
+      return _fetchTenantMappedForums();
+    }
     final json = await _api.get(ApiPaths.nodes, query: {'limit': 100});
     _throwIfError(json);
     return ForumNodesPage.fromJson(json).groups;
+  }
+
+  Future<List<ForumNodeGroup>> _fetchTenantMappedForums() async {
+    final json = await _api.get(
+      ApiPaths.msTenantMappedForums(AppConfig.tenantId),
+      query: {'tenant_id': AppConfig.tenantId},
+    );
+    _throwIfError(json);
+    final nodes = json['nodes'] as List<dynamic>? ?? [];
+    final forums = nodes
+        .whereType<Map<String, dynamic>>()
+        .map(ForumNode.fromJson)
+        .where((n) => n.nodeTypeId == 'Forum')
+        .toList();
+    if (forums.isEmpty) return [];
+    return [ForumNodeGroup(categoryId: 0, title: 'Forum', forums: forums)];
   }
 
   Future<List<ForumThread>> fetchThreads(int forumId) async {

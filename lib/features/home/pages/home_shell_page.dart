@@ -1,10 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/config/app_build.dart';
-import 'package:kairete/config/app_branding.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
-import 'package:kairete/core/tenant/tenant_bootstrap.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
@@ -76,14 +75,15 @@ class _HomeShellPageState extends State<HomeShellPage> {
 
   Set<int> _hiddenTabIndexes() {
     if (!AppConfig.isTenantApp) return const {};
-    final bootstrap = TenantRuntime.bootstrap;
-    if (bootstrap == null) return const {};
     final hidden = <int>{};
-    if (!bootstrap.tabEnabled('blog')) hidden.add(1);
-    if (!bootstrap.tabEnabled('groups')) hidden.add(2);
-    if (!bootstrap.tabEnabled('media')) hidden.add(3);
+    if (!TenantScope.tabEnabled('blog')) hidden.add(1);
+    if (!TenantScope.tabEnabled('groups')) hidden.add(2);
+    if (!TenantScope.tabEnabled('media')) hidden.add(3);
     return hidden;
   }
+
+  bool get _showForumAction =>
+      !AppConfig.isTenantApp || TenantScope.tabEnabled('forum');
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +102,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
           bottom: BorderSide(color: AppTheme.brandAppBarBorder, width: 1),
         ),
         actions: [
-          if (!isTenant)
+          if (_showForumAction)
             IconButton(
               tooltip: 'Forum',
               icon: const Icon(Icons.forum_outlined),
@@ -179,42 +179,19 @@ class _HomeShellPageState extends State<HomeShellPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!isTenant)
-            OmnifeedFeedTabs(
-              selectedIndex: _tabIndex,
-              onSelected: (i) => setState(() => _tabIndex = i),
-              hiddenTabs: _hiddenTabIndexes(),
-            )
-          else
-            DecoratedBox(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  AppBranding.current.appName,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.brandAccent,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ),
-          if (isTenant || (_tabIndex != 2 && _tabIndex != 3))
+          OmnifeedFeedTabs(
+            selectedIndex: _tabIndex,
+            onSelected: (i) => setState(() => _tabIndex = i),
+            hiddenTabs: _hiddenTabIndexes(),
+          ),
+          if (_tabIndex != 2 && _tabIndex != 3)
             Obx(
               () => OmnifeedComposeBar(
-                mode: isTenant || _tabIndex == 0
+                mode: _tabIndex == 0
                     ? OmnifeedComposeBarMode.newsfeed
                     : OmnifeedComposeBarMode.blog,
-                onTapCompose: isTenant || _tabIndex == 0 ? _feed.openCompose : null,
-                onTapRefresh: isTenant || _tabIndex == 0
+                onTapCompose: _tabIndex == 0 ? _feed.openCompose : null,
+                onTapRefresh: _tabIndex == 0
                     ? _feed.loadFeed
                     : _tabIndex == 1
                         ? () async {
@@ -225,7 +202,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
                             }
                           }
                         : null,
-                isRefreshing: isTenant || _tabIndex == 0
+                isRefreshing: _tabIndex == 0
                     ? _feed.isLoading.value
                     : _tabIndex == 1 &&
                             Get.isRegistered<BlogListController>(tag: 'blog_0_0')
@@ -241,7 +218,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
           Expanded(
             child: ColoredBox(
               color: AppTheme.feedFooterBg,
-              child: isTenant || _tabIndex == 0
+              child: _tabIndex == 0
                   ? const OmnifeedPage()
                   : _tabIndex == 1
                       ? BlogListPage()
