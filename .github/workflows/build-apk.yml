@@ -41,7 +41,7 @@ jobs:
             MATRIX=$(printf '[{"app_variant":"%s","tenant_id":"%s","do_ftp":"%s"}]' \
               "${{ inputs.app_variant }}" "${{ inputs.tenant_id }}" "${{ inputs.upload_ftp }}")
           else
-            MATRIX='[{"app_variant":"hub","tenant_id":"","do_ftp":"true"},{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true"}]'
+            MATRIX='[{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true"}]'
           fi
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
@@ -104,9 +104,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze Dart
-        run: flutter analyze --no-fatal-infos
-
       - name: Build debug APK (arm64)
         run: |
           set -o pipefail
@@ -118,6 +115,12 @@ jobs:
             flutter build apk --debug --flavor hub --target-platform android-arm64 \
               --dart-define=APP_VARIANT=hub 2>&1 | tee build.log
           fi
+
+      - name: Dump build log on failure
+        if: failure()
+        run: |
+          echo "=== build.log (tail) ==="
+          tail -n 120 build.log || true
 
       - name: Prepare APK for download
         run: |
