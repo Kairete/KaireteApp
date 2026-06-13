@@ -1,24 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 
+enum OmnifeedTabLayout { hub, tenant }
+
 class OmnifeedFeedTabs extends StatelessWidget {
   const OmnifeedFeedTabs({
     super.key,
     this.selectedIndex = 0,
     this.onSelected,
     this.hiddenTabs = const {},
+    this.layout = OmnifeedTabLayout.hub,
   });
 
   final int selectedIndex;
   final ValueChanged<int>? onSelected;
   final Set<int> hiddenTabs;
+  final OmnifeedTabLayout layout;
 
-  static const _tabs = [
+  static const _hubTabs = [
     _TabSpec(Icons.home_outlined, 'News feed', 0),
     _TabSpec(Icons.menu_book_outlined, 'Blogs', 0),
     _TabSpec(Icons.groups_outlined, 'Gruppi', 0),
     _TabSpec(Icons.perm_media_outlined, 'Media', 0),
   ];
+
+  static const _tenantTabs = [
+    _TabSpec(Icons.home_outlined, 'News feed', 0),
+    _TabSpec(Icons.menu_book_outlined, 'Blog', 0),
+    _TabSpec(Icons.forum_outlined, 'Forum', 0),
+  ];
+
+  List<_TabSpec> get _tabs =>
+      layout == OmnifeedTabLayout.tenant ? _tenantTabs : _hubTabs;
 
   @override
   Widget build(BuildContext context) {

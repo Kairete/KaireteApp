@@ -1,8 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_comment.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
@@ -18,6 +21,13 @@ class OmnifeedService {
     int page = 1,
   }) async {
     await AppApi.instance.applySession();
+
+    if (AppConfig.isTenantApp &&
+        AppConfig.tenantId > 0 &&
+        mode == 'tenant_group') {
+      return _fetchTenantCommunityFeed(sort: sort, page: page);
+    }
+
     final json = await _api.get(
       ApiPaths.newsfeed,
       query: {
@@ -47,6 +57,104 @@ class OmnifeedService {
 
     items = await enrichMediaAlbumHeaders(items);
 
+    return OmnifeedFeed(items: items);
+  }
+
+  Future<OmnifeedFeed> _fetchTenantCommunityFeed({
+    required String sort,
+    required int page,
+  }) async {
+    final tenantId = AppConfig.tenantId;
+    Object? lastError;
+
+    for (final loader in [
+      () => _loadTenantFeedFromMultisite(tenantId, sort: sort, page: page),
+      () => _loadTenantFeedFromOmniFeed(sort: sort, page: page),
+      () => _loadTenantFeedFromGroupOnly(page: page),
+    ]) {
+      try {
+        final feed = await loader();
+        return feed;
+      } on OmnifeedException catch (e) {
+        lastError = e;
+      } on DioException catch (e) {
+        lastError = e;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    if (lastError is OmnifeedException) {
+      throw lastError;
+    }
+    if (lastError is DioException) {
+      throw OmnifeedException(XenforoApi.connectionMessage(lastError));
+    }
+    throw OmnifeedException('Impossibile caricare il feed community.');
+  }
+
+  Future<OmnifeedFeed> _loadTenantFeedFromMultisite(
+    int tenantId, {
+    required String sort,
+    required int page,
+  }) async {
+    final json = await _api.get(
+      ApiPaths.msTenantCommunityFeed(tenantId),
+      query: {
+        'tenant_id': tenantId,
+        'sort': sort,
+        'page': page,
+        'limit': 20,
+      },
+    );
+    _throwIfError(json);
+    var items = OmnifeedFeed.fromJson(json).items;
+    items = await enrichMediaAlbumHeaders(items);
+    return OmnifeedFeed(items: items);
+  }
+
+  Future<OmnifeedFeed> _loadTenantFeedFromOmniFeed({
+    required String sort,
+    required int page,
+  }) async {
+    final json = await _api.get(
+      ApiPaths.newsfeed,
+      query: {
+        'mode': 'tenant_group',
+        'sort': sort,
+        'page': page,
+        'tenant_id': AppConfig.tenantId,
+      },
+    );
+    _throwIfError(json);
+    var items = OmnifeedFeed.fromJson(json).items;
+    items = await enrichMediaAlbumHeaders(items);
+    return OmnifeedFeed(items: items);
+  }
+
+  Future<OmnifeedFeed> _loadTenantFeedFromGroupOnly({required int page}) async {
+    final groupId = TenantScope.groupId;
+    if (groupId <= 0) {
+      throw OmnifeedException('Gruppo community non configurato.');
+    }
+    final postsPage = await GroupsService().fetchPosts(groupId, page: page);
+    final items = postsPage.posts
+        .map(
+          (post) => OmnifeedItem.fromGroupPostApi({
+            'group_post_id': post.groupPostId,
+            'group_id': post.groupId,
+            'message_plain_text': post.messagePlainText,
+            'post_date': post.postDate,
+            'comment_count': post.commentCount,
+            'reaction_score': post.reactionScore,
+            if (post.author != null)
+              'User': {
+                'user_id': post.author!.userId,
+                'username': post.author!.username,
+              },
+          }),
+        )
+        .toList();
     return OmnifeedFeed(items: items);
   }
 

@@ -16,6 +16,8 @@ class ApiPaths {
       'api/ms-tenants/$tenantId/forums';
   static String msTenantMappedBlogEntries(int tenantId) =>
       'api/ms-tenants/$tenantId/blog-entries';
+  static String msTenantCommunityFeed(int tenantId) =>
+      'api/ms-tenants/$tenantId/community-feed';
   static const mobileDeviceSessions = 'api/mobile/device-sessions';
   static const mobileDeviceSessionsRestore =
       'api/mobile/device-sessions/restore-by-device';

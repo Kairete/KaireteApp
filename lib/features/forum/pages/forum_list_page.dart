@@ -8,7 +8,9 @@ import 'package:kairete/features/forum/widgets/forum_category_header.dart';
 import 'package:kairete/features/forum/widgets/forum_node_row.dart';
 
 class ForumListPage extends StatelessWidget {
-  ForumListPage({super.key});
+  ForumListPage({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +18,44 @@ class ForumListPage extends StatelessWidget {
       Get.put(ForumListController());
     }
     final controller = Get.find<ForumListController>();
+
+    final body = Obx(() {
+      if (controller.isLoading.value && controller.groups.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (controller.errorMessage.value.isNotEmpty &&
+          controller.groups.isEmpty) {
+        return _ErrorState(
+          message: controller.errorMessage.value,
+          onRetry: controller.loadForums,
+        );
+      }
+      if (controller.groups.isEmpty) {
+        return const Center(child: Text('Nessun forum mappato.'));
+      }
+
+      return RefreshIndicator(
+        onRefresh: controller.loadForums,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            if (!embedded) const _ForumPageHeader(),
+            for (var gi = 0; gi < controller.groups.length; gi++) ...[
+              if (gi > 0) const SizedBox(height: 8),
+              _ForumCategorySection(
+                group: controller.groups[gi],
+                onForumTap: controller.openForum,
+              ),
+            ],
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    });
+
+    if (embedded) {
+      return ColoredBox(color: AppTheme.feedFooterBg, child: body);
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
@@ -37,39 +77,7 @@ class ForumListPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.groups.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (controller.errorMessage.value.isNotEmpty &&
-            controller.groups.isEmpty) {
-          return _ErrorState(
-            message: controller.errorMessage.value,
-            onRetry: controller.loadForums,
-          );
-        }
-        if (controller.groups.isEmpty) {
-          return const Center(child: Text('Nessun forum disponibile.'));
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.loadForums,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const _ForumPageHeader(),
-              for (var gi = 0; gi < controller.groups.length; gi++) ...[
-                if (gi > 0) const SizedBox(height: 8),
-                _ForumCategorySection(
-                  group: controller.groups[gi],
-                  onForumTap: controller.openForum,
-                ),
-              ],
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      }),
+      body: body,
     );
   }
 }

@@ -1,9 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/config/app_build.dart';
+import 'package:kairete/config/app_branding.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
-import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
@@ -57,12 +56,6 @@ class _HomeShellPageState extends State<HomeShellPage> {
     });
   }
 
-  void _openForum() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => ForumListPage()),
-    );
-  }
-
   Future<void> _openCreateBlog() async {
     final created = await Get.to<bool>(() => const BlogCreatePage());
     if (created == true) {
@@ -74,20 +67,15 @@ class _HomeShellPageState extends State<HomeShellPage> {
   }
 
   Set<int> _hiddenTabIndexes() {
-    if (!AppConfig.isTenantApp) return const {};
-    final hidden = <int>{};
-    if (!TenantScope.tabEnabled('blog')) hidden.add(1);
-    if (!TenantScope.tabEnabled('groups')) hidden.add(2);
-    if (!TenantScope.tabEnabled('media')) hidden.add(3);
-    return hidden;
+    if (AppConfig.isTenantApp) return const {};
+    return const {};
   }
-
-  bool get _showForumAction =>
-      !AppConfig.isTenantApp || TenantScope.tabEnabled('forum');
 
   @override
   Widget build(BuildContext context) {
     final isTenant = AppConfig.isTenantApp;
+    final tabLayout =
+        isTenant ? OmnifeedTabLayout.tenant : OmnifeedTabLayout.hub;
 
     return Scaffold(
       backgroundColor: AppTheme.feedFooterBg,
@@ -97,16 +85,22 @@ class _HomeShellPageState extends State<HomeShellPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text(AppBuild.appBarTitle),
+        title: Text(
+          isTenant ? AppBranding.current.appName : AppBranding.current.appName,
+        ),
         shape: Border(
           bottom: BorderSide(color: AppTheme.brandAppBarBorder, width: 1),
         ),
         actions: [
-          if (_showForumAction)
+          if (!isTenant)
             IconButton(
               tooltip: 'Forum',
               icon: const Icon(Icons.forum_outlined),
-              onPressed: _openForum,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => ForumListPage()),
+                );
+              },
             ),
           Obx(() {
             final badge = Get.isRegistered<AlertsBadgeController>()
@@ -183,8 +177,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
             hiddenTabs: _hiddenTabIndexes(),
+            layout: tabLayout,
           ),
-          if (_tabIndex != 2 && _tabIndex != 3)
+          if (_showComposeBar(isTenant))
             Obx(
               () => OmnifeedComposeBar(
                 mode: _tabIndex == 0
@@ -218,17 +213,32 @@ class _HomeShellPageState extends State<HomeShellPage> {
           Expanded(
             child: ColoredBox(
               color: AppTheme.feedFooterBg,
-              child: _tabIndex == 0
-                  ? const OmnifeedPage()
-                  : _tabIndex == 1
-                      ? BlogListPage()
-                      : _tabIndex == 2
-                          ? const GroupsListPage()
-                          : MediaListPage(),
+              child: _tabBody(isTenant),
             ),
           ),
         ],
       ),
     );
+  }
+
+  bool _showComposeBar(bool isTenant) {
+    if (isTenant) return _tabIndex == 0 || _tabIndex == 1;
+    return _tabIndex != 2 && _tabIndex != 3;
+  }
+
+  Widget _tabBody(bool isTenant) {
+    if (isTenant) {
+      return switch (_tabIndex) {
+        0 => const OmnifeedPage(),
+        1 => BlogListPage(),
+        _ => ForumListPage(embedded: true),
+      };
+    }
+    return switch (_tabIndex) {
+      0 => const OmnifeedPage(),
+      1 => BlogListPage(),
+      2 => const GroupsListPage(),
+      _ => MediaListPage(),
+    };
   }
 }

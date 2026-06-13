@@ -188,7 +188,7 @@ jobs:
             - **Package:** `com.kairete.tenant.juve_social`
             - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
 
-            Richiede Multisite **1.9.95+** + OmniFeed `tenant_group`.
+            Richiede Multisite **1.9.98+** + OmniFeed **1.7.79+** su kairete.it.
           make_latest: true
           files: |
             JuveSocial-debug.apk
