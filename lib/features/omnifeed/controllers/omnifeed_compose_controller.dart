@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/services/attachment_service.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
+import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
 class OmnifeedComposeController extends GetxController {
   final OmnifeedService _service = OmnifeedService();
+  final GroupsService _groups = GroupsService();
   final AttachmentService _attachments = AttachmentService();
   final messageCtrl = TextEditingController();
 
@@ -14,6 +18,9 @@ class OmnifeedComposeController extends GetxController {
   final canSend = false.obs;
   final pendingAttachments = <String>[].obs;
   final _attachmentPaths = <String, String>{};
+
+  bool get _isTenantGroupCompose =>
+      AppConfig.isTenantApp && TenantScope.groupId > 0;
 
   int? get _profileUserId {
     if (!Get.isRegistered<AuthFlowController>()) return null;
@@ -52,6 +59,13 @@ class OmnifeedComposeController extends GetxController {
   }
 
   Future<void> pickAttachments() async {
+    if (_isTenantGroupCompose) {
+      Get.snackbar(
+        'Allegati',
+        'Nel feed community puoi pubblicare solo testo per ora.',
+      );
+      return;
+    }
     final files = await attach_pick.pickAttachments(allowMultiple: true);
     for (final file in files) {
       addAttachment(file.path, file.displayName);
@@ -64,6 +78,15 @@ class OmnifeedComposeController extends GetxController {
 
     isSending.value = true;
     try {
+      if (_isTenantGroupCompose) {
+        await _groups.createPost(
+          groupId: TenantScope.groupId,
+          message: text.isEmpty ? ' ' : text,
+        );
+        Get.back(result: true);
+        return;
+      }
+
       String attachmentKey = '';
       String attachmentHash = '';
       final userId = _profileUserId;
@@ -90,6 +113,8 @@ class OmnifeedComposeController extends GetxController {
       );
       Get.back(result: true);
     } on OmnifeedException catch (e) {
+      Get.snackbar('Errore', e.message);
+    } on GroupsException catch (e) {
       Get.snackbar('Errore', e.message);
     } on AttachmentException catch (e) {
       Get.snackbar('Errore allegati', e.message);

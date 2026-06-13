@@ -97,7 +97,9 @@ class OmnifeedItem {
 
   /// Thread, blog, gruppo, articolo, ecc.: titolo nel body sotto l'header.
   bool get showsModuleTitle =>
-      !isPlainFeedPost && (contentTitle?.trim().isNotEmpty ?? false);
+      !isPlainFeedPost &&
+      contentType != 'tl_group_post' &&
+      (contentTitle?.trim().isNotEmpty ?? false);
 
   String get moduleTitle => contentTitle?.trim() ?? '';
 
@@ -110,7 +112,7 @@ class OmnifeedItem {
 
   /// Forum, blog, album media, gruppo, ecc. accanto al nickname nell'header.
   String? get headerModuleLabel {
-    if (isPlainFeedPost) return null;
+    if (isPlainFeedPost || contentType == 'tl_group_post') return null;
     if (contentType == 'ubs_blog_entry') {
       final blog = blogLabel?.trim();
       if (blog != null && blog.isNotEmpty) return blog;

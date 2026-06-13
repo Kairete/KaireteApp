@@ -106,6 +106,9 @@ class TenantScopedFeed
 			}
 		}
 
+		$scope = TenantMappingScope::fromTenant($tenant);
+		$rawItems = \array_merge($rawItems, $this->buildMappedCommunityRows($scope));
+
 		if ($sort === 'last_activity')
 		{
 			\usort($rawItems, static fn (array $a, array $b): int => ($b['activity_date'] ?? 0) <=> ($a['activity_date'] ?? 0));

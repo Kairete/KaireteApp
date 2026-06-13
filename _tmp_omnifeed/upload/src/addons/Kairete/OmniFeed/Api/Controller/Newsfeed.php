@@ -47,10 +47,6 @@ class Newsfeed extends AbstractController
 		$this->assertApiScopeByRequestMethod('newsfeed');
 
 		$visitor = \XF::visitor();
-		if (!$visitor->hasPermission('profilePost', 'post')) {
-			return $this->noPermission();
-		}
-
 		$message = \trim((string) $this->filter('message', 'str'));
 		$attachmentHash = \trim((string) $this->filter('attachment_hash', 'str'));
 		if ($attachmentHash === '') {
@@ -58,6 +54,38 @@ class Newsfeed extends AbstractController
 		}
 		if ($message === '' && $attachmentHash === '') {
 			return $this->error(\XF::phrase('please_enter_valid_message'));
+		}
+
+		$tenantId = 0;
+		if (\class_exists(\Kairete\Multisite\Service\MobileApi\TenantScopedFeed::class)) {
+			$tenantId = \Kairete\Multisite\Service\MobileApi\TenantScopedFeed::resolveTenantIdFromApp($this->app());
+		}
+		if ($tenantId > 0
+			&& \class_exists(\Kairete\Multisite\Service\MobileApi\TenantContext::class)
+			&& \class_exists(\Kairete\Multisite\Service\Member\TenantProfilePostBridge::class)) {
+			$tenant = \Kairete\Multisite\Service\MobileApi\TenantContext::resolveActiveTenant($this->app(), $tenantId);
+			if ($tenant) {
+				if ($attachmentHash !== '') {
+					return $this->error('Gli allegati sul profilo tenant non sono ancora supportati. Pubblica solo testo.');
+				}
+				if (!\Kairete\Multisite\Service\Member\TenantProfilePostBridge::createGroupPost(
+					$this->app(),
+					$tenant,
+					$visitor,
+					$message !== '' ? $message : ' '
+				)) {
+					return $this->error(\XF::phrase('unexpected_error_occurred'));
+				}
+
+				return $this->apiSuccess([
+					'tenant_id' => $tenantId,
+					'posted_to' => 'tenant_group',
+				]);
+			}
+		}
+
+		if (!$visitor->hasPermission('profilePost', 'post')) {
+			return $this->noPermission();
 		}
 
 		$userProfile = $visitor->Profile;
