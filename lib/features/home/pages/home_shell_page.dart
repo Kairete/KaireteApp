@@ -1,8 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/config/app_config.dart';
-import 'package:kairete/core/tenant/tenant_bootstrap.dart';
 import 'package:kairete/config/app_build.dart';
+import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/services/reaction_catalog.dart';
+import 'package:kairete/core/tenant/tenant_bootstrap.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
