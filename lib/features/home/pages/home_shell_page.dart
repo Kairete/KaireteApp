@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kairete/config/app_branding.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/alerts/pages/alerts_page.dart';
@@ -41,6 +42,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
     ReactionCatalog.instance.ensureLoaded();
     HomeBinding().dependencies();
     _feed = OmnifeedController.ensure();
+    if (AppConfig.isTenantApp) {
+      TenantService().refreshBootstrap();
+    }
     if (Get.isRegistered<AlertsBadgeController>()) {
       Get.find<AlertsBadgeController>().refresh();
     }

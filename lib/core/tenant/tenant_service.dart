@@ -22,6 +22,7 @@ class TenantService {
     for (final loader in [
       () => _loadBootstrapFromMsTenantsQuery(id),
       () => _loadBootstrapFromDedicatedRoute(id),
+      () => _loadBootstrapFromTenantsList(id),
     ]) {
       try {
         return await loader();
@@ -59,6 +60,53 @@ class TenantService {
     return _parseBootstrapResponse(json, id);
   }
 
+  /// Usa api/ms-tenants (già attivo su kairete.it) con scope incluso nel server 1.9.101+.
+  Future<TenantBootstrap> _loadBootstrapFromTenantsList(int id) async {
+    final json = await _api.get(ApiPaths.msTenants);
+    final err = XenforoApi.firstErrorMessage(json);
+    if (err != null) throw TenantException(err);
+
+    final tenants = json['tenants'] as List<dynamic>? ?? [];
+    for (final raw in tenants) {
+      if (raw is! Map<String, dynamic>) continue;
+      final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
+      if (tid != id) continue;
+
+      final scopeRaw = raw['scope'];
+      final scope = scopeRaw is Map
+          ? Map<String, dynamic>.from(scopeRaw)
+          : const <String, dynamic>{};
+
+      if (_scopeHasMapping(scope) ||
+          (int.tryParse(raw['newsfeed_group_id']?.toString() ?? '') ?? 0) > 0) {
+        return TenantBootstrap.fromJson({
+          'tenant_id': tid,
+          'title': raw['title']?.toString() ?? '',
+          'slug': raw['slug']?.toString() ?? '',
+          'newsfeed_group_id': raw['newsfeed_group_id'] ?? scope['groupId'] ?? 0,
+          'scope': scope,
+          'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
+        });
+      }
+    }
+
+    throw TenantException('Scope tenant non presente nella lista ms-tenants.');
+  }
+
+  bool _scopeHasMapping(Map<String, dynamic> scope) {
+    for (final key in [
+      'forumNodeIds',
+      'blogIds',
+      'blogCategoryIds',
+      'groupId',
+    ]) {
+      final raw = scope[key];
+      if (raw is List && raw.isNotEmpty) return true;
+      if (raw is int && raw > 0) return true;
+    }
+    return false;
+  }
+
   TenantBootstrap _parseBootstrapResponse(
     Map<String, dynamic> json,
     int id,
@@ -83,7 +131,6 @@ class TenantService {
     return bootstrap;
   }
 
-  /// Fallback offline quando le route bootstrap non sono ancora su kairete.it.
   TenantBootstrap? _embeddedFallbackBootstrap(int id) {
     final def = TenantApps.byTenantId(id);
     if (def == null) return null;
@@ -106,10 +153,29 @@ class TenantService {
     );
   }
 
-  Future<void> ensureTenantReady() async {
+  Future<void> ensureTenantReady({bool forceReload = false}) async {
     if (!AppConfig.isTenantApp) return;
-    if (TenantRuntime.bootstrap != null) return;
+    if (!forceReload && TenantRuntime.bootstrap != null) {
+      _maybeUpgradeEmbeddedBootstrap();
+      return;
+    }
     TenantRuntime.bootstrap = await loadBootstrap();
+  }
+
+  void _maybeUpgradeEmbeddedBootstrap() {
+    final current = TenantRuntime.bootstrap;
+    if (current == null) return;
+    if (_scopeHasMapping(current.scope)) return;
+
+    final embedded = _embeddedFallbackBootstrap(current.tenantId);
+    if (embedded != null && _scopeHasMapping(embedded.scope)) {
+      TenantRuntime.bootstrap = embedded;
+    }
+  }
+
+  Future<void> refreshBootstrap() async {
+    TenantRuntime.clear();
+    await ensureTenantReady(forceReload: true);
   }
 }
 
