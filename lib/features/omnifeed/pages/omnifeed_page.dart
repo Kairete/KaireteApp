@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
@@ -15,14 +16,15 @@ class OmnifeedPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Obx(
-          () => OmnifeedContentFilters(
-            selectedModeIndex: c.feedModeIndex.value,
-            sortByLastComment: c.sortByLastComment.value,
-            onModeSelected: c.setFeedModeIndex,
-            onSortChanged: c.setSortByLastComment,
+        if (!AppConfig.isTenantApp)
+          Obx(
+            () => OmnifeedContentFilters(
+              selectedModeIndex: c.feedModeIndex.value,
+              sortByLastComment: c.sortByLastComment.value,
+              onModeSelected: c.setFeedModeIndex,
+              onSortChanged: c.setSortByLastComment,
+            ),
           ),
-        ),
         Expanded(
           child: Obx(() {
             if (c.isLoading.value && c.items.isEmpty) {

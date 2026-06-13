@@ -6,10 +6,12 @@ class OmnifeedFeedTabs extends StatelessWidget {
     super.key,
     this.selectedIndex = 0,
     this.onSelected,
+    this.hiddenTabs = const {},
   });
 
   final int selectedIndex;
   final ValueChanged<int>? onSelected;
+  final Set<int> hiddenTabs;
 
   static const _tabs = [
     _TabSpec(Icons.home_outlined, 'News feed', 0),
@@ -29,6 +31,9 @@ class OmnifeedFeedTabs extends StatelessWidget {
       ),
       child: Row(
         children: List.generate(_tabs.length, (i) {
+          if (hiddenTabs.contains(i)) {
+            return const SizedBox.shrink();
+          }
           final tab = _tabs[i];
           final active = i == selectedIndex;
           return Expanded(
@@ -38,40 +43,10 @@ class OmnifeedFeedTabs extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 6),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(
-                        tab.icon,
-                        color: AppTheme.primary,
-                        size: 22,
-                      ),
-                      if (tab.badge > 0)
-                        Positioned(
-                          right: -10,
-                          top: -6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.badgeRed,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              tab.badge > 999
-                                  ? '${(tab.badge / 1000).toStringAsFixed(1)}K'
-                                  : '${tab.badge}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  Icon(
+                    tab.icon,
+                    color: AppTheme.primary,
+                    size: 22,
                   ),
                   const SizedBox(height: 4),
                   Text(

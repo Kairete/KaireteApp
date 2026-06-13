@@ -1,10 +1,14 @@
+import 'package:kairete/config/app_branding.dart';
+
 /// Identificativo build visibile in app (aggiornare ad ogni release).
 class AppBuild {
   AppBuild._();
 
-	static const label = 'fix42';
-	static const stamp = '20250607w';
+  static const label = 'ms1';
+  static const stamp = '20250613a';
 
-  /// Titolo barra home: etichetta + timbro per capire subito quale APK è installato.
-  static String get appBarTitle => 'Kairete · $label · $stamp';
+  static String get appBarTitle {
+    final name = AppBranding.current.appName;
+    return '$name · $label · $stamp';
+  }
 }

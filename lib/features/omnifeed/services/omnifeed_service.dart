@@ -1,3 +1,4 @@
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
@@ -28,15 +29,18 @@ class OmnifeedService {
     _throwIfError(json);
     var items = OmnifeedFeed.fromJson(json).items;
 
-    final userId = await AppApi.instance.sessionUserId ?? 0;
-    if (userId > 0) {
-      try {
-        final ownMedia = await MediaService().fetchMedia(userId: userId, limit: 30);
-        items = _mergeFeedItems(
-          items,
-          ownMedia.map(OmnifeedItem.fromMediaItem).toList(),
-        );
-      } catch (_) {}
+    if (!AppConfig.isTenantApp) {
+      final userId = await AppApi.instance.sessionUserId ?? 0;
+      if (userId > 0) {
+        try {
+          final ownMedia =
+              await MediaService().fetchMedia(userId: userId, limit: 30);
+          items = _mergeFeedItems(
+            items,
+            ownMedia.map(OmnifeedItem.fromMediaItem).toList(),
+          );
+        } catch (_) {}
+      }
     }
 
     items = await enrichMediaAlbumHeaders(items);

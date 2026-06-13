@@ -1,32 +1,24 @@
 # APK su kairete.it (FTP automatico)
 
-Dopo ogni build riuscita su GitHub Actions, l’APK viene caricato in:
+Scheda completa: **[FTP_TRAPPOLA.md](FTP_TRAPPOLA.md)**
 
-| | |
-|---|---|
-| **FTP** | `/public_html/Kairete-debug.apk` |
-| **URL pubblico** | https://www.kairete.it/Kairete-debug.apk |
+## URL pubblici
 
-Host e percorso sono già nel workflow CI. Servono solo **2 secret** su GitHub.
+| App | URL |
+|-----|-----|
+| Hub Kairete | https://www.kairete.it/Kairete-debug.apk |
+| Juve Social | https://www.kairete.it/JuveSocial-debug.apk |
 
-## Secret da configurare (una volta)
+Host FTP: `178.132.0.4` · cartella `/public_html/` · utente `admin@kairete.it`
 
-Repo: https://github.com/Kairete/KaireteApp  
-**Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+## Secret GitHub
 
-| Nome secret | Valore |
-|-------------|--------|
+| Secret | Valore |
+|--------|--------|
 | `FTP_USER` | `admin@kairete.it` |
-| `FTP_PASSWORD` | *(password FTP — non in chat)* |
+| `FTP_PASSWORD` | *(password FTP)* |
 
-I vecchi secret `FTP_HOST` e `FTP_DIR` **non servono più** (host e cartella sono fissi nel workflow).
+## Build + upload
 
-## Quando parte l’upload
-
-- **Automatico** ad ogni push su `main` / `master`
-- **Manuale**: Actions → Build APK (debug) → Run workflow (upload FTP spuntato)
-
-## Caricamento manuale (fallback)
-
-1. Scaricate da https://github.com/Kairete/KaireteApp/releases/latest  
-2. Caricate `Kairete-debug.apk` in `/public_html/` via FileZilla / WinSCP
+- **Automatico** su push `main`/`master` (solo hub)
+- **Manuale Juve Social**: Actions → Build APK → `juve_social` + `tenant_id: 3` + upload FTP

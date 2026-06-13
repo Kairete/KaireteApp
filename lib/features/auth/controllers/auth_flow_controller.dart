@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
+import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 import 'package:kairete/features/auth/pages/login_page.dart';
@@ -195,15 +197,30 @@ class AuthFlowController extends GetxController {
       AppApi.instance.bindSession(user.userId);
     }
     isLoading.value = false;
-    _openHome();
+    _openHomeAfterBootstrap();
   }
 
   void _goAfterAuth(UserAccount user) {
     if (user.needsProfileFields) {
       _navigateTo(AppRoutes.profileFields);
     } else {
-      _openHome();
+      _openHomeAfterBootstrap();
     }
+  }
+
+  Future<void> _openHomeAfterBootstrap() async {
+    if (AppConfig.isTenantApp) {
+      isLoading.value = true;
+      try {
+        await TenantService().ensureTenantReady();
+      } catch (e) {
+        errorMessage.value = e.toString();
+        isLoading.value = false;
+        return;
+      }
+      isLoading.value = false;
+    }
+    _openHome();
   }
 
   void _goHome() => _openHome();

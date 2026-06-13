@@ -7,11 +7,11 @@ class XenforoApi {
     _dio.options.connectTimeout = const Duration(seconds: 15);
     _dio.options.receiveTimeout = const Duration(seconds: 20);
     _dio.options.sendTimeout = const Duration(seconds: 20);
-    // Accetta 4xx così XenForo restituisce JSON con errors[] invece di DioException.
     _dio.options.validateStatus = (status) => status != null && status < 500;
     _dio.options.headers['Accept'] = 'application/json';
     _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
+    _applyTenantHeader();
     _applyUserHeader();
   }
 
@@ -25,6 +25,15 @@ class XenforoApi {
 
   void _applyUserHeader() {
     _dio.options.headers['XF-Api-User'] = (_userId ?? 0).toString();
+  }
+
+  void _applyTenantHeader() {
+    if (AppConfig.isTenantApp && AppConfig.tenantId > 0) {
+      _dio.options.headers[AppConfig.tenantHeader] =
+          AppConfig.tenantId.toString();
+    } else {
+      _dio.options.headers.remove(AppConfig.tenantHeader);
+    }
   }
 
   Future<Map<String, dynamic>> post(

@@ -49,14 +49,27 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.kairete.app"
         minSdkVersion 28
         targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
+    }
 
+    flavorDimensions "kairete"
+
+    productFlavors {
+        hub {
+            dimension "kairete"
+            applicationId "com.kairete.app"
+            resValue "string", "app_name", "Kairete"
+        }
+        juveSocial {
+            dimension "kairete"
+            applicationId "com.kairete.tenant.juve_social"
+            resValue "string", "app_name", "Juve Social"
+        }
     }
 
     if (keystorePropertiesFile.exists() && keystoreProperties['storeFile']) {
@@ -74,7 +87,6 @@ android {
             }
         }
     }
-
 }
 
 flutter {

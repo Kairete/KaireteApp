@@ -1,11 +1,14 @@
 import 'package:kairete/config/api_paths.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/session/device_session_service.dart';
 import 'package:kairete/core/session/session_store.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 
 class AuthService {
   XenforoApi get _api => AppApi.instance.xenforo;
+  final DeviceSessionService _deviceSessions = DeviceSessionService();
 
   Future<UserAccount> login({
     required String login,
@@ -20,6 +23,7 @@ class AuthService {
 
     final account = UserAccount.fromApi(json);
     await _persist(account);
+    await _deviceSessions.registerAfterAuth(account.userId);
     return account;
   }
 
@@ -30,20 +34,13 @@ class AuthService {
     required DateTime dateOfBirth,
     Map<String, String>? customFields,
   }) async {
-    final body = <String, dynamic>{
-      'username': username.trim(),
-      'email': email.trim(),
-      'password': password,
-      'dob[day]': dateOfBirth.day,
-      'dob[month]': dateOfBirth.month,
-      'dob[year]': dateOfBirth.year,
-      'timezone': 'Europe/Rome',
-    };
-    if (customFields != null) {
-      customFields.forEach((key, value) {
-        body['custom_fields[$key]'] = value;
-      });
-    }
+    final body = _registrationBody(
+      username: username,
+      email: email,
+      password: password,
+      dateOfBirth: dateOfBirth,
+      customFields: customFields,
+    );
 
     final json = await _api.post(ApiPaths.users, body: body);
     final err = XenforoApi.firstErrorMessage(json);
@@ -56,10 +53,19 @@ class AuthService {
 
     final account = UserAccount.fromApi(json);
     await _persist(account);
+    await _deviceSessions.registerAfterAuth(account.userId);
     return account;
   }
 
   Future<UserAccount?> restoreSession() async {
+    try {
+      final fromDevice = await _deviceSessions.tryRestoreFromDevice();
+      if (fromDevice != null) {
+        await _persist(fromDevice);
+        return fromDevice;
+      }
+    } catch (_) {}
+
     final userId = await SessionStore.instance.userId;
     if (userId == null) return null;
     await AppApi.instance.applySession(userId: userId);
@@ -111,6 +117,33 @@ class AuthService {
       username: account.username,
     );
     AppApi.instance.bindSession(account.userId);
+  }
+
+  Map<String, dynamic> _registrationBody({
+    required String username,
+    required String email,
+    required String password,
+    required DateTime dateOfBirth,
+    Map<String, String>? customFields,
+  }) {
+    final body = <String, dynamic>{
+      'username': username.trim(),
+      'email': email.trim(),
+      'password': password,
+      'dob[day]': dateOfBirth.day,
+      'dob[month]': dateOfBirth.month,
+      'dob[year]': dateOfBirth.year,
+      'timezone': 'Europe/Rome',
+    };
+    if (AppConfig.isTenantApp && AppConfig.tenantId > 0) {
+      body['tenant_id'] = AppConfig.tenantId;
+    }
+    if (customFields != null) {
+      customFields.forEach((key, value) {
+        body['custom_fields[$key]'] = value;
+      });
+    }
+    return body;
   }
 }
 

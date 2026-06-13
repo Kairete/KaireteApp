@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/core/services/reaction_catalog.dart';
+import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/tenant/tenant_bootstrap.dart';
 import 'package:kairete/config/app_build.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
@@ -71,6 +72,17 @@ class _HomeShellPageState extends State<HomeShellPage> {
     }
   }
 
+  Set<int> _hiddenTabIndexes() {
+    if (!AppConfig.isTenantApp) return const {};
+    final bootstrap = TenantRuntime.bootstrap;
+    if (bootstrap == null) return const {};
+    final hidden = <int>{};
+    if (!bootstrap.tabEnabled('blog')) hidden.add(1);
+    if (!bootstrap.tabEnabled('groups')) hidden.add(2);
+    if (!bootstrap.tabEnabled('media')) hidden.add(3);
+    return hidden;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,8 +94,8 @@ class _HomeShellPageState extends State<HomeShellPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(AppBuild.appBarTitle),
-        shape: const Border(
-          bottom: BorderSide(color: Color(0xFF0F4A35), width: 1),
+        shape: Border(
+          bottom: BorderSide(color: AppTheme.appBarBorderBottom, width: 1),
         ),
         actions: [
           IconButton(
@@ -165,6 +177,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
           OmnifeedFeedTabs(
             selectedIndex: _tabIndex,
             onSelected: (i) => setState(() => _tabIndex = i),
+            hiddenTabs: _hiddenTabIndexes(),
           ),
           if (_tabIndex != 2 && _tabIndex != 3)
             Obx(

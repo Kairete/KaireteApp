@@ -3,20 +3,35 @@ name: Build APK (debug)
 on:
   workflow_dispatch:
     inputs:
+      app_variant:
+        description: Variante app (hub = Kairete, juve_social = Juve Social)
+        type: choice
+        options:
+          - hub
+          - juve_social
+        default: juve_social
+      tenant_id:
+        description: Tenant Multisite (solo juve_social)
+        type: string
+        default: "3"
       upload_ftp:
-        description: Carica Kairete-debug.apk sul server FTP
+        description: Carica APK sul server FTP
         type: boolean
         default: true
   push:
     branches: [main, master]
+
+concurrency:
+  group: build-apk-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.app_variant || 'hub' }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
 env:
   FTP_HOST: 178.132.0.4
-  FTP_REMOTE_PATH: /public_html/Kairete-debug.apk
-  APK_PUBLIC_URL: https://www.kairete.it/Kairete-debug.apk
+  FTP_REMOTE_DIR: /public_html
+  APK_PUBLIC_BASE: https://www.kairete.it
 
 jobs:
   build:
@@ -25,13 +40,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve build variant
+        id: variant
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VARIANT="${{ inputs.app_variant }}"
+            TENANT_ID="${{ inputs.tenant_id }}"
+            DO_FTP="${{ inputs.upload_ftp }}"
+          else
+            VARIANT="hub"
+            TENANT_ID=""
+            DO_FTP="true"
+          fi
+          echo "APP_VARIANT=$VARIANT" >> "$GITHUB_ENV"
+          echo "TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+          echo "DO_FTP=$DO_FTP" >> "$GITHUB_ENV"
+          if [ "$VARIANT" = "juve_social" ]; then
+            echo "FLAVOR=juveSocial" >> "$GITHUB_ENV"
+            echo "APK_BASENAME=JuveSocial" >> "$GITHUB_ENV"
+            echo "VERSION_FILE=JuveSocial-app-version.txt" >> "$GITHUB_ENV"
+          else
+            echo "FLAVOR=hub" >> "$GITHUB_ENV"
+            echo "APK_BASENAME=Kairete" >> "$GITHUB_ENV"
+            echo "VERSION_FILE=app-version.txt" >> "$GITHUB_ENV"
+          fi
+          echo "variant=$VARIANT" >> "$GITHUB_OUTPUT"
+
       - name: Read build label
         run: |
           LABEL=$(grep "static const label" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
           STAMP=$(grep "static const stamp" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
           echo "BUILD_LABEL=$LABEL" >> "$GITHUB_ENV"
           echo "BUILD_STAMP=$STAMP" >> "$GITHUB_ENV"
-          echo "Build label: $LABEL ($STAMP)"
+          echo "Build label: $LABEL ($STAMP) variant=${{ steps.variant.outputs.variant }}"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -55,88 +96,120 @@ jobs:
       - name: Build debug APK (arm64)
         run: |
           set -o pipefail
-          flutter build apk --debug --target-platform android-arm64 2>&1 | tee build.log
+          if [ "$APP_VARIANT" = "juve_social" ]; then
+            flutter build apk --debug --flavor juveSocial --target-platform android-arm64 \
+              --dart-define=APP_VARIANT=juve_social \
+              --dart-define=TENANT_ID="$TENANT_ID" 2>&1 | tee build.log
+          else
+            flutter build apk --debug --flavor hub --target-platform android-arm64 \
+              --dart-define=APP_VARIANT=hub 2>&1 | tee build.log
+          fi
 
       - name: Prepare APK for download
         run: |
           APK_DIR=build/app/outputs/flutter-apk
           ls -la "$APK_DIR"
           APK_FILE=$(find "$APK_DIR" -maxdepth 1 -name '*debug*.apk' | head -n 1)
-          test -n "$APK_FILE"
-          cp "$APK_FILE" Kairete-debug.apk
-          cp "$APK_FILE" "Kairete-${BUILD_LABEL}.apk"
-          SIZE=$(stat -c%s Kairete-debug.apk)
+          if [ -z "$APK_FILE" ]; then
+            echo "Nessun APK trovato in $APK_DIR"
+            exit 1
+          fi
+          cp "$APK_FILE" "${APK_BASENAME}-debug.apk"
+          cp "$APK_FILE" "${APK_BASENAME}-${BUILD_LABEL}.apk"
+          SIZE=$(stat -c%s "${APK_BASENAME}-debug.apk")
           {
             echo "label=${BUILD_LABEL}"
             echo "stamp=${BUILD_STAMP}"
+            echo "variant=${APP_VARIANT}"
+            echo "tenant_id=${TENANT_ID}"
+            echo "package=$([ "$APP_VARIANT" = "juve_social" ] && echo com.kairete.tenant.juve_social || echo com.kairete.app)"
             echo "sha=${{ github.sha }}"
             echo "size=${SIZE}"
             echo "built=${{ github.run_id }}"
-          } > app-version.txt
-          ls -la Kairete-debug.apk "Kairete-${BUILD_LABEL}.apk" app-version.txt
+            echo "download=${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk"
+          } > "$VERSION_FILE"
+          ls -la "${APK_BASENAME}-debug.apk" "${APK_BASENAME}-${BUILD_LABEL}.apk" "$VERSION_FILE"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kairete-debug-apk-${{ env.BUILD_LABEL }}
+          name: ${{ env.APK_BASENAME }}-debug-${{ env.BUILD_LABEL }}
           path: |
-            Kairete-debug.apk
-            Kairete-${{ env.BUILD_LABEL }}.apk
-            app-version.txt
+            ${{ env.APK_BASENAME }}-debug.apk
+            ${{ env.APK_BASENAME }}-${{ env.BUILD_LABEL }}.apk
+            ${{ env.VERSION_FILE }}
 
-      - name: Publish GitHub Release (latest)
+      - name: Publish GitHub Release (hub)
+        if: env.APP_VARIANT == 'hub'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Kairete · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
           body: |
-            ## Installazione
-            1. **Disinstalla** la versione precedente di Kairete
-            2. Scarica **`Kairete-${{ env.BUILD_LABEL }}.apk`** (nome con versione, evita cache)
-            3. Verifica in app: **Kairete · ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}**
+            ## Hub Kairete
+            - **Scarica:** `Kairete-${{ env.BUILD_LABEL }}.apk`
+            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/Kairete-debug.apk
+            - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
 
-            | File | URL |
-            |------|-----|
-            | Versionato | https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-${{ env.BUILD_LABEL }}.apk |
-            | Generico | https://github.com/Kairete/KaireteApp/releases/download/latest/Kairete-debug.apk |
-
-            Commit: ${{ github.sha }}
+            Per Juve Social: Actions → Build APK → `juve_social`.
           make_latest: true
           files: |
             Kairete-debug.apk
             Kairete-${{ env.BUILD_LABEL }}.apk
             app-version.txt
 
-      - name: Publish GitHub Release (archivio)
+      - name: Publish GitHub Release (Juve Social)
+        if: env.APP_VARIANT == 'juve_social'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ env.BUILD_LABEL }}-${{ github.run_id }}
-          name: Kairete · ${{ env.BUILD_LABEL }} (archivio)
-          prerelease: true
+          tag_name: juve-social-latest
+          name: Juve Social · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
+          body: |
+            ## Juve Social (tenant ${{ env.TENANT_ID }})
+            - **Scarica:** `JuveSocial-${{ env.BUILD_LABEL }}.apk`
+            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/JuveSocial-debug.apk
+            - **Package:** `com.kairete.tenant.juve_social`
+            - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
+
+            Richiede Multisite **1.9.95+** + OmniFeed `tenant_group`.
+          make_latest: true
           files: |
-            Kairete-debug.apk
-            Kairete-${{ env.BUILD_LABEL }}.apk
-            app-version.txt
+            JuveSocial-debug.apk
+            JuveSocial-${{ env.BUILD_LABEL }}.apk
+            JuveSocial-app-version.txt
 
       - name: Upload APK to FTP server
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload_ftp == true)
+        if: env.DO_FTP == 'true'
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           if [ -z "$FTP_USER" ] || [ -z "$FTP_PASSWORD" ]; then
-            echo "::warning::FTP non configurato (secret FTP_USER/FTP_PASSWORD mancanti). Salta upload."
+            echo "::warning::FTP non configurato. Aggiungi secret FTP_USER e FTP_PASSWORD su GitHub."
             exit 0
           fi
-          BASE="ftp://${FTP_HOST}/public_html"
-          for remote in Kairete-debug.apk "Kairete-${BUILD_LABEL}.apk" app-version.txt; do
-            echo "Upload → ${BASE}/${remote}"
-            curl -v --fail --show-error \
-              -T "${remote}" \
+          BASE="ftp://${FTP_HOST}${FTP_REMOTE_DIR}"
+          for local in "${APK_BASENAME}-debug.apk" "${APK_BASENAME}-${BUILD_LABEL}.apk" "$VERSION_FILE"; do
+            echo "Upload → ${BASE}/${local}"
+            curl --fail --show-error \
+              -T "${local}" \
               --ftp-create-dirs \
               --ftp-pasv \
               -u "${FTP_USER}:${FTP_PASSWORD}" \
-              "${BASE}/${remote}"
+              "${BASE}/${local}"
           done
-          echo "APK: ${APK_PUBLIC_URL}"
-          echo "Versione: https://www.kairete.it/app-version.txt"
+          echo "APK pubblico: ${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk"
+
+      - name: Riepilogo build
+        run: |
+          {
+            echo "## APK ${APK_BASENAME}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Variante | \`${APP_VARIANT}\` |"
+            echo "| Label | \`${BUILD_LABEL}\` · \`${BUILD_STAMP}\` |"
+            echo "| Artifact | \`${APK_BASENAME}-debug-${BUILD_LABEL}\` |"
+            echo "| FTP | ${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk |"
+            echo "| Release | https://github.com/${{ github.repository }}/releases |"
+          } >> "$GITHUB_STEP_SUMMARY"

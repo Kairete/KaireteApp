@@ -15,6 +15,10 @@ Dopo ogni build riuscita:
 
 Avviare una build: **Actions** → **Build APK (debug)** → **Run workflow**.
 
+- **Hub Kairete** (default): `app_variant = hub` → `Kairete-debug.apk`
+- **Juve Social**: `app_variant = juve_social`, `tenant_id = 3` → `JuveSocial-debug.apk`  
+  Release: https://github.com/Kairete/KaireteApp/releases/tag/juve-social-latest
+
 Serve un push del codice aggiornato su branch `main` (o avvio manuale del workflow).
 
 ### 2) FTP su kairete.it (automatico)

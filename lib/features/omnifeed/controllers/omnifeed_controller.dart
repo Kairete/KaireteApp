@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/content_owner_service.dart';
 import 'package:kairete/core/utils/app_toast.dart';
@@ -33,8 +34,10 @@ class OmnifeedController extends GetxController {
   final feedModeIndex = 0.obs;
   final sortByLastComment = false.obs;
 
-  String get _feedMode =>
-      OmnifeedContentFilters.modes[feedModeIndex.value.clamp(0, 3)];
+  String get _feedMode {
+    if (AppConfig.isTenantApp) return 'tenant_group';
+    return OmnifeedContentFilters.modes[feedModeIndex.value.clamp(0, 3)];
+  }
 
   String get _feedSort => sortByLastComment.value ? 'last_activity' : 'post_date';
 

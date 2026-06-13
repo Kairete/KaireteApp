@@ -6,6 +6,14 @@ class ApiPaths {
   static const me = 'api/me';
   static const alerts = 'api/alerts/';
 
+  // Multisite mobile
+  static const msTenants = 'api/ms-tenants';
+  static String msTenantBootstrap(int tenantId) =>
+      'api/ms-tenants/$tenantId/bootstrap';
+  static const mobileDeviceSessions = 'api/mobile/device-sessions';
+  static const mobileDeviceSessionsRestore =
+      'api/mobile/device-sessions/restore-by-device';
+
   // OmniFeed / newsfeed (XenForo add-on API)
   static const newsfeed = 'api/newsfeed';
   static const newsfeedPost = 'api/newsfeed/post';
