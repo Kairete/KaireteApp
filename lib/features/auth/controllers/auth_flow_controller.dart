@@ -214,9 +214,8 @@ class AuthFlowController extends GetxController {
       try {
         await TenantService().ensureTenantReady();
       } catch (e) {
-        errorMessage.value = e.toString();
-        isLoading.value = false;
-        return;
+        // Fallback embedded in TenantService: non bloccare la home.
+        errorMessage.value = '';
       }
       isLoading.value = false;
     }

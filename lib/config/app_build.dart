@@ -5,8 +5,8 @@ import 'package:kairete/config/app_config.dart';
 class AppBuild {
   AppBuild._();
 
-  static const label = 'ms6';
-  static const stamp = '20250613f';
+  static const label = 'ms7';
+  static const stamp = '20250613g';
 
   static String get appBarTitle {
     final name = AppBranding.current.appName;

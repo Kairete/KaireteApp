@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Definizione di una sotto-app community (modello per nuove APK).
-///
-/// Per aggiungere una community:
-/// 1. Aggiungi una voce in [TenantApps.registry]
-/// 2. Duplica flavor Android in `android/app/build.gradle` (vedi TENANT_APK.md)
-/// 3. Aggiungi logo in `assets/branding/<slug>/logo.png`
-/// 4. Build con `--dart-define=APP_VARIANT=<slug>`
 class TenantAppDefinition {
   const TenantAppDefinition({
     required this.slug,
@@ -18,6 +12,10 @@ class TenantAppDefinition {
     required this.appBarBorderBottom,
     required this.logoAssetPath,
     this.gradleFlavorName,
+    this.fallbackNewsfeedGroupId = 0,
+    this.fallbackForumNodeIds = const [],
+    this.fallbackBlogIds = const [],
+    this.fallbackBlogCategoryIds = const [],
   });
 
   final String slug;
@@ -29,6 +27,10 @@ class TenantAppDefinition {
   final Color appBarBorderBottom;
   final String logoAssetPath;
   final String? gradleFlavorName;
+  final int fallbackNewsfeedGroupId;
+  final List<int> fallbackForumNodeIds;
+  final List<int> fallbackBlogIds;
+  final List<int> fallbackBlogCategoryIds;
 
   String get variantId => slug;
 }
@@ -47,6 +49,7 @@ class TenantApps {
     appBarBorderBottom: Color(0xFF1A1A1A),
     logoAssetPath: 'assets/branding/juve_social/logo.png',
     gradleFlavorName: 'juveSocial',
+    fallbackNewsfeedGroupId: 4,
   );
 
   static const List<TenantAppDefinition> registry = [juveSocial];
@@ -54,6 +57,13 @@ class TenantApps {
   static TenantAppDefinition? bySlug(String slug) {
     for (final def in registry) {
       if (def.slug == slug) return def;
+    }
+    return null;
+  }
+
+  static TenantAppDefinition? byTenantId(int tenantId) {
+    for (final def in registry) {
+      if (def.defaultTenantId == tenantId) return def;
     }
     return null;
   }

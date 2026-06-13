@@ -101,7 +101,7 @@ class OmnifeedService {
       throw OmnifeedException(XenforoApi.connectionMessage(lastError));
     }
     throw OmnifeedException(
-      'Feed non disponibile. Aggiorna Multisite 1.9.99+ su kairete.it.',
+      'Feed non disponibile. Verifica connessione o aggiorna Multisite su kairete.it.',
     );
   }
 
