@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
@@ -78,6 +80,9 @@ class BlogListController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      if (AppConfig.isTenantApp) {
+        await TenantService().syncScopeFromServer();
+      }
       final list = await _service
           .fetchEntries(
             blogId: filterBlogId,

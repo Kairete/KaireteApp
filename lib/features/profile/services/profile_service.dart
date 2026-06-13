@@ -7,6 +7,8 @@ import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/core/tenant/tenant_feed_merge.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_media_enrichment.dart';
 import 'package:kairete/features/profile/models/user_profile.dart';
 
@@ -52,6 +54,8 @@ class ProfileService {
     int userId, {
     required int page,
   }) async {
+    await TenantService().ensureTenantReady();
+
     try {
       final json = await _api.get(
         ApiPaths.msTenantMappedUserFeed(AppConfig.tenantId, userId),
@@ -62,10 +66,36 @@ class ProfileService {
         },
       );
       if (XenforoApi.firstErrorMessage(json) == null) {
-        return OmnifeedFeed.fromJson(json);
+        final feed = OmnifeedFeed.fromJson(json);
+        if (feed.items.isNotEmpty) {
+          return OmnifeedFeed(
+            items: await enrichMediaAlbumHeaders(feed.items),
+          );
+        }
       }
     } catch (_) {}
-    return OmnifeedFeed(items: []);
+
+    try {
+      final items = await _fetchUserFeedFromApi(
+        userId,
+        page: page,
+        sort: 'post_date',
+      );
+      if (items.isNotEmpty) {
+        return OmnifeedFeed(
+          items: await enrichMediaAlbumHeaders(items),
+        );
+      }
+    } catch (_) {}
+
+    final merged = await TenantFeedMergeService().buildUserItems(
+      userId: userId,
+      page: page,
+      limit: 20,
+    );
+    return OmnifeedFeed(
+      items: await enrichMediaAlbumHeaders(merged),
+    );
   }
 
   Future<List<OmnifeedItem>> _fetchUserFeedFromApi(

@@ -5,6 +5,7 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/core/tenant/tenant_api_helpers.dart';
+import 'package:kairete/core/tenant/tenant_feed_merge.dart';
 import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
@@ -70,18 +71,18 @@ class OmnifeedService {
     final tenantId = AppConfig.tenantId;
     Object? lastError;
 
-    final loaders = <Future<OmnifeedFeed> Function()>[];
-    if (TenantScope.groupId > 0) {
-      loaders.add(() => _loadTenantFeedFromGroupOnly(page: page));
-    }
-    loaders.addAll([
+    final loaders = <Future<OmnifeedFeed> Function()>[
       () => _loadTenantFeedFromMultisite(tenantId, sort: sort, page: page),
       () => _loadTenantFeedFromOmniFeed(sort: sort, page: page),
-    ]);
+      () => _loadTenantFeedFromClientMerge(page: page),
+      if (TenantScope.groupId > 0)
+        () => _loadTenantFeedFromGroupOnly(page: page),
+    ];
 
     for (final loader in loaders) {
       try {
-        return await loader();
+        final feed = await loader();
+        if (feed.items.isNotEmpty) return feed;
       } on OmnifeedException catch (e) {
         if (!TenantApiHelpers.isMissingEndpoint(e.message) &&
             !e.message.contains('non configurato')) {
@@ -103,6 +104,18 @@ class OmnifeedService {
     throw OmnifeedException(
       'Feed non disponibile. Verifica connessione o aggiorna Multisite su kairete.it.',
     );
+  }
+
+  Future<OmnifeedFeed> _loadTenantFeedFromClientMerge({required int page}) async {
+    var items = await TenantFeedMergeService().buildCommunityItems(
+      page: page,
+      limit: 20,
+    );
+    if (items.isEmpty) {
+      throw OmnifeedException('Nessun contenuto mappato disponibile.');
+    }
+    items = await enrichMediaAlbumHeaders(items);
+    return OmnifeedFeed(items: items);
   }
 
   Future<OmnifeedFeed> _loadTenantFeedFromMultisite(

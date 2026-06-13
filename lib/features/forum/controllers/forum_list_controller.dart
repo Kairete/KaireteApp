@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 import 'package:kairete/features/forum/pages/forum_thread_list_page.dart';
 import 'package:kairete/features/forum/services/forum_service.dart';
@@ -24,6 +26,9 @@ class ForumListController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      if (AppConfig.isTenantApp) {
+        await TenantService().syncScopeFromServer();
+      }
       groups.value = await _service.fetchForumGroups().timeout(
             const Duration(seconds: 25),
           );

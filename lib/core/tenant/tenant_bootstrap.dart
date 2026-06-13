@@ -42,6 +42,19 @@ class TenantBootstrap {
 
   bool tabEnabled(String tab) => tabs.contains(tab);
 
+  TenantBootstrap mergeFrom(TenantBootstrap other) {
+    return TenantBootstrap(
+      tenantId: tenantId > 0 ? tenantId : other.tenantId,
+      title: other.title.isNotEmpty ? other.title : title,
+      slug: other.slug.isNotEmpty ? other.slug : slug,
+      newsfeedGroupId: other.newsfeedGroupId > 0
+          ? other.newsfeedGroupId
+          : newsfeedGroupId,
+      tabs: other.tabs.isNotEmpty ? other.tabs : tabs,
+      scope: other.scope,
+    );
+  }
+
   static int _int(dynamic v) {
     if (v is int) return v;
     return int.tryParse(v?.toString() ?? '') ?? 0;

@@ -11,6 +11,7 @@ import 'package:kairete/features/auth/controllers/auth_flow_controller.dart';
 import 'package:kairete/features/blog/controllers/blog_list_controller.dart';
 import 'package:kairete/features/blog/pages/blog_create_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
+import 'package:kairete/features/forum/controllers/forum_list_controller.dart';
 import 'package:kairete/features/forum/pages/forum_list_page.dart';
 import 'package:kairete/features/groups/pages/groups_list_page.dart';
 import 'package:kairete/features/media/pages/media_list_page.dart';
@@ -73,6 +74,25 @@ class _HomeShellPageState extends State<HomeShellPage> {
   Set<int> _hiddenTabIndexes() {
     if (AppConfig.isTenantApp) return const {};
     return const {};
+  }
+
+  Future<void> _onTabSelected(int i) async {
+    if (i == _tabIndex) return;
+    if (AppConfig.isTenantApp) {
+      await TenantService().syncScopeFromServer();
+    }
+    setState(() => _tabIndex = i);
+    if (!AppConfig.isTenantApp) return;
+    if (i == 0) {
+      await _feed.loadFeed();
+    } else if (i == 1) {
+      const tag = 'blog_0_0';
+      if (Get.isRegistered<BlogListController>(tag: tag)) {
+        await Get.find<BlogListController>(tag: tag).loadEntries();
+      }
+    } else if (i == 2 && Get.isRegistered<ForumListController>()) {
+      await Get.find<ForumListController>().loadForums();
+    }
   }
 
   @override
@@ -179,7 +199,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         children: [
           OmnifeedFeedTabs(
             selectedIndex: _tabIndex,
-            onSelected: (i) => setState(() => _tabIndex = i),
+            onSelected: _onTabSelected,
             hiddenTabs: _hiddenTabIndexes(),
             layout: tabLayout,
           ),

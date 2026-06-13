@@ -65,7 +65,7 @@ class OmnifeedController extends GetxController {
     errorMessage.value = '';
     try {
       if (AppConfig.isTenantApp) {
-        await TenantService().ensureTenantReady();
+        await TenantService().syncScopeFromServer();
       }
       final feed = await _service
           .fetchFeed(mode: _feedMode, sort: _feedSort)

@@ -47,6 +47,51 @@ class TenantService {
     throw TenantException('Bootstrap tenant non disponibile.');
   }
 
+  /// Aggiorna scope/tabs dal server senza resettare la sessione (mapping ACP live).
+  Future<bool> syncScopeFromServer({int? tenantId}) async {
+    if (!AppConfig.isTenantApp) return false;
+    final id = tenantId ?? AppConfig.tenantId;
+    if (id <= 0) return false;
+
+    try {
+      await AppApi.instance.applySession();
+      final json = await _api.get(ApiPaths.msTenants);
+      final err = XenforoApi.firstErrorMessage(json);
+      if (err != null) return false;
+
+      final tenants = json['tenants'] as List<dynamic>? ?? [];
+      for (final raw in tenants) {
+        if (raw is! Map<String, dynamic>) continue;
+        final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
+        if (tid != id) continue;
+
+        final scopeRaw = raw['scope'];
+        final scope = scopeRaw is Map
+            ? Map<String, dynamic>.from(scopeRaw)
+            : const <String, dynamic>{};
+
+        final incoming = TenantBootstrap.fromJson({
+          'tenant_id': tid,
+          'title': raw['title']?.toString() ?? '',
+          'slug': raw['slug']?.toString() ?? '',
+          'newsfeed_group_id': raw['newsfeed_group_id'] ?? scope['groupId'] ?? 0,
+          'scope': scope,
+          'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
+        });
+
+        final current = TenantRuntime.bootstrap;
+        if (current == null) {
+          TenantRuntime.bootstrap = incoming;
+        } else {
+          TenantRuntime.bootstrap = current.mergeFrom(incoming);
+        }
+        return true;
+      }
+    } catch (_) {}
+
+    return false;
+  }
+
   Future<TenantBootstrap> _loadBootstrapFromMsTenantsQuery(int id) async {
     final json = await _api.get(
       ApiPaths.msTenants,
@@ -77,7 +122,7 @@ class TenantService {
           ? Map<String, dynamic>.from(scopeRaw)
           : const <String, dynamic>{};
 
-      if (_scopeHasMapping(scope) ||
+      if (_scopeHasAnyMapping(scope) ||
           (int.tryParse(raw['newsfeed_group_id']?.toString() ?? '') ?? 0) > 0) {
         return TenantBootstrap.fromJson({
           'tenant_id': tid,
@@ -93,16 +138,32 @@ class TenantService {
     throw TenantException('Scope tenant non presente nella lista ms-tenants.');
   }
 
-  bool _scopeHasMapping(Map<String, dynamic> scope) {
+  bool _scopeHasAnyMapping(Map<String, dynamic> scope) {
     for (final key in [
       'forumNodeIds',
       'blogIds',
       'blogCategoryIds',
+      'mediaCategoryIds',
+      'mediaAlbumIds',
       'groupId',
     ]) {
       final raw = scope[key];
       if (raw is List && raw.isNotEmpty) return true;
       if (raw is int && raw > 0) return true;
+    }
+    return false;
+  }
+
+  bool _scopeHasModuleMapping(Map<String, dynamic> scope) {
+    for (final key in [
+      'forumNodeIds',
+      'blogIds',
+      'blogCategoryIds',
+      'mediaCategoryIds',
+      'mediaAlbumIds',
+    ]) {
+      final raw = scope[key];
+      if (raw is List && raw.isNotEmpty) return true;
     }
     return false;
   }
@@ -126,7 +187,14 @@ class TenantService {
 
     final bootstrap = TenantBootstrap.fromJson(bootstrapRaw);
     if (bootstrap.tenantId <= 0) {
-      return bootstrap.copyWith(tenantId: id);
+      return TenantBootstrap(
+        tenantId: id,
+        title: bootstrap.title,
+        slug: bootstrap.slug,
+        newsfeedGroupId: bootstrap.newsfeedGroupId,
+        tabs: bootstrap.tabs,
+        scope: bootstrap.scope,
+      );
     }
     return bootstrap;
   }
@@ -155,21 +223,26 @@ class TenantService {
 
   Future<void> ensureTenantReady({bool forceReload = false}) async {
     if (!AppConfig.isTenantApp) return;
-    if (!forceReload && TenantRuntime.bootstrap != null) {
-      _maybeUpgradeEmbeddedBootstrap();
+    if (forceReload) {
+      TenantRuntime.bootstrap = await loadBootstrap();
       return;
     }
-    TenantRuntime.bootstrap = await loadBootstrap();
+    if (TenantRuntime.bootstrap == null) {
+      TenantRuntime.bootstrap = await loadBootstrap();
+      return;
+    }
+    _maybeUpgradeEmbeddedBootstrap();
+    await syncScopeFromServer();
   }
 
   void _maybeUpgradeEmbeddedBootstrap() {
     final current = TenantRuntime.bootstrap;
     if (current == null) return;
-    if (_scopeHasMapping(current.scope)) return;
+    if (_scopeHasModuleMapping(current.scope)) return;
 
     final embedded = _embeddedFallbackBootstrap(current.tenantId);
-    if (embedded != null && _scopeHasMapping(embedded.scope)) {
-      TenantRuntime.bootstrap = embedded;
+    if (embedded != null && _scopeHasModuleMapping(embedded.scope)) {
+      TenantRuntime.bootstrap = current.mergeFrom(embedded);
     }
   }
 
@@ -185,17 +258,4 @@ class TenantException implements Exception {
 
   @override
   String toString() => message;
-}
-
-extension on TenantBootstrap {
-  TenantBootstrap copyWith({int? tenantId}) {
-    return TenantBootstrap(
-      tenantId: tenantId ?? this.tenantId,
-      title: title,
-      slug: slug,
-      newsfeedGroupId: newsfeedGroupId,
-      tabs: tabs,
-      scope: scope,
-    );
-  }
 }
