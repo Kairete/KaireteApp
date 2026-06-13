@@ -63,12 +63,10 @@ android {
         hub {
             dimension "kairete"
             applicationId "com.kairete.app"
-            resValue "string", "app_name", "Kairete"
         }
         juveSocial {
             dimension "kairete"
             applicationId "com.kairete.tenant.juve_social"
-            resValue "string", "app_name", "Juve Social"
         }
     }
 

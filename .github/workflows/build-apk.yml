@@ -104,6 +104,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Analyze Dart
+        run: flutter analyze --no-fatal-infos
+
       - name: Build debug APK (arm64)
         run: |
           set -o pipefail
