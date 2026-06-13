@@ -24,6 +24,7 @@ class ApiPaths {
 
   // OmniFeed / newsfeed (XenForo add-on API)
   static const newsfeed = 'api/newsfeed';
+  static const newsfeedTenantScope = 'api/newsfeed/tenant-scope';
   static const newsfeedPost = 'api/newsfeed/post';
   static const newsfeedBlogPost = 'api/newsfeed/blog-post';
   static const newsfeedUserFeed = 'api/newsfeed/user-feed';

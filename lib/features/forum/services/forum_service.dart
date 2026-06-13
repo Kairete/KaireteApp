@@ -25,6 +25,7 @@ class ForumService {
   }
 
   Future<List<ForumNodeGroup>> _fetchTenantMappedForums() async {
+    await TenantService().syncScopeFromServer();
     await TenantService().ensureTenantReady();
     try {
       final json = await _api.get(

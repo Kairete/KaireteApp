@@ -20,12 +20,14 @@ class TenantService {
     Object? lastError;
 
     for (final loader in [
+      () => _loadScopeFromOmniFeedTenantScope(id),
       () => _loadBootstrapFromMsTenantsQuery(id),
       () => _loadBootstrapFromDedicatedRoute(id),
       () => _loadBootstrapFromTenantsList(id),
     ]) {
       try {
-        return await loader();
+        final bootstrap = await loader();
+        if (bootstrap != null) return bootstrap;
       } on TenantException catch (e) {
         lastError = e;
       } on DioException catch (e) {
@@ -47,7 +49,7 @@ class TenantService {
     throw TenantException('Bootstrap tenant non disponibile.');
   }
 
-  /// Aggiorna scope/tabs dal server senza resettare la sessione (mapping ACP live).
+  /// Aggiorna scope/tabs dal server (mapping ACP live, senza nuova APK).
   Future<bool> syncScopeFromServer({int? tenantId}) async {
     if (!AppConfig.isTenantApp) return false;
     final id = tenantId ?? AppConfig.tenantId;
@@ -55,90 +57,42 @@ class TenantService {
 
     try {
       await AppApi.instance.applySession();
-      final json = await _api.get(ApiPaths.msTenants);
-      final err = XenforoApi.firstErrorMessage(json);
-      if (err != null) return false;
+    } catch (_) {
+      return false;
+    }
 
-      final tenants = json['tenants'] as List<dynamic>? ?? [];
-      for (final raw in tenants) {
-        if (raw is! Map<String, dynamic>) continue;
-        final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
-        if (tid != id) continue;
-
-        final scopeRaw = raw['scope'];
-        final scope = scopeRaw is Map
-            ? Map<String, dynamic>.from(scopeRaw)
-            : const <String, dynamic>{};
-
-        final incoming = TenantBootstrap.fromJson({
-          'tenant_id': tid,
-          'title': raw['title']?.toString() ?? '',
-          'slug': raw['slug']?.toString() ?? '',
-          'newsfeed_group_id': raw['newsfeed_group_id'] ?? scope['groupId'] ?? 0,
-          'scope': scope,
-          'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
-        });
-
-        final current = TenantRuntime.bootstrap;
-        if (current == null) {
-          TenantRuntime.bootstrap = incoming;
-        } else {
-          TenantRuntime.bootstrap = current.mergeFrom(incoming);
+    for (final loader in [
+      () => _loadScopeFromOmniFeedTenantScope(id),
+      () => _loadBootstrapFromMsTenantsQuery(id),
+      () => _loadBootstrapFromDedicatedRoute(id),
+      () => _loadBootstrapFromTenantsList(id),
+    ]) {
+      try {
+        final incoming = await loader();
+        if (incoming != null && _applyIncomingBootstrap(incoming)) {
+          return true;
         }
-        return true;
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     return false;
   }
 
-  Future<TenantBootstrap> _loadBootstrapFromMsTenantsQuery(int id) async {
-    final json = await _api.get(
-      ApiPaths.msTenants,
-      query: {'tenant_id': id, 'bootstrap': 1},
-    );
-    return _parseBootstrapResponse(json, id);
-  }
-
-  Future<TenantBootstrap> _loadBootstrapFromDedicatedRoute(int id) async {
-    final json = await _api.get(ApiPaths.msTenantBootstrap(id));
-    return _parseBootstrapResponse(json, id);
-  }
-
-  /// Usa api/ms-tenants (già attivo su kairete.it) con scope incluso nel server 1.9.101+.
-  Future<TenantBootstrap> _loadBootstrapFromTenantsList(int id) async {
-    final json = await _api.get(ApiPaths.msTenants);
-    final err = XenforoApi.firstErrorMessage(json);
-    if (err != null) throw TenantException(err);
-
-    final tenants = json['tenants'] as List<dynamic>? ?? [];
-    for (final raw in tenants) {
-      if (raw is! Map<String, dynamic>) continue;
-      final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
-      if (tid != id) continue;
-
-      final scopeRaw = raw['scope'];
-      final scope = scopeRaw is Map
-          ? Map<String, dynamic>.from(scopeRaw)
-          : const <String, dynamic>{};
-
-      if (_scopeHasAnyMapping(scope) ||
-          (int.tryParse(raw['newsfeed_group_id']?.toString() ?? '') ?? 0) > 0) {
-        return TenantBootstrap.fromJson({
-          'tenant_id': tid,
-          'title': raw['title']?.toString() ?? '',
-          'slug': raw['slug']?.toString() ?? '',
-          'newsfeed_group_id': raw['newsfeed_group_id'] ?? scope['groupId'] ?? 0,
-          'scope': scope,
-          'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
-        });
-      }
+  bool _applyIncomingBootstrap(TenantBootstrap incoming) {
+    if (!_scopePayloadPresent(incoming.scope) && incoming.newsfeedGroupId <= 0) {
+      return false;
     }
 
-    throw TenantException('Scope tenant non presente nella lista ms-tenants.');
+    final current = TenantRuntime.bootstrap;
+    if (current == null) {
+      TenantRuntime.bootstrap = incoming;
+    } else {
+      TenantRuntime.bootstrap = current.mergeFrom(incoming);
+    }
+    return true;
   }
 
-  bool _scopeHasAnyMapping(Map<String, dynamic> scope) {
+  bool _scopePayloadPresent(Map<String, dynamic> scope) {
     for (final key in [
       'forumNodeIds',
       'blogIds',
@@ -147,43 +101,89 @@ class TenantService {
       'mediaAlbumIds',
       'groupId',
     ]) {
-      final raw = scope[key];
-      if (raw is List && raw.isNotEmpty) return true;
-      if (raw is int && raw > 0) return true;
+      if (scope.containsKey(key)) return true;
     }
     return false;
   }
 
-  bool _scopeHasModuleMapping(Map<String, dynamic> scope) {
-    for (final key in [
-      'forumNodeIds',
-      'blogIds',
-      'blogCategoryIds',
-      'mediaCategoryIds',
-      'mediaAlbumIds',
-    ]) {
-      final raw = scope[key];
-      if (raw is List && raw.isNotEmpty) return true;
+  Future<TenantBootstrap?> _loadScopeFromOmniFeedTenantScope(int id) async {
+    final json = await _api.get(
+      ApiPaths.newsfeedTenantScope,
+      query: {'tenant_id': id},
+    );
+    final err = XenforoApi.firstErrorMessage(json);
+    if (err != null) {
+      if (TenantApiHelpers.isMissingEndpoint(err)) return null;
+      throw TenantException(err);
     }
-    return false;
+    return _bootstrapFromScopePayload(json, id);
   }
 
-  TenantBootstrap _parseBootstrapResponse(
+  Future<TenantBootstrap?> _loadBootstrapFromMsTenantsQuery(int id) async {
+    try {
+      final json = await _api.get(
+        ApiPaths.msTenants,
+        query: {'tenant_id': id, 'bootstrap': 1},
+      );
+      return _parseBootstrapResponseOrNull(json, id);
+    } on TenantException catch (e) {
+      if (TenantApiHelpers.isMissingEndpoint(e.message)) return null;
+      rethrow;
+    }
+  }
+
+  Future<TenantBootstrap?> _loadBootstrapFromDedicatedRoute(int id) async {
+    try {
+      final json = await _api.get(ApiPaths.msTenantBootstrap(id));
+      return _parseBootstrapResponseOrNull(json, id);
+    } on TenantException catch (e) {
+      if (TenantApiHelpers.isMissingEndpoint(e.message)) return null;
+      rethrow;
+    }
+  }
+
+  Future<TenantBootstrap?> _loadBootstrapFromTenantsList(int id) async {
+    final json = await _api.get(ApiPaths.msTenants);
+    final err = XenforoApi.firstErrorMessage(json);
+    if (err != null) {
+      if (TenantApiHelpers.isMissingEndpoint(err)) return null;
+      throw TenantException(err);
+    }
+
+    final tenants = json['tenants'] as List<dynamic>? ?? [];
+    for (final raw in tenants) {
+      if (raw is! Map<String, dynamic>) continue;
+      final tid = int.tryParse(raw['tenant_id']?.toString() ?? '') ?? 0;
+      if (tid != id) continue;
+
+      final scopeRaw = raw['scope'];
+      if (scopeRaw is! Map) continue;
+
+      return TenantBootstrap.fromJson({
+        'tenant_id': tid,
+        'title': raw['title']?.toString() ?? '',
+        'slug': raw['slug']?.toString() ?? '',
+        'newsfeed_group_id': raw['newsfeed_group_id'] ?? scopeRaw['groupId'] ?? 0,
+        'scope': Map<String, dynamic>.from(scopeRaw),
+        'tabs': raw['tabs'] ?? const ['feed', 'blog', 'forum'],
+      });
+    }
+
+    return null;
+  }
+
+  TenantBootstrap? _parseBootstrapResponseOrNull(
     Map<String, dynamic> json,
     int id,
   ) {
     final err = XenforoApi.firstErrorMessage(json);
     if (err != null) {
-      if (TenantApiHelpers.isMissingEndpoint(err)) {
-        throw TenantException(err);
-      }
+      if (TenantApiHelpers.isMissingEndpoint(err)) return null;
       throw TenantException(err);
     }
 
     final bootstrapRaw = json['bootstrap'];
-    if (bootstrapRaw is! Map<String, dynamic>) {
-      throw TenantException('Bootstrap tenant non disponibile.');
-    }
+    if (bootstrapRaw is! Map<String, dynamic>) return null;
 
     final bootstrap = TenantBootstrap.fromJson(bootstrapRaw);
     if (bootstrap.tenantId <= 0) {
@@ -199,9 +199,29 @@ class TenantService {
     return bootstrap;
   }
 
+  TenantBootstrap? _bootstrapFromScopePayload(
+    Map<String, dynamic> json,
+    int id,
+  ) {
+    final scopeRaw = json['scope'];
+    final scope = scopeRaw is Map
+        ? Map<String, dynamic>.from(scopeRaw)
+        : const <String, dynamic>{};
+
+    return TenantBootstrap.fromJson({
+      'tenant_id': json['tenant_id'] ?? id,
+      'title': json['title']?.toString() ?? '',
+      'slug': json['slug']?.toString() ?? '',
+      'newsfeed_group_id': json['newsfeed_group_id'] ?? scope['groupId'] ?? 0,
+      'scope': scope,
+      'tabs': json['tabs'] ?? const ['feed', 'blog', 'forum'],
+    });
+  }
+
   TenantBootstrap? _embeddedFallbackBootstrap(int id) {
     final def = TenantApps.byTenantId(id);
     if (def == null) return null;
+    if (def.fallbackNewsfeedGroupId <= 0) return null;
 
     return TenantBootstrap(
       tenantId: id,
@@ -210,13 +230,7 @@ class TenantService {
       newsfeedGroupId: def.fallbackNewsfeedGroupId,
       tabs: const ['feed', 'blog', 'forum'],
       scope: {
-        if (def.fallbackForumNodeIds.isNotEmpty)
-          'forumNodeIds': def.fallbackForumNodeIds,
-        if (def.fallbackBlogIds.isNotEmpty) 'blogIds': def.fallbackBlogIds,
-        if (def.fallbackBlogCategoryIds.isNotEmpty)
-          'blogCategoryIds': def.fallbackBlogCategoryIds,
-        if (def.fallbackNewsfeedGroupId > 0)
-          'groupId': def.fallbackNewsfeedGroupId,
+        'groupId': def.fallbackNewsfeedGroupId,
       },
     );
   }
@@ -231,19 +245,7 @@ class TenantService {
       TenantRuntime.bootstrap = await loadBootstrap();
       return;
     }
-    _maybeUpgradeEmbeddedBootstrap();
     await syncScopeFromServer();
-  }
-
-  void _maybeUpgradeEmbeddedBootstrap() {
-    final current = TenantRuntime.bootstrap;
-    if (current == null) return;
-    if (_scopeHasModuleMapping(current.scope)) return;
-
-    final embedded = _embeddedFallbackBootstrap(current.tenantId);
-    if (embedded != null && _scopeHasModuleMapping(embedded.scope)) {
-      TenantRuntime.bootstrap = current.mergeFrom(embedded);
-    }
   }
 
   Future<void> refreshBootstrap() async {

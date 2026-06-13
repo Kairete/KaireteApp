@@ -39,6 +39,7 @@ class BlogService {
   }
 
   Future<List<BlogEntry>> _fetchTenantMappedEntries() async {
+    await TenantService().syncScopeFromServer();
     await TenantService().ensureTenantReady();
     try {
       final json = await _api.get(
@@ -68,6 +69,7 @@ class BlogService {
   }
 
   Future<List<BlogEntry>> _fetchScopedBlogEntries() async {
+    await TenantService().syncScopeFromServer();
     final blogIds = TenantScope.blogIds;
     final categoryIds = TenantScope.blogCategoryIds;
     if (blogIds.isEmpty && categoryIds.isEmpty) {
@@ -75,19 +77,27 @@ class BlogService {
     }
 
     final merged = <BlogEntry>[];
-    for (final blogId in blogIds) {
+
+    if (categoryIds.isNotEmpty) {
       final json = await _api.get(
         ApiPaths.blogEntries,
-        query: {'blog_ids[]': blogId, 'limit': 50},
+        query: {
+          'category_ids[]': categoryIds,
+          'limit': 100,
+        },
       );
       if (XenforoApi.firstErrorMessage(json) == null) {
         merged.addAll(BlogEntriesPage.fromJson(json).entries);
       }
     }
-    for (final categoryId in categoryIds) {
+
+    if (blogIds.isNotEmpty) {
       final json = await _api.get(
         ApiPaths.blogEntries,
-        query: {'category_ids[]': categoryId, 'limit': 50},
+        query: {
+          'blog_ids[]': blogIds,
+          'limit': 100,
+        },
       );
       if (XenforoApi.firstErrorMessage(json) == null) {
         merged.addAll(BlogEntriesPage.fromJson(json).entries);
