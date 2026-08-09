@@ -115,17 +115,26 @@ class ForumNode {
   }
 
   factory ForumNode.fromJson(Map<String, dynamic> json) {
+    int asInt(dynamic value) {
+      if (value is int) return value;
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    Map<String, dynamic>? typeData;
+    final rawType = json['type_data'];
+    if (rawType is Map) {
+      typeData = Map<String, dynamic>.from(rawType);
+    }
+
     return ForumNode(
-      nodeId: json['node_id'] as int? ?? 0,
+      nodeId: asInt(json['node_id']),
       title: json['title']?.toString() ?? '',
       nodeTypeId: json['node_type_id']?.toString() ?? '',
-      parentNodeId: json['parent_node_id'] as int? ?? 0,
-      displayOrder: json['display_order'] as int? ?? 0,
+      parentNodeId: asInt(json['parent_node_id']),
+      displayOrder: asInt(json['display_order']),
       description: json['description']?.toString(),
       viewUrl: json['view_url']?.toString(),
-      typeData: ForumNodeTypeData.fromJson(
-        json['type_data'] as Map<String, dynamic>?,
-      ),
+      typeData: ForumNodeTypeData.fromJson(typeData),
     );
   }
 }

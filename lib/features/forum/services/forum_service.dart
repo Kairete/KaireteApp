@@ -11,6 +11,7 @@ import 'package:kairete/features/blog/services/blog_service.dart';
 import 'package:kairete/features/forum/models/forum_feed_item.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
+import 'package:kairete/features/forum/services/forum_tenant_groups.dart';
 import 'package:kairete/features/forum/utils/forum_quote_bbcode.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
@@ -65,103 +66,26 @@ class ForumService {
 
     final json = await _api.get(ApiPaths.nodes, query: {'limit': 500});
     _throwIfError(json);
-    final allNodes = <ForumNode>[];
+    final rawNodes = <Map<String, dynamic>>[];
     if (json['nodes'] is List) {
       for (final raw in json['nodes'] as List) {
         if (raw is Map) {
-          allNodes.add(ForumNode.fromJson(Map<String, dynamic>.from(raw)));
+          rawNodes.add(Map<String, dynamic>.from(raw));
         }
       }
     }
-    final byId = {for (final n in allNodes) n.nodeId: n};
 
-    bool underMappedRoot(ForumNode node) {
-      if (allowedRoots.contains(node.nodeId)) return true;
-      var parentId = node.parentNodeId;
-      final seen = <int>{};
-      while (parentId > 0 && seen.add(parentId)) {
-        if (allowedRoots.contains(parentId)) return true;
-        parentId = byId[parentId]?.parentNodeId ?? 0;
-      }
-      return false;
-    }
-
-    // Solo i contenitori mappati (hanno figli Category/Forum) restano fuori lista,
-    // come il root "Juve Social". I forum foglia mappati devono restare visibili.
-    final containerRoots = allowedRoots.where((id) {
-      return allNodes.any(
-        (n) =>
-            n.parentNodeId == id &&
-            (n.isCategory || n.isForum) &&
-            n.nodeId != id,
-      );
-    }).toSet();
-
-    // Forum nello scope (anche se lo scope ACP ha solo ID forum espansi).
-    final scopedForums = allNodes
-        .where((n) => n.isForum && underMappedRoot(n) && !containerRoots.contains(n.nodeId))
-        .toList();
-    if (scopedForums.isEmpty) {
+    final groups = buildTenantForumGroups(
+      rawNodes: rawNodes,
+      mappedNodeIds: allowedRoots,
+    );
+    if (groups.isEmpty) {
       throw ForumException(
         'Nessun forum/categoria sotto i nodi mappati. '
         'Verifica il mapping in ACP e Multisite 1.9.177+.',
       );
     }
-
-    // Riporta le Category antenate (es. "Juventus Forum") anche se non sono in forumNodeIds.
-    final byNodeId = <int, ForumNode>{
-      for (final f in scopedForums) f.nodeId: f,
-    };
-    for (final forum in scopedForums) {
-      var parentId = forum.parentNodeId;
-      final seen = <int>{};
-      while (parentId > 0 && seen.add(parentId)) {
-        if (containerRoots.contains(parentId)) break;
-        final parent = byId[parentId];
-        if (parent == null) break;
-        // Forum antenato non in lista = contenitore (es. root "Juve Social"): stop.
-        if (parent.isForum && !byNodeId.containsKey(parentId)) {
-          break;
-        }
-        if (parent.isCategory) {
-          byNodeId[parentId] = parent;
-        }
-        parentId = parent.parentNodeId;
-      }
-    }
-
-    final scoped = byNodeId.values.toList();
-    final scopedIds = byNodeId.keys.toSet();
-    final treeMap = <String, List<int>>{'0': []};
-    for (final n in scoped) {
-      final parentInScope =
-          scopedIds.contains(n.parentNodeId) ? n.parentNodeId : 0;
-      treeMap.putIfAbsent('$parentInScope', () => []).add(n.nodeId);
-    }
-
-    return ForumNodesPage.fromJson({
-      'nodes': scoped
-          .map(
-            (n) => {
-              'node_id': n.nodeId,
-              'title': n.title,
-              'node_type_id': n.nodeTypeId,
-              'parent_node_id': n.parentNodeId,
-              'display_order': n.displayOrder,
-              'description': n.description,
-              'view_url': n.viewUrl,
-              'type_data': {
-                'discussion_count': n.typeData?.discussionCount ?? 0,
-                'message_count': n.typeData?.messageCount ?? 0,
-                'last_post_date': n.typeData?.lastPostDate,
-                'last_thread_title': n.typeData?.lastThreadTitle,
-                'last_post_username': n.typeData?.lastPostUsername,
-              },
-            },
-          )
-          .toList(),
-      'tree_map': treeMap,
-    }).groups;
+    return groups;
   }
 
   Future<List<ForumThread>> fetchThreads(int forumId) async {
