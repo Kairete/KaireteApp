@@ -161,24 +161,55 @@ jobs:
           echo "BUILD_STAMP=$STAMP" >> "$GITHUB_ENV"
           echo "Build label: $LABEL ($STAMP) variant=$APP_VARIANT basename=$APK_BASENAME"
 
-      - name: Apply launcher icon from URL
-        if: matrix.cfg.launcher_icon_url != ''
+      - name: Apply launcher icon (URL or tenant branding asset)
         run: |
           set -e
           ICON_URL="${{ matrix.cfg.launcher_icon_url }}"
           if [ "$FLAVOR" = "juveSocial" ]; then
             ICON_ROOT="android/app/src/juveSocial/res"
+            FALLBACK_ICON="assets/branding/juve_social/logo.png"
           else
             ICON_ROOT="android/app/src/main/res"
+            FALLBACK_ICON=""
           fi
-          DEST_DIR="${ICON_ROOT}/mipmap-xxxhdpi"
-          mkdir -p "$DEST_DIR"
-          curl -fsSL "$ICON_URL" -o "$DEST_DIR/ic_launcher.png"
-          for d in mdpi hdpi xhdpi xxhdpi; do
+          TMP_ICON="$(mktemp /tmp/launcher-XXXXXX.png)"
+          if [ -n "$ICON_URL" ]; then
+            curl -fsSL "$ICON_URL" -o "$TMP_ICON"
+            ICON_SRC="$ICON_URL"
+          elif [ -n "$FALLBACK_ICON" ] && [ -f "$FALLBACK_ICON" ]; then
+            cp "$FALLBACK_ICON" "$TMP_ICON"
+            ICON_SRC="$FALLBACK_ICON"
+          else
+            echo "Nessuna icona launcher da applicare"
+            rm -f "$TMP_ICON"
+            exit 0
+          fi
+          # API 26+ usa adaptive icon: senza foreground dedicato resta l'icona hub (Kairete).
+          mkdir -p "${ICON_ROOT}/mipmap-anydpi-v26" "${ICON_ROOT}/values"
+          printf '%s\n' \
+            '<?xml version="1.0" encoding="utf-8"?>' \
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">' \
+            '    <background android:drawable="@color/ic_launcher_background"/>' \
+            '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>' \
+            '</adaptive-icon>' \
+            > "${ICON_ROOT}/mipmap-anydpi-v26/ic_launcher.xml"
+          cp "${ICON_ROOT}/mipmap-anydpi-v26/ic_launcher.xml" "${ICON_ROOT}/mipmap-anydpi-v26/ic_launcher_round.xml"
+          if [ ! -f "${ICON_ROOT}/values/colors.xml" ]; then
+            printf '%s\n' \
+              '<?xml version="1.0" encoding="utf-8"?>' \
+              '<resources>' \
+              '    <color name="ic_launcher_background">#000000</color>' \
+              '</resources>' \
+              > "${ICON_ROOT}/values/colors.xml"
+          fi
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             mkdir -p "${ICON_ROOT}/mipmap-$d"
-            cp "$DEST_DIR/ic_launcher.png" "${ICON_ROOT}/mipmap-$d/ic_launcher.png"
+            cp "$TMP_ICON" "${ICON_ROOT}/mipmap-$d/ic_launcher.png"
+            cp "$TMP_ICON" "${ICON_ROOT}/mipmap-$d/ic_launcher_foreground.png"
+            cp "$TMP_ICON" "${ICON_ROOT}/mipmap-$d/ic_launcher_round.png"
           done
-          echo "Launcher icon applicata in $ICON_ROOT da $ICON_URL"
+          rm -f "$TMP_ICON"
+          echo "Launcher adaptive icon applicata in $ICON_ROOT da $ICON_SRC"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4

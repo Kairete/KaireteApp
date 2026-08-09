@@ -5,8 +5,8 @@ import 'package:kairete/config/app_config.dart';
 class AppBuild {
   AppBuild._();
 
-  static const label = 'ms73';
-  static const stamp = '20260809a';
+  static const label = 'ms74';
+  static const stamp = '20260809b';
 
   /// Titolo corto per AppBar (evita i "…" che nascondono msXX).
   static String get appBarTitle {
