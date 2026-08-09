@@ -42,7 +42,8 @@ class ForumService {
         return _fetchScopedForumGroups();
       }
       _throwIfError(json);
-      return _forumGroupsFromNodes(json['nodes']);
+      // Stesso raggruppamento hub: categorie come header + forum sotto tree_map.
+      return ForumNodesPage.fromJson(json).groups;
     } on DioException catch (e) {
       final apiMsg = e.response?.data is Map<String, dynamic>
           ? XenforoApi.firstErrorMessage(
@@ -56,34 +57,78 @@ class ForumService {
     }
   }
 
-  List<ForumNodeGroup> _forumGroupsFromNodes(dynamic rawNodes) {
-    final nodes = rawNodes as List<dynamic>? ?? [];
-    final forums = nodes
-        .whereType<Map<String, dynamic>>()
-        .map(ForumNode.fromJson)
-        .where((n) => n.nodeTypeId == 'Forum')
-        .toList();
-    if (forums.isEmpty) return [];
-    return [ForumNodeGroup(categoryId: 0, title: 'Forum', forums: forums)];
-  }
-
   Future<List<ForumNodeGroup>> _fetchScopedForumGroups() async {
-    final allowed = TenantScope.forumNodeIds.toSet();
-    if (allowed.isEmpty) {
+    final allowedRoots = TenantScope.forumNodeIds.toSet();
+    if (allowedRoots.isEmpty) {
       throw ForumException('Nessun forum mappato per questa community.');
     }
 
     final json = await _api.get(ApiPaths.nodes, query: {'limit': 200});
     _throwIfError(json);
-    final groups = ForumNodesPage.fromJson(json).groups;
-    final forums = <ForumNode>[];
-    for (final group in groups) {
-      for (final forum in group.forums) {
-        if (allowed.contains(forum.nodeId)) forums.add(forum);
+    final allNodes = <ForumNode>[];
+    if (json['nodes'] is List) {
+      for (final raw in json['nodes'] as List) {
+        if (raw is Map<String, dynamic>) {
+          allNodes.add(ForumNode.fromJson(raw));
+        }
       }
     }
-    if (forums.isEmpty) return [];
-    return [ForumNodeGroup(categoryId: 0, title: 'Forum', forums: forums)];
+    final byId = {for (final n in allNodes) n.nodeId: n};
+
+    bool underMappedRoot(ForumNode node) {
+      if (allowedRoots.contains(node.nodeId)) return true;
+      var parentId = node.parentNodeId;
+      final seen = <int>{};
+      while (parentId > 0 && seen.add(parentId)) {
+        if (allowedRoots.contains(parentId)) return true;
+        parentId = byId[parentId]?.parentNodeId ?? 0;
+      }
+      return false;
+    }
+
+    // Escludi i root mappati (contenitori); tieni categorie/forum discendenti.
+    final scoped = allNodes
+        .where(
+          (n) =>
+              (n.isCategory || n.isForum) &&
+              underMappedRoot(n) &&
+              !allowedRoots.contains(n.nodeId),
+        )
+        .toList();
+    if (scoped.isEmpty) return [];
+
+    final scopedIds = scoped.map((n) => n.nodeId).toSet();
+    final treeMap = <String, List<int>>{'0': []};
+    for (final n in scoped) {
+      final parentInScope =
+          scopedIds.contains(n.parentNodeId) ? n.parentNodeId : 0;
+      final key = '$parentInScope';
+      treeMap.putIfAbsent(key, () => []).add(n.nodeId);
+    }
+
+    return ForumNodesPage.fromJson({
+      'nodes': scoped
+          .map(
+            (n) => {
+              'node_id': n.nodeId,
+              'title': n.title,
+              'node_type_id': n.nodeTypeId,
+              'parent_node_id': n.parentNodeId,
+              'display_order': n.displayOrder,
+              'description': n.description,
+              'view_url': n.viewUrl,
+              'type_data': {
+                'discussion_count': n.typeData?.discussionCount ?? 0,
+                'message_count': n.typeData?.messageCount ?? 0,
+                'last_post_date': n.typeData?.lastPostDate,
+                'last_thread_title': n.typeData?.lastThreadTitle,
+                'last_post_username': n.typeData?.lastPostUsername,
+              },
+            },
+          )
+          .toList(),
+      'tree_map': treeMap,
+    }).groups;
   }
 
   Future<List<ForumThread>> fetchThreads(int forumId) async {
