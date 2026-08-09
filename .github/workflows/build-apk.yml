@@ -189,7 +189,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.16.9"
+          # App requires Dart >=3.9 (pubspec). Flutter 3.16 era CI cannot resolve deps.
+          flutter-version: "3.35.0"
           channel: stable
           cache: true
 
