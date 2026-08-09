@@ -63,7 +63,7 @@ class ForumService {
       throw ForumException('Nessun forum mappato per questa community.');
     }
 
-    final json = await _api.get(ApiPaths.nodes, query: {'limit': 200});
+    final json = await _api.get(ApiPaths.nodes, query: {'limit': 500});
     _throwIfError(json);
     final allNodes = <ForumNode>[];
     if (json['nodes'] is List) {
@@ -86,16 +86,31 @@ class ForumService {
       return false;
     }
 
-    // Escludi i root mappati (contenitori); tieni categorie/forum discendenti.
+    // Solo i contenitori mappati (hanno figli Category/Forum) restano fuori lista,
+    // come il root "Juve Social". I forum foglia mappati devono restare visibili.
+    final containerRoots = allowedRoots.where((id) {
+      return allNodes.any(
+        (n) =>
+            n.parentNodeId == id &&
+            (n.isCategory || n.isForum) &&
+            n.nodeId != id,
+      );
+    }).toSet();
+
     final scoped = allNodes
         .where(
           (n) =>
               (n.isCategory || n.isForum) &&
               underMappedRoot(n) &&
-              !allowedRoots.contains(n.nodeId),
+              !containerRoots.contains(n.nodeId),
         )
         .toList();
-    if (scoped.isEmpty) return [];
+    if (scoped.isEmpty) {
+      throw ForumException(
+        'Nessun forum/categoria sotto i nodi mappati. '
+        'Verifica il mapping in ACP e Multisite 1.9.177+.',
+      );
+    }
 
     final scopedIds = scoped.map((n) => n.nodeId).toSet();
     final treeMap = <String, List<int>>{'0': []};
