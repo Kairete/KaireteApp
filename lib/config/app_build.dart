@@ -5,13 +5,16 @@ import 'package:kairete/config/app_config.dart';
 class AppBuild {
   AppBuild._();
 
-  static const label = 'ms11';
-  static const stamp = '20250613k';
+  static const label = 'ms73';
+  static const stamp = '20260809a';
 
+  /// Titolo corto per AppBar (evita i "…" che nascondono msXX).
   static String get appBarTitle {
     final name = AppBranding.current.appName;
     final tenant =
         AppConfig.isTenantApp ? ' · t${AppConfig.tenantId}' : '';
-    return '$name · $label · $stamp$tenant';
+    return '$name · $label$tenant';
   }
+
+  static String get fullLabel => '$label · $stamp';
 }

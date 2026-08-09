@@ -33,16 +33,29 @@ class BlogProfile {
       username = user['username']?.toString();
       final urls = user['avatar_urls'];
       if (urls is Map) {
-        avatar = urls['m']?.toString() ?? urls['s']?.toString();
+        avatar = urls['m']?.toString() ??
+            urls['l']?.toString() ??
+            urls['s']?.toString();
+      }
+    }
+
+    final blogId = json['blog_id'] as int? ?? 0;
+    final coverDate = json['cover_date'] as int? ?? 0;
+    var cover = ApiUrl.resolve(json['cover_url']?.toString());
+    // API live a volte omette cover_url anche se il file esiste.
+    if (cover.isEmpty && blogId > 0) {
+      cover = ApiUrl.resolve('data/kairete_blog_covers/$blogId.jpg');
+      if (coverDate > 0) {
+        cover = '$cover?t=$coverDate';
       }
     }
 
     return BlogProfile(
-      blogId: json['blog_id'] as int? ?? 0,
+      blogId: blogId,
       title: json['title']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      coverUrl: ApiUrl.resolve(json['cover_url']?.toString()),
+      coverUrl: cover.isEmpty ? null : cover,
       isWatched: json['is_watched'] == true,
       canWatch: json['can_watch'] != false,
       ownerUsername: username,

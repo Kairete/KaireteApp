@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
+import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
 import 'package:kairete/features/forum/controllers/thread_detail_controller.dart';
 import 'package:kairete/features/forum/widgets/thread_post_body.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
@@ -23,6 +28,7 @@ class ThreadDetailPage extends StatefulWidget {
 
 class _ThreadDetailPageState extends State<ThreadDetailPage> {
   late final String _tag;
+  int _shareCount = 0;
 
   @override
   void initState() {
@@ -123,42 +129,69 @@ class _ThreadDetailPageState extends State<ThreadDetailPage> {
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                      beforeFooter: thread.tags.isNotEmpty
-                          ? FeedCardTagsRow(
+                          if (thread.tags.isNotEmpty)
+                            FeedCardTagsRow(
                               tags: thread.tags,
                               onTagTap: TagFeedNavigation.openTag,
-                            )
-                          : null,
+                              embeddedInBody: true,
+                            ),
+                        ],
+                      ),
+                      beforeFooter: FeedAuthorSignature.maybe(
+                        html: thread.author?.signatureHtml,
+                        plain: thread.author?.signaturePlain,
+                        show: thread.author?.contentShowSignature ?? true,
+                      ),
                       footer: FeedCardActionBar(
                         commentCount: thread.commentCount,
                         likeCount: thread.firstPostReactionScore,
                         onComment: c.focusReplies,
                         onReact: (reactionId) => c.react(reactionId: reactionId),
-                      ),
-                      comments: c.replies
-                          .map(
-                            (post) => FeedCommentTile(
-                              authorName: post.author?.label ??
-                                  post.author?.username ??
-                                  '',
-                              avatarUrl: post.author?.avatarUrl,
-                              dateLabel: formatOmnifeedCardDate(post.postDate),
-                              message: post.messagePlainText?.trim().isNotEmpty ==
-                                      true
-                                  ? post.messagePlainText!.trim()
-                                  : _stripHtml(post.messageParsed),
-                              messageHtml: post.messageParsed,
-                              likeCount: post.reactionScore,
-                              showCommentButton: false,
-                              onLike: post.canReact
-                                  ? (reactionId) =>
-                                      c.reactToReply(post, reactionId: reactionId)
-                                  : null,
+                        shareCount: _shareCount,
+                        onShareInternal: () async {
+                          final result = await showFeedShareInternal(
+                            context: context,
+                            itemId: OmnifeedItemId.encode(
+                              OmnifeedItemId.typeThread,
+                              thread.threadId,
                             ),
-                          )
-                          .toList(),
+                            previewText:
+                                thread.messagePlainText ?? thread.title,
+                          );
+                          if (result != null && mounted) {
+                            setState(() {
+                              _shareCount = result.shareCount;
+                            });
+                          }
+                        },
+                        onShareExternal: () async {
+                          final result = await showFeedShareExternal(
+                            context: context,
+                            itemId: OmnifeedItemId.encode(
+                              OmnifeedItemId.typeThread,
+                              thread.threadId,
+                            ),
+                            viewUrl: thread.viewUrl,
+                          );
+                          if (result != null && mounted) {
+                            setState(() {
+                              _shareCount = result.shareCount;
+                            });
+                          }
+                        },
+                      ),
+                      comments: [
+                        KeyedSubtree(
+                          key: c.repliesKey,
+                          child: Obx(
+                            () => FeedNestedCommentThread(
+                              comments: c.nestedReplies(),
+                              highlightCommentId: c.highlightReplyId.value,
+                              onReplyTap: c.beginReply,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     Obx(() {
                       if (!c.hasMoreReplies.value) {
@@ -186,71 +219,20 @@ class _ThreadDetailPageState extends State<ThreadDetailPage> {
                 ),
               ),
             ),
-            _ReplyBar(controller: c),
+            Obx(
+              () => FeedCommentBar(
+                controller: c.replyCtrl,
+                focusNode: c.replyFocus,
+                isSending: c.isSending.value,
+                onSend: c.sendFromBar,
+                hintText: 'Scrivi una risposta…',
+                replyLabel: c.replyDraft.replyLabel,
+                onCancelReply: c.replyDraft.isActive ? c.cancelReply : null,
+              ),
+            ),
           ],
         );
       }),
-    );
-  }
-}
-
-String _stripHtml(String? html) {
-  if (html == null) return '';
-  return html
-      .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-      .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
-      .replaceAll(RegExp(r'<[^>]*>'), ' ')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
-}
-
-class _ReplyBar extends StatelessWidget {
-  const _ReplyBar({required this.controller});
-
-  final ThreadDetailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Material(
-        color: Colors.white,
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller.replyCtrl,
-                  decoration: const InputDecoration(
-                    hintText: 'Scrivi una risposta…',
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  minLines: 1,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Obx(() {
-                return IconButton(
-                  onPressed: controller.isSending.value
-                      ? null
-                      : controller.sendReply,
-                  icon: controller.isSending.value
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send, color: AppTheme.primary),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

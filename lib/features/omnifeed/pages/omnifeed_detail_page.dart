@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_detail_controller.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
-import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
+import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
 class OmnifeedDetailPage extends StatefulWidget {
   const OmnifeedDetailPage({super.key, required this.item});
@@ -34,7 +37,9 @@ class _OmnifeedDetailPageState extends State<OmnifeedDetailPage> {
   Widget build(BuildContext context) {
     final c = Get.find<OmnifeedDetailController>();
     return Scaffold(
-      appBar: AppBar(title: const Text('OmniFeed')),
+      appBar: AppBar(
+        title: Text(_detailTitle(c.item.value ?? widget.item)),
+      ),
       body: Obx(() {
         if (c.isLoading.value && c.item.value == null) {
           return const Center(child: CircularProgressIndicator());
@@ -48,24 +53,57 @@ class _OmnifeedDetailPageState extends State<OmnifeedDetailPage> {
                 children: [
                   OmnifeedCard(
                     item: item,
+                    expandBody: true,
                     onReact: (reactionId) => c.react(reactionId: reactionId),
-                    comments: c.comments
-                        .map(
-                          (comment) => FeedCommentTile(
-                            authorName: comment.author?.label ??
-                                comment.author?.username ??
-                                '',
-                            avatarUrl: comment.author?.avatarUrl,
-                            dateLabel:
-                                formatOmnifeedCardDate(comment.commentDate),
-                            message: comment.messagePlainText,
-                            likeCount: comment.reactionScore,
-                            visitorReactionId: comment.visitorReactionId,
-                            showCommentButton: false,
-                          ),
-                        )
-                        .toList(),
+                    onBookmark: c.toggleBookmark,
+                    onShareInternal: () async {
+                      final result = await showFeedShareInternal(
+                        context: context,
+                        itemId: item.itemId,
+                        previewText:
+                            item.messagePlainText ?? item.contentTitle,
+                      );
+                      if (result != null) {
+                        c.applyShareResult(result);
+                        if (Get.isRegistered<OmnifeedController>()) {
+                          OmnifeedController.ensure()
+                              .applyShareResult(item.itemId, result);
+                        }
+                      }
+                    },
+                    onShareExternal: () async {
+                      final result = await showFeedShareExternal(
+                        context: context,
+                        itemId: item.itemId,
+                        viewUrl: item.viewUrl,
+                      );
+                      if (result != null) {
+                        c.applyShareResult(result);
+                        if (Get.isRegistered<OmnifeedController>()) {
+                          OmnifeedController.ensure()
+                              .applyShareResult(item.itemId, result);
+                        }
+                      }
+                    },
+                    onTagTap: TagFeedNavigation.openTag,
+                    comments: [
+                      Obx(
+                        () => FeedNestedCommentThread(
+                          comments: c.nestedComments(),
+                          highlightCommentId: c.highlightCommentId.value,
+                          onReplyTap: c.beginReply,
+                        ),
+                      ),
+                    ],
                   ),
+                  if (c.commentsErrorMessage.value.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Text(
+                        c.commentsErrorMessage.value,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
                   if (c.errorMessage.value.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -77,55 +115,31 @@ class _OmnifeedDetailPageState extends State<OmnifeedDetailPage> {
                 ],
               ),
             ),
-            _CommentBar(controller: c),
+            Obx(
+              () => FeedCommentBar(
+                controller: c.commentCtrl,
+                focusNode: c.commentFocus,
+                isSending: c.isSending.value,
+                onSend: c.sendFromBar,
+                replyLabel: c.replyDraft.replyLabel,
+                onCancelReply:
+                    c.replyDraft.isActive ? c.cancelReply : null,
+              ),
+            ),
           ],
         );
       }),
     );
   }
-}
 
-class _CommentBar extends StatelessWidget {
-  const _CommentBar({required this.controller});
-
-  final OmnifeedDetailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller.commentCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'Scrivi un commento…',
-                  isDense: true,
-                ),
-                minLines: 1,
-                maxLines: 3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Obx(() {
-              return IconButton(
-                onPressed: controller.isSending.value
-                    ? null
-                    : controller.sendComment,
-                icon: controller.isSending.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
+  String _detailTitle(OmnifeedItem item) {
+    if (item.contentType == 'social_news_article') {
+      final category = item.categoryLabel?.trim();
+      if (category != null && category.isNotEmpty) return category;
+      final title = item.contentTitle?.trim();
+      if (title != null && title.isNotEmpty) return title;
+      return 'News';
+    }
+    return 'OmniFeed';
   }
 }

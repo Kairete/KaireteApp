@@ -12,6 +12,7 @@ class MediaActionBar extends StatelessWidget {
     this.onTapJoin,
     this.isRefreshing = false,
     this.showJoin = false,
+    this.showCreateAlbum = true,
     this.isJoined = false,
     this.joinLoading = false,
   });
@@ -22,6 +23,7 @@ class MediaActionBar extends StatelessWidget {
   final VoidCallback? onTapJoin;
   final bool isRefreshing;
   final bool showJoin;
+  final bool showCreateAlbum;
   final bool isJoined;
   final bool joinLoading;
 
@@ -35,7 +37,7 @@ class MediaActionBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
         child: Row(
           children: [
             Expanded(
@@ -45,14 +47,16 @@ class MediaActionBar extends StatelessWidget {
                 onTap: onTapAddMedia,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActionChip(
-                icon: Icons.create_new_folder_outlined,
-                label: 'Crea album',
-                onTap: onTapCreateAlbum,
+            if (showCreateAlbum) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActionChip(
+                  icon: Icons.create_new_folder_outlined,
+                  label: 'Crea album',
+                  onTap: onTapCreateAlbum,
+                ),
               ),
-            ),
+            ],
             if (showJoin) ...[
               const SizedBox(width: 8),
               _JoinChip(
@@ -65,6 +69,7 @@ class MediaActionBar extends StatelessWidget {
             FeedRefreshButton(
               onTap: onTapRefresh,
               isLoading: isRefreshing,
+              compact: true,
             ),
           ],
         ),
@@ -93,7 +98,7 @@ class _ActionChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(4),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: AppTheme.cardBorder),
@@ -101,15 +106,15 @@ class _ActionChip extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: AppTheme.primary),
-              const SizedBox(width: 6),
+              Icon(icon, size: 15, color: AppTheme.primary),
+              const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.primary,
                   ),
@@ -143,7 +148,7 @@ class _JoinChip extends StatelessWidget {
         onTap: isLoading ? null : onTap,
         borderRadius: BorderRadius.circular(4),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
@@ -163,7 +168,7 @@ class _JoinChip extends StatelessWidget {
                       isJoined
                           ? Icons.notifications_active
                           : Icons.notifications_none_outlined,
-                      size: 18,
+                      size: 15,
                       color:
                           isJoined ? AppTheme.primary : AppTheme.textSecondary,
                     ),
@@ -171,7 +176,7 @@ class _JoinChip extends StatelessWidget {
                     Text(
                       isJoined ? 'Joined' : 'Join',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: isJoined
                             ? AppTheme.primary

@@ -4,6 +4,7 @@ class BlogComment {
   BlogComment({
     required this.commentId,
     required this.messagePlainText,
+    this.parentCommentId = 0,
     this.messageParsed,
     this.commentDate,
     this.reactionScore = 0,
@@ -14,6 +15,7 @@ class BlogComment {
 
   final int commentId;
   final String messagePlainText;
+  final int parentCommentId;
   final String? messageParsed;
   final int? commentDate;
   final int reactionScore;
@@ -25,6 +27,7 @@ class BlogComment {
     return BlogComment(
       commentId: json['comment_id'] as int? ?? 0,
       messagePlainText: json['message_plain_text']?.toString() ?? '',
+      parentCommentId: json['parent_comment_id'] as int? ?? 0,
       messageParsed: json['message_parsed']?.toString(),
       commentDate: json['comment_date'] as int?,
       reactionScore: json['reaction_score'] as int? ?? 0,

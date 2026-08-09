@@ -13,7 +13,7 @@ class ContentOwnerService {
     if (id <= 0) throw ContentOwnerException('Contenuto non valido.');
 
     try {
-      final json = await _api.delete('${ApiPaths.newsfeedItems}$item.itemId');
+      final json = await _api.delete('${ApiPaths.newsfeedItems}${item.itemId}');
       if (XenforoApi.firstErrorMessage(json) == null) return;
     } catch (_) {}
 
@@ -26,6 +26,8 @@ class ContentOwnerService {
         await _delete('${ApiPaths.blogEntries}/$id');
       case 'tl_group_post':
         await _delete('${ApiPaths.groupPosts}$id');
+      case 'xfmg_media':
+        await _delete('${ApiPaths.media}$id');
       default:
         throw ContentOwnerException('Eliminazione non supportata.');
     }
@@ -92,6 +94,20 @@ class ContentOwnerService {
     );
   }
 
+  Future<void> updateMedia({
+    required int mediaId,
+    required String title,
+    required String message,
+  }) async {
+    await _update(
+      '${ApiPaths.media}$mediaId',
+      {
+        if (title.trim().isNotEmpty) 'title': title.trim(),
+        'description': message.trim(),
+      },
+    );
+  }
+
   Future<void> updateItem({
     required OmnifeedItem item,
     String? title,
@@ -134,6 +150,12 @@ class ContentOwnerService {
         );
       case 'tl_group_post':
         await updateGroupPost(groupPostId: id, message: message);
+      case 'xfmg_media':
+        await updateMedia(
+          mediaId: id,
+          title: title ?? item.contentTitle ?? '',
+          message: message,
+        );
       default:
         throw ContentOwnerException('Modifica non supportata.');
     }

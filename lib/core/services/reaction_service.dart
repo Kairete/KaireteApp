@@ -133,6 +133,45 @@ class ReactionService {
     );
   }
 
+  Future<String> reactProfilePostComment(
+    int commentId, {
+    int? authorUserId,
+    int reactionId = 1,
+  }) async {
+    await _ensureLoggedIn(authorUserId: authorUserId);
+    if (commentId <= 0) {
+      throw ReactionException('Commento non disponibile.');
+    }
+    // Preferisci endpoint OmniFeed (mobile); fallback XF/profile-post-comments.
+    try {
+      return await _postReact(
+        '${ApiPaths.newsfeedCommentReplies}$commentId/react',
+        reactionId,
+      );
+    } on ReactionException catch (e) {
+      if (!_isRouteMissing(e.message)) rethrow;
+    }
+    return _postReact(
+      '${ApiPaths.profilePostComments}$commentId/react',
+      reactionId,
+    );
+  }
+
+  Future<String> reactMediaComment(
+    int commentId, {
+    int? authorUserId,
+    int reactionId = 1,
+  }) async {
+    await _ensureLoggedIn(authorUserId: authorUserId);
+    if (commentId <= 0) {
+      throw ReactionException('Commento non disponibile.');
+    }
+    return _postReact(
+      '${ApiPaths.mediaComments}/$commentId/react',
+      reactionId,
+    );
+  }
+
   Future<String> reactGroupPost(int groupPostId, {int reactionId = 1}) async {
     await _ensureLoggedIn();
     if (groupPostId <= 0) {

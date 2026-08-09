@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/app_widgets/models/app_widget_models.dart';
+import 'package:kairete/features/app_widgets/widgets/app_widget_strip.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
+import 'package:kairete/features/suggestions/widgets/suggestions_feed_rail.dart';
 import 'package:kairete/features/media/controllers/media_list_controller.dart';
+import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/pages/album_create_page.dart';
 import 'package:kairete/features/media/pages/media_compose_page.dart';
 import 'package:kairete/features/media/widgets/album_cover_header.dart';
 import 'package:kairete/features/media/widgets/media_action_bar.dart';
 import 'package:kairete/features/media/widgets/media_feed_card.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
 class MediaListPage extends StatelessWidget {
@@ -17,21 +24,26 @@ class MediaListPage extends StatelessWidget {
     this.filterCategoryId,
     this.pageTitle,
     this.showActionBar = true,
+    this.tenantMapped = false,
   });
 
   final int? filterAlbumId;
   final int? filterCategoryId;
   final String? pageTitle;
   final bool showActionBar;
+  final bool tenantMapped;
 
   @override
   Widget build(BuildContext context) {
-    final tag = 'media_${filterAlbumId ?? 0}_${filterCategoryId ?? 0}';
+    final tag = tenantMapped
+        ? 'media_tenant_mapped'
+        : 'media_${filterAlbumId ?? 0}_${filterCategoryId ?? 0}';
     if (!Get.isRegistered<MediaListController>(tag: tag)) {
       Get.put(
         MediaListController(
           filterAlbumId: filterAlbumId,
           filterCategoryId: filterCategoryId,
+          tenantMapped: tenantMapped,
         ),
         tag: tag,
       );
@@ -39,15 +51,52 @@ class MediaListPage extends StatelessWidget {
     final controller = Get.find<MediaListController>(tag: tag);
     final isAlbumView = filterAlbumId != null;
     final isFiltered = filterAlbumId != null || filterCategoryId != null;
-    final showBar = showActionBar && (!isFiltered || isAlbumView);
+    final showBar = showActionBar && (tenantMapped || !isFiltered || isAlbumView);
+
+    Future<void> openCreateAlbum() async {
+      final created = await Get.to<bool>(() => const AlbumCreatePage());
+      if (created == true) await controller.refreshAll();
+    }
+
+    Widget albumCoverHeader(MediaAlbumProfile profile) {
+      return AlbumCoverHeader(
+        profile: profile,
+        onTapCreateAlbum: openCreateAlbum,
+      );
+    }
 
     Widget buildCard(MediaItem item) {
       return MediaFeedCard(
         item: item,
+        showAlbumInHeader: !isAlbumView,
         onOpen: () => controller.openDetail(item),
         onComment: () => controller.openDetail(item),
         onReact: (reactionId) =>
             controller.react(item, reactionId: reactionId),
+        onShareInternal: () async {
+          final result = await showFeedShareInternal(
+            context: context,
+            itemId: OmnifeedItemId.encode(
+              OmnifeedItemId.typeMedia,
+              item.mediaId,
+            ),
+            previewText: item.description ?? item.title,
+          );
+          final created = result?.createdItem;
+          if (created != null) {
+            OmnifeedController.ensure().prependItem(created);
+          }
+        },
+        onShareExternal: () async {
+          await showFeedShareExternal(
+            context: context,
+            itemId: OmnifeedItemId.encode(
+              OmnifeedItemId.typeMedia,
+              item.mediaId,
+            ),
+            viewUrl: item.viewUrl,
+          );
+        },
         onAuthorTap: () => controller.openAuthorProfile(item),
         onAlbumTap: () => controller.openAlbumFilter(item),
         onCategoryTap: () => controller.openCategoryFilter(item),
@@ -64,14 +113,11 @@ class MediaListPage extends StatelessWidget {
             () => MediaActionBar(
               onTapRefresh: controller.refreshAll,
               onTapAddMedia: () async {
-                await Get.to(() => const MediaComposePage());
+                await Get.to(() => MediaComposePage(tenantMapped: tenantMapped));
                 await controller.refreshAll();
               },
-              onTapCreateAlbum: () async {
-                final created =
-                    await Get.to<bool>(() => const AlbumCreatePage());
-                if (created == true) await controller.refreshAll();
-              },
+              onTapCreateAlbum: openCreateAlbum,
+              showCreateAlbum: true,
               showJoin: isAlbumView,
               isJoined: controller.isWatched.value,
               joinLoading: controller.watchLoading.value,
@@ -101,27 +147,40 @@ class MediaListPage extends StatelessWidget {
                 onRefresh: controller.refreshAll,
                 child: ListView(
                   children: [
-                    if (showCover) AlbumCoverHeader(profile: profile!),
+                    if (showCover) albumCoverHeader(profile),
                     SizedBox(
                       height: MediaQuery.sizeOf(context).height * 0.35,
-                      child: const Center(child: Text('Nessun media.')),
+                      child: Center(
+                        child: Text(
+                          tenantMapped
+                              ? 'Nessun media negli album mappati.'
+                              : 'Nessun media.',
+                        ),
+                      ),
                     ),
                   ],
                 ),
               );
             }
 
+            final slots = controller.injectedSlots(controller.items.toList());
             return RefreshIndicator(
               onRefresh: controller.refreshAll,
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 16),
-                itemCount: controller.items.length + headerCount,
+                itemCount: slots.length + headerCount,
                 itemBuilder: (_, i) {
                   if (showCover && i == 0) {
-                    return AlbumCoverHeader(profile: profile!);
+                    return albumCoverHeader(profile);
                   }
-                  final item = controller.items[i - headerCount];
-                  return buildCard(item);
+                  final slot = slots[i - headerCount];
+                  if (slot is SuggestionsRailMarker) {
+                    return SuggestionsFeedRail(marker: slot);
+                  }
+                  if (slot is AppWidgetStripMarker) {
+                    return AppWidgetStrip(widgets: slot.widgets);
+                  }
+                  return buildCard(slot as MediaItem);
                 },
               ),
             );

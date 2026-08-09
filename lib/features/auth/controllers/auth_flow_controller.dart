@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -212,7 +212,7 @@ class AuthFlowController extends GetxController {
     if (AppConfig.isTenantApp) {
       isLoading.value = true;
       try {
-        await TenantService().ensureTenantReady();
+        await TenantService().refreshBootstrap();
       } catch (e) {
         // Fallback embedded in TenantService: non bloccare la home.
         errorMessage.value = '';

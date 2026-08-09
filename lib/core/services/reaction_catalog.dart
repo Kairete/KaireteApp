@@ -31,8 +31,8 @@ class ReactionCatalog {
       if (raw is! List) return;
 
       _icons = raw
-          .whereType<Map<String, dynamic>>()
-          .map(ReactionIcon.fromJson)
+          .whereType<Map>()
+          .map((e) => ReactionIcon.fromJson(Map<String, dynamic>.from(e)))
           .where((icon) => icon.active && icon.reactionId > 0)
           .toList(growable: false);
       _loaded = true;

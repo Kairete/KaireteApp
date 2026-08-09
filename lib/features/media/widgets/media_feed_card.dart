@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
@@ -9,9 +10,13 @@ class MediaFeedCard extends StatelessWidget {
   const MediaFeedCard({
     super.key,
     required this.item,
+    this.showAlbumInHeader = true,
     this.onOpen,
     this.onComment,
     this.onReact,
+    this.onShareInternal,
+    this.onShareExternal,
+    this.shareCount = 0,
     this.onAuthorTap,
     this.onAlbumTap,
     this.onCategoryTap,
@@ -20,9 +25,13 @@ class MediaFeedCard extends StatelessWidget {
   });
 
   final MediaItem item;
+  final bool showAlbumInHeader;
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
   final Future<void> Function(int reactionId)? onReact;
+  final VoidCallback? onShareInternal;
+  final VoidCallback? onShareExternal;
+  final int shareCount;
   final VoidCallback? onAuthorTap;
   final VoidCallback? onAlbumTap;
   final VoidCallback? onCategoryTap;
@@ -32,18 +41,18 @@ class MediaFeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final author = item.author;
-    final categoryTitle = item.category?.title.trim();
+    final nickname = author?.username.trim().isNotEmpty == true
+        ? author!.username
+        : (author?.label ?? '');
 
     return FeedCardShell(
       header: FeedCardAuthorHeader(
         avatarUrl: author?.avatarUrl,
-        authorName: author?.label ?? author?.username,
-        moduleLabel: item.albumHeaderLabel,
+        authorName: nickname,
+        moduleLabel: showAlbumInHeader ? item.albumHeaderLabel : null,
         dateLabel: formatOmnifeedCardDate(item.mediaDate),
-        categoryLabel: categoryTitle,
         onAuthorTap: onAuthorTap,
-        onModuleTap: onAlbumTap,
-        onCategoryTap: onCategoryTap,
+        onModuleTap: showAlbumInHeader ? onAlbumTap : null,
       ),
       body: InkWell(
         onTap: onOpen,
@@ -78,23 +87,31 @@ class MediaFeedCard extends StatelessWidget {
                   ),
                 ),
               ],
-              FeedCardDetailLink(
-                onTap: onOpen,
-                visible: item.previewHasMore,
+              FeedCardTagsContinueRow(
+                tags: item.tags,
+                onTagTap: onTagTap,
+                onContinue: onOpen,
+                showContinue: item.previewHasMore,
+                embeddedInBody: true,
               ),
             ],
           ),
         ),
       ),
-      beforeFooter: item.tags.isNotEmpty
-          ? FeedCardTagsRow(tags: item.tags, onTagTap: onTagTap)
-          : null,
+      beforeFooter: FeedAuthorSignature.maybe(
+        html: author?.signatureHtml,
+        plain: author?.signaturePlain,
+        show: author?.contentShowSignature ?? true,
+      ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
         likeCount: item.reactionScore,
         visitorReactionId: item.visitorReactionId,
         onComment: onComment ?? onOpen,
         onReact: item.canReact ? onReact : null,
+        shareCount: shareCount,
+        onShareInternal: onShareInternal,
+        onShareExternal: onShareExternal,
       ),
     );
   }

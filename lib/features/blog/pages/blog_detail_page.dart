@@ -13,7 +13,16 @@ import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
 import 'package:kairete/features/blog/widgets/blog_entry_body.dart';
+import 'package:kairete/features/blog/widgets/blog_related_carousel.dart';
+import 'package:kairete/features/feed/utils/feed_comment_reply.dart';
+import 'package:kairete/features/feed/utils/feed_comment_tree.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
@@ -29,10 +38,14 @@ class BlogDetailPage extends StatefulWidget {
 class _BlogDetailPageState extends State<BlogDetailPage> {
   final BlogService _service = BlogService();
   final _commentCtrl = TextEditingController();
+  final _commentFocus = FocusNode();
+  final _replyDraft = FeedCommentReplyDraft();
   BlogEntry? _entry;
   List<BlogComment> _comments = const [];
+  int _shareCount = 0;
   bool _loading = true;
   bool _sending = false;
+  int? _highlightCommentId;
   String? _error;
 
   @override
@@ -44,6 +57,7 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
   @override
   void dispose() {
     _commentCtrl.dispose();
+    _commentFocus.dispose();
     super.dispose();
   }
 
@@ -140,6 +154,14 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     }
   }
 
+  Future<void> _sendFromBar() async {
+    if (_replyDraft.isActive) {
+      await _sendReply(_replyDraft.parentCommentId!, _replyDraft.messageForApi(_commentCtrl.text));
+    } else {
+      await _sendComment();
+    }
+  }
+
   Future<void> _sendComment() async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _entry == null) return;
@@ -158,6 +180,79 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     }
   }
 
+  Future<void> _sendReply(int parentCommentId, String message) async {
+    if (message.trim().isEmpty || _entry == null) return;
+    final beforeIds = _comments.map((c) => c.commentId).toList();
+    setState(() => _sending = true);
+    try {
+      await _service.postComment(
+        blogEntryId: widget.entryId,
+        message: message.trim(),
+        parentCommentId: parentCommentId,
+      );
+      _replyDraft.clear();
+      _commentCtrl.clear();
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _highlightCommentId = detectNewNestedCommentId(
+          previousIds: beforeIds,
+          current: _nestedComments(),
+          parentCommentId: parentCommentId,
+        );
+      });
+    } on BlogException catch (e) {
+      AppToast.error(e.message);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  void _beginReply(FeedNestedCommentData comment) {
+    _replyDraft.beginFrom(comment);
+    _replyDraft.primeComposer(_commentCtrl);
+    setState(() {});
+    requestCommentFocusAfterFrame(_commentFocus, mountedOn: this);
+  }
+
+  void _cancelReply() {
+    _replyDraft.clear();
+    _commentCtrl.clear();
+    setState(() {});
+  }
+
+  List<FeedNestedCommentData> _nestedComments() {
+    final ids = _comments.map((c) => c.commentId).toList();
+    final parents = _comments.map((c) => c.parentCommentId).toList();
+    final depths = depthByCommentId(ids: ids, parentIds: parents);
+    return _comments
+        .map(
+          (comment) {
+            final depth = depths[comment.commentId] ?? 0;
+            return FeedNestedCommentData(
+              id: comment.commentId,
+              parentId: comment.parentCommentId,
+              depthHint: depth,
+              authorName:
+                  comment.author?.label ?? comment.author?.username ?? '',
+              avatarUrl: comment.author?.avatarUrl,
+              dateLabel: formatFeedCommentDate(comment.commentDate),
+              message: comment.messagePlainText,
+              messageHtml: comment.messageParsed,
+              likeCount: comment.reactionScore,
+              visitorReactionId: comment.visitorReactionId,
+              canReply: nestedCommentCanReply(depth),
+              canLike: comment.canReact,
+              onLike: comment.canReact
+                  ? (reactionId) =>
+                      _reactToComment(comment, reactionId: reactionId)
+                  : null,
+            );
+          },
+        )
+        .toList();
+  }
+
   void _openBlogFilter() {
     final entry = _entry;
     if (entry == null) return;
@@ -171,21 +266,9 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     );
   }
 
-  void _openCategoryFilter() {
-    final entry = _entry;
-    if (entry == null) return;
-    final categoryId = entry.category?.categoryId;
-    if (categoryId == null || categoryId <= 0) return;
-    Get.to(
-      () => BlogListPage(
-        filterCategoryId: categoryId,
-        pageTitle: entry.category?.title ?? 'Categoria',
-      ),
-    );
-  }
-
   void _focusCommentInput() {
-    FocusScope.of(context).requestFocus(FocusNode());
+    _cancelReply();
+    _commentFocus.requestFocus();
   }
 
   Future<void> _editEntry() async {
@@ -214,11 +297,48 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
     }
   }
 
+  Future<void> _toggleHighlight() async {
+    final entry = _entry;
+    if (entry == null) return;
+    final blogId = entry.blog?.blogId ?? 0;
+    final scope = (entry.highlightScope ?? '').trim().isNotEmpty
+        ? entry.highlightScope!.trim()
+        : (blogId > 0 ? 'owner:blog:$blogId' : 'admin:blog');
+    try {
+      final item = OmnifeedItem(
+        itemId: OmnifeedItemId.encode(
+          OmnifeedItemId.typeBlogPost,
+          entry.blogEntryId,
+        ),
+        contentType: 'ubs_blog_entry',
+        contentId: entry.blogEntryId,
+        canHighlight: true,
+        isHighlighted: entry.isHighlighted,
+        highlightScope: scope,
+      );
+      final highlighted = await OmnifeedService().toggleHighlight(item);
+      if (!mounted) return;
+      setState(() {
+        _entry = entry.copyWith(
+          isHighlighted: highlighted,
+          canHighlight: true,
+          highlightScope: scope,
+        );
+      });
+      AppToast.success(
+        highlighted ? 'Fissato in alto sul blog.' : 'Tolto dall\'alto.',
+      );
+    } on OmnifeedException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile aggiornare il pin.');
+    }
+  }
+
   String _blogMetaDateLine(BlogEntry entry) {
-    final date = formatOmnifeedCardDate(entry.postDate);
-    final category = entry.category?.title ?? '';
-    if (category.isEmpty) return date;
-    return '$date - $category';
+    return formatOmnifeedCardDate(entry.postDate);
   }
 
   @override
@@ -268,24 +388,59 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                     moduleLabel: _entry!.blog?.title,
                                     dateLabel: _blogMetaDateLine(_entry!),
                                     onModuleTap: _openBlogFilter,
-                                    trailing: _entry!.canEdit || _entry!.canDelete
-                                        ? FeedCardOwnerMenu(
-                                            onEdit: _entry!.canEdit
-                                                ? _editEntry
-                                                : null,
-                                            onDelete: _entry!.canDelete
-                                                ? _deleteEntry
-                                                : null,
+                                    trailing: _entry!.canEdit ||
+                                            _entry!.canDelete ||
+                                            _entry!.canHighlight ||
+                                            _entry!.isHighlighted
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (_entry!.isHighlighted)
+                                                const Padding(
+                                                  padding:
+                                                      EdgeInsets.only(right: 2),
+                                                  child: Icon(
+                                                    Icons.push_pin,
+                                                    size: 16,
+                                                    color: Color(0xFFB45309),
+                                                  ),
+                                                ),
+                                              FeedCardOwnerMenu(
+                                                onEdit: _entry!.canEdit
+                                                    ? _editEntry
+                                                    : null,
+                                                onDelete: _entry!.canDelete
+                                                    ? _deleteEntry
+                                                    : null,
+                                                onHighlight: (_entry!
+                                                            .canHighlight ||
+                                                        _entry!.isHighlighted)
+                                                    ? _toggleHighlight
+                                                    : null,
+                                                isHighlighted:
+                                                    _entry!.isHighlighted,
+                                              ),
+                                            ],
                                           )
                                         : const FeedCardMenuButton(),
                                   ),
                                   body: BlogEntryBody(entry: _entry!),
-                                  beforeFooter: _entry!.tags.isNotEmpty
-                                      ? FeedCardTagsRow(
+                                  afterBody: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      if (_entry!.tags.isNotEmpty)
+                                        FeedCardTagsRow(
                                           tags: _entry!.tags,
                                           onTagTap: TagFeedNavigation.openTag,
-                                        )
-                                      : null,
+                                          tightBottom: true,
+                                        ),
+                                      BlogRelatedCarousel(
+                                        entryId: _entry!.blogEntryId,
+                                      ),
+                                    ],
+                                  ),
+                                  beforeFooter: null,
                                   footer: FeedCardActionBar(
                                     commentCount: _entry!.commentCount,
                                     likeCount: _entry!.reactionScore,
@@ -295,98 +450,67 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                         ? (reactionId) =>
                                             _react(reactionId: reactionId)
                                         : null,
-                                  ),
-                                  comments: _comments
-                                      .map(
-                                        (comment) => FeedCommentTile(
-                                          authorName: comment.author?.label ??
-                                              comment.author?.username ??
-                                              '',
-                                          avatarUrl: comment.author?.avatarUrl,
-                                          dateLabel: formatOmnifeedCardDate(
-                                            comment.commentDate,
-                                          ),
-                                          message: comment.messagePlainText,
-                                          messageHtml: comment.messageParsed,
-                                          likeCount: comment.reactionScore,
-                                          visitorReactionId:
-                                              comment.visitorReactionId,
-                                          showCommentButton: false,
-                                          onLike: comment.canReact
-                                              ? (reactionId) =>
-                                                  _reactToComment(
-                                                    comment,
-                                                    reactionId: reactionId,
-                                                  )
-                                              : null,
+                                    shareCount: _shareCount,
+                                    onShareInternal: () async {
+                                      final entry = _entry!;
+                                      final result =
+                                          await showFeedShareInternal(
+                                        context: context,
+                                        itemId: OmnifeedItemId.encode(
+                                          OmnifeedItemId.typeBlogPost,
+                                          entry.blogEntryId,
                                         ),
-                                      )
-                                      .toList(),
+                                        previewText: entry.messagePlainText ??
+                                            entry.title,
+                                      );
+                                      if (result != null && mounted) {
+                                        setState(() {
+                                          _shareCount = result.shareCount;
+                                        });
+                                      }
+                                    },
+                                    onShareExternal: () async {
+                                      final entry = _entry!;
+                                      final result =
+                                          await showFeedShareExternal(
+                                        context: context,
+                                        itemId: OmnifeedItemId.encode(
+                                          OmnifeedItemId.typeBlogPost,
+                                          entry.blogEntryId,
+                                        ),
+                                        viewUrl: entry.viewUrl,
+                                      );
+                                      if (result != null && mounted) {
+                                        setState(() {
+                                          _shareCount = result.shareCount;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  comments: [
+                                    FeedNestedCommentThread(
+                                      comments: _nestedComments(),
+                                      highlightCommentId: _highlightCommentId,
+                                      onReplyTap: _beginReply,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        if (_entry!.canComment) _CommentBar(
-                          controller: _commentCtrl,
-                          isSending: _sending,
-                          onSend: _sendComment,
-                        ),
+                        if (_entry!.canComment)
+                          FeedCommentBar(
+                            controller: _commentCtrl,
+                            focusNode: _commentFocus,
+                            isSending: _sending,
+                            onSend: _sendFromBar,
+                            replyLabel: _replyDraft.replyLabel,
+                            onCancelReply:
+                                _replyDraft.isActive ? _cancelReply : null,
+                          ),
                       ],
                     ),
-    );
-  }
-}
-
-class _CommentBar extends StatelessWidget {
-  const _CommentBar({
-    required this.controller,
-    required this.isSending,
-    required this.onSend,
-  });
-
-  final TextEditingController controller;
-  final bool isSending;
-  final VoidCallback onSend;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Material(
-        color: Colors.white,
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    hintText: 'Scrivi un commento…',
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  minLines: 1,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: isSending ? null : onSend,
-                icon: isSending
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send, color: AppTheme.primary),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

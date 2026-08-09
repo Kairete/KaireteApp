@@ -16,9 +16,16 @@ $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
 & $flutter pub get
-& $flutter build apk --debug --target-platform android-arm64
+& $flutter build apk --debug --flavor hub --target-platform android-arm64
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Build fallita (exit $LASTEXITCODE)." -ForegroundColor Red
+  exit $LASTEXITCODE
+}
 
-$apk = Join-Path $root "build\app\outputs\flutter-apk\app-arm64-v8a-debug.apk"
+$apk = Join-Path $root "build\app\outputs\flutter-apk\app-hub-debug.apk"
+if (-not (Test-Path $apk)) {
+  $apk = Join-Path $root "build\app\outputs\flutter-apk\app-arm64-v8a-debug.apk"
+}
 if (-not (Test-Path $apk)) {
   $apk = Join-Path $root "build\app\outputs\flutter-apk\app-debug.apk"
 }
@@ -28,6 +35,7 @@ if (Test-Path $apk) {
   Write-Host ""
   Write-Host "APK pronto:" -ForegroundColor Green
   Write-Host $dest
+  Get-Item $dest | Format-List FullName, Length, LastWriteTime
 } else {
   Write-Host "Build fallita. Usa GitHub Actions (vedi BUILD_APK.md)." -ForegroundColor Red
   exit 1

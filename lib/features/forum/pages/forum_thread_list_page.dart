@@ -2,9 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/widgets/feed_refresh_button.dart';
+import 'package:kairete/features/app_widgets/models/app_widget_models.dart';
+import 'package:kairete/features/app_widgets/widgets/app_widget_strip.dart';
+import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/blog/widgets/blog_feed_card.dart';
 import 'package:kairete/features/feed/widgets/content_watch_bar.dart';
+import 'package:kairete/features/suggestions/widgets/suggestions_feed_rail.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
 import 'package:kairete/features/forum/controllers/forum_thread_list_controller.dart';
+import 'package:kairete/features/forum/models/forum_feed_item.dart';
+import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/forum/widgets/thread_feed_card.dart';
+import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
 
@@ -109,6 +119,7 @@ class ForumThreadListPage extends StatelessWidget {
           );
         }
 
+        final slots = controller.injectedSlots(controller.items.toList());
         return RefreshIndicator(
           onRefresh: () async {
             await Future.wait([
@@ -118,7 +129,7 @@ class ForumThreadListPage extends StatelessWidget {
           },
           child: ListView.builder(
             padding: const EdgeInsets.only(bottom: 88),
-            itemCount: controller.items.length + 1,
+            itemCount: slots.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {
                 return Obx(
@@ -130,22 +141,112 @@ class ForumThreadListPage extends StatelessWidget {
                   ),
                 );
               }
-              final thread = controller.items[i - 1];
-              return ThreadFeedCard(
-                thread: thread,
-                forumTitle: forumTitle,
-                onOpen: () => controller.openDetail(thread),
-                onComment: () => controller.openDetail(thread),
-                onReact: (reactionId) =>
-                    controller.react(thread, reactionId: reactionId),
-                onAuthorTap: () =>
-                    OmnifeedNavigation.openUserProfile(thread.author?.userId),
-                onTagTap: TagFeedNavigation.openTag,
-              );
+              final slot = slots[i - 1];
+              if (slot is SuggestionsRailMarker) {
+                return SuggestionsFeedRail(marker: slot);
+              }
+              if (slot is AppWidgetStripMarker) {
+                return AppWidgetStrip(widgets: slot.widgets);
+              }
+              final feedItem = slot as ForumFeedItem;
+              final blog = feedItem.blogEntry;
+              if (blog != null) {
+                return _blogCard(context, controller, blog);
+              }
+              final thread = feedItem.thread!;
+              return _threadCard(context, controller, thread);
             },
           ),
         );
       }),
+    );
+  }
+
+  Widget _blogCard(
+    BuildContext context,
+    ForumThreadListController controller,
+    BlogEntry entry,
+  ) {
+    return BlogFeedCard(
+      entry: entry,
+      onOpen: () => controller.openBlogDetail(entry),
+      onComment: () => controller.openBlogDetail(entry),
+      onReact: (reactionId) =>
+          controller.reactBlog(entry, reactionId: reactionId),
+      onShareInternal: () async {
+        final result = await showFeedShareInternal(
+          context: context,
+          itemId: OmnifeedItemId.encode(
+            OmnifeedItemId.typeBlogPost,
+            entry.blogEntryId,
+          ),
+          previewText: entry.messagePlainText ?? entry.title,
+        );
+        final created = result?.createdItem;
+        if (created != null) {
+          OmnifeedController.ensure().prependItem(created);
+        }
+      },
+      onShareExternal: () async {
+        await showFeedShareExternal(
+          context: context,
+          itemId: OmnifeedItemId.encode(
+            OmnifeedItemId.typeBlogPost,
+            entry.blogEntryId,
+          ),
+          viewUrl: entry.viewUrl,
+        );
+      },
+      onAuthorTap: () => OmnifeedNavigation.openUserProfile(
+            entry.author?.userId,
+            username: entry.author?.username,
+          ),
+      onBlogTap: () => controller.openBlogFilter(entry),
+      onTagTap: TagFeedNavigation.openTag,
+    );
+  }
+
+  Widget _threadCard(
+    BuildContext context,
+    ForumThreadListController controller,
+    ForumThread thread,
+  ) {
+    return ThreadFeedCard(
+      thread: thread,
+      forumTitle: forumTitle,
+      onOpen: () => controller.openDetail(thread),
+      onComment: () => controller.openDetail(thread),
+      onReact: (reactionId) =>
+          controller.react(thread, reactionId: reactionId),
+      onShareInternal: () async {
+        final result = await showFeedShareInternal(
+          context: context,
+          itemId: OmnifeedItemId.encode(
+            OmnifeedItemId.typeThread,
+            thread.threadId,
+          ),
+          previewText: thread.messagePlainText ?? thread.title,
+        );
+        final created = result?.createdItem;
+        if (created != null) {
+          OmnifeedController.ensure().prependItem(created);
+        }
+      },
+      onShareExternal: () async {
+        await showFeedShareExternal(
+          context: context,
+          itemId: OmnifeedItemId.encode(
+            OmnifeedItemId.typeThread,
+            thread.threadId,
+          ),
+          viewUrl: thread.viewUrl,
+        );
+      },
+      onAuthorTap: () => OmnifeedNavigation.openUserProfile(
+            thread.author?.userId,
+            username: thread.author?.username,
+          ),
+      onTagTap: TagFeedNavigation.openTag,
     );
   }
 }

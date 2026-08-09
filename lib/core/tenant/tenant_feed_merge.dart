@@ -7,6 +7,7 @@ import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_media_enrichment.dart';
 import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/core/tenant/tenant_scope_filter.dart';
 import 'package:kairete/core/tenant/tenant_service.dart';
 
 /// Merge client-side dei contenuti mappati tenant (fallback se API community-feed assente).
@@ -19,7 +20,11 @@ class TenantFeedMergeService {
   Future<List<OmnifeedItem>> buildCommunityItems({
     int page = 1,
     int limit = 20,
+    String feedFilter = 'all',
   }) async {
+    if (feedFilter == 'following') {
+      return [];
+    }
     await TenantService().ensureTenantReady();
     final sources = await Future.wait([
       _groupPostItems(),
@@ -28,7 +33,11 @@ class TenantFeedMergeService {
       _mediaItems(),
     ]);
     final merged = mergeOmnifeedItemLists(sources);
-    return _slicePage(merged, page: page, limit: limit);
+    return _slicePage(
+      TenantScopeFilter.filterFeedItems(merged),
+      page: page,
+      limit: limit,
+    );
   }
 
   Future<List<OmnifeedItem>> buildUserItems({
@@ -94,26 +103,100 @@ class TenantFeedMergeService {
     }
   }
 
+  /// Solo articoli blog per integrazione nel newsfeed tenant.
+  Future<List<OmnifeedItem>> buildBlogFeedItems() => _blogItems();
+
   Future<List<OmnifeedItem>> _blogItems() async {
-    if (TenantScope.blogIds.isEmpty && TenantScope.blogCategoryIds.isEmpty) {
+    final allowedBlogIds = await _resolvedBlogIds();
+    final allowedCats = TenantScope.blogCategoryIds.toSet();
+    if (allowedBlogIds.isEmpty && allowedCats.isEmpty) {
       return [];
     }
-    try {
-      final entries = await _blog.fetchEntries();
-      return entries.map(OmnifeedItem.fromBlogEntry).toList();
-    } catch (_) {
-      return [];
+
+    final byId = <int, OmnifeedItem>{};
+
+    // Per-blog: evita l’API mapped-entries che fallisce se lo scope ACP è vuoto.
+    if (allowedBlogIds.isNotEmpty) {
+      final lists = await Future.wait(
+        allowedBlogIds.map((blogId) async {
+          try {
+            return await _blog.fetchEntries(blogId: blogId);
+          } catch (_) {
+            return <BlogEntry>[];
+          }
+        }),
+      );
+      for (final entries in lists) {
+        for (final entry in entries) {
+          final item = OmnifeedItem.fromBlogEntry(entry);
+          byId[item.contentId ?? item.itemId] = item;
+        }
+      }
     }
+
+    if (allowedCats.isNotEmpty) {
+      try {
+        final entries = await _blog.fetchEntries();
+        for (final entry in entries) {
+          final catId = entry.category?.categoryId ?? 0;
+          if (!allowedCats.contains(catId)) continue;
+          final item = OmnifeedItem.fromBlogEntry(entry);
+          byId[item.contentId ?? item.itemId] = item;
+        }
+      } catch (_) {}
+    }
+
+    return byId.values.toList();
+  }
+
+  /// Blog mappati in ACP + blog collegati ai forum mappati (forum-link).
+  Future<Set<int>> _resolvedBlogIds() async {
+    final ids = TenantScope.blogIds.toSet();
+    final forums = TenantScope.forumNodeIds;
+    if (forums.isEmpty) return ids;
+    final linked = await Future.wait(
+      forums.map((nodeId) async {
+        try {
+          final link = await _forum.fetchLinkedBlog(nodeId);
+          return link?.blogId ?? 0;
+        } catch (_) {
+          return 0;
+        }
+      }),
+    );
+    for (final id in linked) {
+      if (id > 0) ids.add(id);
+    }
+    return ids;
   }
 
   Future<List<OmnifeedItem>> _forumThreadItems() async {
     final nodeIds = TenantScope.forumNodeIds;
     if (nodeIds.isEmpty) return [];
 
+    final nodeTitles = <int, String>{};
+    try {
+      final groups = await _forum.fetchForumGroups();
+      for (final group in groups) {
+        for (final forum in group.forums) {
+          nodeTitles[forum.nodeId] = forum.title;
+        }
+      }
+    } catch (_) {}
+
     final lists = await Future.wait(
       nodeIds.map((nodeId) async {
         try {
-          return await _forum.fetchThreads(nodeId);
+          final threads = await _forum.fetchThreads(nodeId);
+          final forumTitle = nodeTitles[nodeId];
+          if (forumTitle == null || forumTitle.isEmpty) return threads;
+          return threads
+              .map(
+                (thread) => thread.forumTitle?.trim().isNotEmpty == true
+                    ? thread
+                    : thread.copyWith(forumTitle: forumTitle),
+              )
+              .toList();
         } catch (_) {
           return <ForumThread>[];
         }

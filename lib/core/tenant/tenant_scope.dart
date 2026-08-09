@@ -39,4 +39,12 @@ class TenantScope {
 
   static bool tabEnabled(String tab) =>
       !AppConfig.isTenantApp || (_bootstrap?.tabEnabled(tab) ?? false);
+
+  static bool get hasMappedModules {
+    return forumNodeIds.isNotEmpty ||
+        blogIds.isNotEmpty ||
+        blogCategoryIds.isNotEmpty ||
+        mediaCategoryIds.isNotEmpty ||
+        mediaAlbumIds.isNotEmpty;
+  }
 }

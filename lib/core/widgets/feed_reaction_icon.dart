@@ -1,42 +1,47 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
+import 'package:kairete/core/widgets/reaction_face.dart';
 
-/// Icona reazione attiva del visitatore, oppure thumb di default.
+/// Icona reazione attiva del visitatore, oppure thumb outline di default.
 class FeedReactionIcon extends StatelessWidget {
   const FeedReactionIcon({
     super.key,
     this.visitorReactionId,
     this.size = 16,
     this.fallbackColor = Colors.white,
+    this.outlined = false,
   });
 
   final int? visitorReactionId;
   final double size;
   final Color fallbackColor;
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
     final reactionId = visitorReactionId ?? 0;
     if (reactionId > 0) {
       final icon = ReactionCatalog.instance.iconFor(reactionId);
-      if (icon != null && icon.imageUrl.isNotEmpty) {
-        return CachedNetworkImage(
-          imageUrl: icon.imageUrl,
-          width: size,
-          height: size,
-          errorWidget: (_, __, ___) => Icon(
-            Icons.thumb_up,
+      if (icon != null) {
+        return ReactionFace(
+          icon: icon,
+          size: size,
+          fallback: Icon(
+            outlined ? Icons.thumb_up_outlined : Icons.thumb_up,
             size: size,
             color: fallbackColor,
+            weight: outlined ? 300 : null,
+            opticalSize: outlined ? 20 : null,
           ),
         );
       }
     }
     return Icon(
-      reactionId > 0 ? Icons.thumb_up : Icons.thumb_up_outlined,
+      Icons.thumb_up_outlined,
       size: size,
       color: fallbackColor,
+      weight: outlined ? 300 : null,
+      opticalSize: outlined ? 20 : null,
     );
   }
 }

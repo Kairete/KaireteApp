@@ -16,7 +16,7 @@ class OmnifeedNavigation {
   static void openAuthor(OmnifeedItem item) =>
       openUserProfile(item.author?.userId);
 
-  static void openUserProfile(int? userId) {
+  static void openUserProfile(int? userId, {String? username}) {
     if (userId == null || userId <= 0) return;
     Get.toNamed(AppRoutes.profile.replaceFirst(':userId', '$userId'));
   }
@@ -41,6 +41,12 @@ class OmnifeedNavigation {
         forumTitle: item.categoryLabel ?? 'Forum',
       ),
     );
+  }
+
+  static void openGroup(OmnifeedItem item) {
+    final groupId = item.groupId ?? _groupIdFromViewUrl(item.viewUrl);
+    if (groupId == null || groupId <= 0) return;
+    Get.to(() => GroupDetailPage(groupId: groupId));
   }
 
   static void openDetail(OmnifeedItem item) {

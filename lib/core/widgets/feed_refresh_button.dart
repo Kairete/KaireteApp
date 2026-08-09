@@ -17,7 +17,7 @@ class FeedRefreshButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final padding = compact
-        ? const EdgeInsets.all(10)
+        ? const EdgeInsets.all(8)
         : const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
 
     return Material(
@@ -41,7 +41,7 @@ class FeedRefreshButton extends StatelessWidget {
                     color: Colors.white,
                   ),
                 )
-              : const Icon(Icons.refresh, size: 20, color: Colors.white),
+              : Icon(Icons.refresh, size: compact ? 18 : 20, color: Colors.white),
         ),
       ),
     );

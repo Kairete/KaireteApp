@@ -4,11 +4,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/feed/utils/feed_comment_reply.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
 import 'package:kairete/features/media/models/media_comment.dart';
+import 'package:kairete/features/media/utils/media_comment_ui.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/pages/album_create_page.dart';
 import 'package:kairete/features/media/pages/media_compose_page.dart';
@@ -17,6 +23,7 @@ import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/media/widgets/media_viewer.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
@@ -34,10 +41,13 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
   final MediaService _service = MediaService();
   final _commentCtrl = TextEditingController();
   final _commentFocus = FocusNode();
+  final _replyDraft = FeedCommentReplyDraft();
   MediaItem? _item;
   List<MediaComment> _comments = const [];
+  int _shareCount = 0;
   bool _loading = true;
   bool _sending = false;
+  int? _highlightCommentId;
   String? _error;
 
   @override
@@ -104,6 +114,43 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
     }
   }
 
+  List<FeedNestedCommentData> _nestedComments() {
+    return [
+      for (final comment in mapMediaCommentsToNested(_comments))
+        comment.copyWith(
+          onLike: (reactionId) => _reactToComment(
+            commentId: comment.id,
+            reactionId: reactionId,
+          ),
+        ),
+    ];
+  }
+
+  Future<void> _reactToComment({
+    required int commentId,
+    int reactionId = 1,
+  }) async {
+    try {
+      await ReactionService().reactMediaComment(
+        commentId,
+        reactionId: reactionId,
+      );
+      await _load();
+    } on ReactionException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } catch (_) {
+      AppToast.error('Impossibile reagire al commento.');
+    }
+  }
+
+  Future<void> _sendFromBar() async {
+    if (_replyDraft.isActive) {
+      await _sendReply(_replyDraft.parentCommentId!, _replyDraft.messageForApi(_commentCtrl.text));
+    } else {
+      await _sendComment();
+    }
+  }
+
   Future<void> _sendComment() async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty) return;
@@ -117,6 +164,56 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<void> _sendReply(int parentCommentId, String message) async {
+    if (message.trim().isEmpty) return;
+    final beforeIds = _comments.map((c) => c.commentId).toList();
+    setState(() => _sending = true);
+    try {
+      MediaComment? quoted;
+      for (final comment in _comments) {
+        if (comment.commentId == parentCommentId) {
+          quoted = comment;
+          break;
+        }
+      }
+      await _service.postComment(
+        mediaId: widget.mediaId,
+        message: message.trim(),
+        parentCommentId: parentCommentId,
+        quotedAuthorName: quoted?.author?.label ?? quoted?.author?.username,
+        quotedAuthorUserId: quoted?.author?.userId ?? 0,
+      );
+      _replyDraft.clear();
+      _commentCtrl.clear();
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _highlightCommentId = detectNewNestedCommentId(
+          previousIds: beforeIds,
+          current: _nestedComments(),
+          parentCommentId: parentCommentId,
+        );
+      });
+    } on MediaException catch (e) {
+      AppToast.error(e.message);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  void _beginReply(FeedNestedCommentData comment) {
+    _replyDraft.beginFrom(comment);
+    _replyDraft.primeComposer(_commentCtrl);
+    setState(() {});
+    requestCommentFocusAfterFrame(_commentFocus, mountedOn: this);
+  }
+
+  void _cancelReply() {
+    _replyDraft.clear();
+    _commentCtrl.clear();
+    setState(() {});
   }
 
   void _openViewer() {
@@ -215,7 +312,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                     formatOmnifeedCardDate(_item!.mediaDate),
                                 categoryLabel: _item!.category?.title,
                                 onAuthorTap: () => OmnifeedNavigation
-                                    .openUserProfile(_item!.author?.userId),
+                                    .openUserProfile(
+                                  _item!.author?.userId,
+                                  username: _item!.author?.username,
+                                ),
                                 onModuleTap: _openAlbumFilter,
                                 onCategoryTap: _openCategoryFilter,
                               ),
@@ -238,25 +338,48 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                     ? (reactionId) =>
                                         _react(reactionId: reactionId)
                                     : null,
-                              ),
-                              comments: _comments
-                                  .map(
-                                    (comment) => FeedCommentTile(
-                                      authorName: comment.author?.label ??
-                                          comment.author?.username ??
-                                          '',
-                                      avatarUrl: comment.author?.avatarUrl,
-                                      dateLabel: formatOmnifeedCardDate(
-                                        comment.commentDate,
-                                      ),
-                                      message:
-                                          comment.messagePlainText ?? '',
-                                      likeCount: comment.reactionScore,
-                                      visitorReactionId:
-                                          comment.visitorReactionId,
+                                shareCount: _shareCount,
+                                onShareInternal: () async {
+                                  final item = _item!;
+                                  final result = await showFeedShareInternal(
+                                    context: context,
+                                    itemId: OmnifeedItemId.encode(
+                                      OmnifeedItemId.typeMedia,
+                                      item.mediaId,
                                     ),
-                                  )
-                                  .toList(),
+                                    previewText:
+                                        item.description ?? item.title,
+                                  );
+                                  if (result != null && mounted) {
+                                    setState(() {
+                                      _shareCount = result.shareCount;
+                                    });
+                                  }
+                                },
+                                onShareExternal: () async {
+                                  final item = _item!;
+                                  final result = await showFeedShareExternal(
+                                    context: context,
+                                    itemId: OmnifeedItemId.encode(
+                                      OmnifeedItemId.typeMedia,
+                                      item.mediaId,
+                                    ),
+                                    viewUrl: item.viewUrl,
+                                  );
+                                  if (result != null && mounted) {
+                                    setState(() {
+                                      _shareCount = result.shareCount;
+                                    });
+                                  }
+                                },
+                              ),
+                              comments: [
+                                FeedNestedCommentThread(
+                                  comments: _nestedComments(),
+                                  highlightCommentId: _highlightCommentId,
+                                  onReplyTap: _beginReply,
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -266,7 +389,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                       controller: _commentCtrl,
                       focusNode: _commentFocus,
                       isSending: _sending,
-                      onSend: _sendComment,
+                      onSend: _sendFromBar,
+                      replyLabel: _replyDraft.replyLabel,
+                      onCancelReply:
+                          _replyDraft.isActive ? _cancelReply : null,
                     ),
                   ],
                 ),

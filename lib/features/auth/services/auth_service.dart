@@ -2,6 +2,8 @@ import 'package:kairete/config/api_paths.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/core/presence/app_presence_service.dart';
+import 'package:kairete/core/push/push_notification_service.dart';
 import 'package:kairete/core/session/device_session_service.dart';
 import 'package:kairete/core/session/session_store.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
@@ -23,7 +25,7 @@ class AuthService {
 
     final account = UserAccount.fromApi(json);
     await _persist(account);
-    await _deviceSessions.registerAfterAuth(account.userId);
+    await _afterAuth(account);
     return account;
   }
 
@@ -53,7 +55,7 @@ class AuthService {
 
     final account = UserAccount.fromApi(json);
     await _persist(account);
-    await _deviceSessions.registerAfterAuth(account.userId);
+    await _afterAuth(account);
     return account;
   }
 
@@ -62,6 +64,7 @@ class AuthService {
       final fromDevice = await _deviceSessions.tryRestoreFromDevice();
       if (fromDevice != null) {
         await _persist(fromDevice);
+        await _afterAuth(fromDevice);
         return fromDevice;
       }
     } catch (_) {}
@@ -69,7 +72,9 @@ class AuthService {
     final userId = await SessionStore.instance.userId;
     if (userId == null) return null;
     await AppApi.instance.applySession(userId: userId);
-    return fetchMe();
+    final account = await fetchMe();
+    await _afterAuth(account);
+    return account;
   }
 
   Future<UserAccount> fetchMe() async {
@@ -107,8 +112,22 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    await AppPresenceService.instance.onUserLoggedOut();
+    await PushNotificationService.instance.unregister();
     await SessionStore.instance.clear();
     AppApi.instance.clearSession();
+  }
+
+  Future<void> _afterAuth(UserAccount account) async {
+    try {
+      await _deviceSessions.registerAfterAuth(account.userId);
+    } catch (_) {}
+
+    AppPresenceService.instance.onUserAuthenticated();
+
+    try {
+      await PushNotificationService.instance.register(userId: account.userId);
+    } catch (_) {}
   }
 
   Future<void> _persist(UserAccount account) async {

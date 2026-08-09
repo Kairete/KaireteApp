@@ -23,6 +23,18 @@ class XenforoApi {
     _applyUserHeader();
   }
 
+  /// Esegue [action] impersonando [userId] su XF-Api-User (come app legacy profilo).
+  Future<T> runAsUser<T>(int userId, Future<T> Function() action) async {
+    if (userId <= 0) return action();
+    final previous = _userId;
+    setUserId(userId);
+    try {
+      return await action();
+    } finally {
+      setUserId(previous);
+    }
+  }
+
   void _applyUserHeader() {
     _dio.options.headers['XF-Api-User'] = (_userId ?? 0).toString();
   }
@@ -47,9 +59,22 @@ class XenforoApi {
     Map<String, dynamic>? body,
     Map<String, dynamic>? query,
   }) async {
+    final form = FormData();
+    (body ?? {}).forEach((key, value) {
+      if (value == null) return;
+      if (value is List) {
+        // XF API array fields (es. tags[]): ripeti la chiave con [].
+        for (final item in value) {
+          if (item == null) continue;
+          form.fields.add(MapEntry('$key[]', item.toString()));
+        }
+      } else {
+        form.fields.add(MapEntry(key, value.toString()));
+      }
+    });
     final response = await _dio.post<Map<String, dynamic>>(
       path,
-      data: FormData.fromMap(body ?? {}),
+      data: form,
       queryParameters: query,
     );
     return response.data ?? {};
@@ -102,9 +127,13 @@ class XenforoApi {
     return response.data ?? {};
   }
 
-  Future<Map<String, dynamic>> delete(String path) async {
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final response = await _dio.delete<Map<String, dynamic>>(
       path,
+      data: body != null ? FormData.fromMap(body) : null,
       queryParameters: _withLimit(null),
     );
     return response.data ?? {};

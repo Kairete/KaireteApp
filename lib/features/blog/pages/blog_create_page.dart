@@ -64,7 +64,7 @@ class _BlogCreatePageState extends State<BlogCreatePage> {
             controller: c.descriptionCtrl,
             maxLines: 3,
             decoration: const InputDecoration(
-              labelText: 'Descrizione breve',
+              labelText: 'Descrizione web',
             ),
           ),
           const SizedBox(height: 12),

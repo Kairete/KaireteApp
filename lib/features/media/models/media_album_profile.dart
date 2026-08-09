@@ -2,6 +2,7 @@ class MediaAlbumProfile {
   MediaAlbumProfile({
     required this.albumId,
     required this.title,
+    this.categoryId = 0,
     this.description = '',
     this.coverUrl,
     this.isWatched = false,
@@ -12,6 +13,7 @@ class MediaAlbumProfile {
 
   final int albumId;
   final String title;
+  final int categoryId;
   final String description;
   final String? coverUrl;
   final bool isWatched;
@@ -25,6 +27,7 @@ class MediaAlbumProfile {
     return MediaAlbumProfile(
       albumId: albumId,
       title: title,
+      categoryId: categoryId,
       description: description,
       coverUrl: coverUrl ?? this.coverUrl,
       isWatched: isWatched,
@@ -65,9 +68,16 @@ class MediaAlbumProfile {
       }
     }
 
+    var categoryId = json['category_id'] as int? ?? 0;
+    final category = json['Category'];
+    if (categoryId <= 0 && category is Map) {
+      categoryId = category['category_id'] as int? ?? 0;
+    }
+
     return MediaAlbumProfile(
       albumId: json['album_id'] as int? ?? 0,
       title: json['title']?.toString() ?? '',
+      categoryId: categoryId,
       description: json['description']?.toString() ?? '',
       coverUrl: cover,
       isWatched: json['is_watching'] as bool? ??

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_branding.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/attachment_picker.dart' as attach_pick;
 import 'package:kairete/core/utils/error_report_dialog.dart';
@@ -9,7 +11,14 @@ import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 
 class MediaComposeController extends GetxController {
+  MediaComposeController({bool tenantMapped = false}) : _tenantMappedFlag = tenantMapped;
+
+  final bool _tenantMappedFlag;
+
   final MediaService _service = MediaService();
+
+  /// Tenant upload se esplicitamente richiesto o se siamo in una sotto-app.
+  bool get isTenantUpload => _tenantMappedFlag || AppConfig.isTenantApp;
 
   final titleCtrl = TextEditingController();
   final descriptionCtrl = TextEditingController();
@@ -29,6 +38,7 @@ class MediaComposeController extends GetxController {
   final lastPublishError = ''.obs;
 
   List<MediaAlbum> get visibleAlbums {
+    if (isTenantUpload) return albums;
     final categoryId = selectedCategoryId.value;
     if (categoryId == null || categoryId <= 0) {
       return albums;
@@ -55,9 +65,9 @@ class MediaComposeController extends GetxController {
   }
 
   void _onFieldsChanged() {
+    final hasAlbum = (selectedAlbumId.value ?? 0) > 0;
     canSend.value = titleCtrl.text.trim().isNotEmpty &&
-        (selectedCategoryId.value ?? 0) > 0 &&
-        (selectedAlbumId.value ?? 0) > 0 &&
+        hasAlbum &&
         pendingFile.value != null;
   }
 
@@ -65,20 +75,38 @@ class MediaComposeController extends GetxController {
     isLoading.value = true;
     loadError.value = '';
     try {
-      final results = await Future.wait([
-        _service.fetchAlbums(),
-        _service.fetchCategories(),
-      ]);
-      albums.value = results[0] as List<MediaAlbum>;
-      categories.value = results[1] as List<MediaCategory>;
+      await AppBranding.ensureFromPackage();
+      final useTenant = isTenantUpload;
 
-      if (categories.isEmpty) {
-        loadError.value =
-            'Nessuna categoria Media Gallery disponibile. Verifica permessi XFMG sul forum.';
+      if (useTenant) {
+        albums.value = await _service.fetchTenantUploadAlbums();
+        categories.value = await _service.fetchTenantUploadCategories(
+          uploadAlbums: albums,
+        );
+      } else {
+        final results = await Future.wait([
+          _service.fetchAlbums(),
+          _service.fetchCategories(),
+        ]);
+        albums.value = results[0] as List<MediaAlbum>;
+        categories.value = results[1] as List<MediaCategory>;
+      }
+
+      if (albums.isEmpty) {
+        loadError.value = useTenant
+            ? await _service.describeTenantUploadMappingIssue()
+            : 'Nessun album disponibile. Verifica permessi Media Gallery sul forum.';
         return;
       }
 
-      selectedCategoryId.value = categories.first.categoryId;
+      selectedAlbumId.value = albums.first.albumId;
+      final album = albums.first;
+      if (album.categoryId > 0) {
+        selectedCategoryId.value = album.categoryId;
+      } else if (categories.isNotEmpty) {
+        selectedCategoryId.value = categories.first.categoryId;
+      }
+
       _syncAlbumSelection();
       _onFieldsChanged();
     } on MediaException catch (e) {
@@ -137,8 +165,6 @@ class MediaComposeController extends GetxController {
     final name = pendingFilename.value;
     if (albumId == null ||
         albumId <= 0 ||
-        categoryId == null ||
-        categoryId <= 0 ||
         path == null ||
         name == null) {
       return;
@@ -151,7 +177,7 @@ class MediaComposeController extends GetxController {
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         albumId: albumId,
-        categoryId: categoryId,
+        categoryId: categoryId ?? 0,
         tags: tagsCtrl.text.trim(),
         filePath: path,
         filename: name,
@@ -192,9 +218,12 @@ class AlbumCreateController extends GetxController {
 
   final titleCtrl = TextEditingController();
   final descriptionCtrl = TextEditingController();
-  final selectedPrivacy = 'private'.obs;
-  final pendingFile = RxnString();
-  final pendingFilename = RxnString();
+  final viewMembersCtrl = TextEditingController();
+  final addMembersCtrl = TextEditingController();
+  final selectedViewPrivacy = 'private'.obs;
+  final selectedAddPrivacy = 'private'.obs;
+  final coverPath = RxnString();
+  final coverFilename = RxnString();
 
   final isSending = false.obs;
   final canSend = false.obs;
@@ -203,6 +232,8 @@ class AlbumCreateController extends GetxController {
   void onInit() {
     super.onInit();
     titleCtrl.addListener(_onFieldsChanged);
+    viewMembersCtrl.addListener(_onFieldsChanged);
+    addMembersCtrl.addListener(_onFieldsChanged);
     _onFieldsChanged();
   }
 
@@ -210,46 +241,73 @@ class AlbumCreateController extends GetxController {
   void onClose() {
     titleCtrl.dispose();
     descriptionCtrl.dispose();
+    viewMembersCtrl.dispose();
+    addMembersCtrl.dispose();
     super.onClose();
   }
 
   void _onFieldsChanged() {
-    canSend.value = titleCtrl.text.trim().isNotEmpty;
+    final titleOk = titleCtrl.text.trim().isNotEmpty;
+    final viewOk = selectedViewPrivacy.value != 'shared' ||
+        viewMembersCtrl.text.trim().isNotEmpty;
+    final addOk = selectedAddPrivacy.value != 'shared' ||
+        addMembersCtrl.text.trim().isNotEmpty;
+    canSend.value = titleOk && viewOk && addOk;
   }
 
-  void setPrivacy(String value) {
-    selectedPrivacy.value = value;
+  void setViewPrivacy(String value) {
+    selectedViewPrivacy.value = value;
+    _onFieldsChanged();
+  }
+
+  void setAddPrivacy(String value) {
+    selectedAddPrivacy.value = value;
+    _onFieldsChanged();
   }
 
   Future<void> pickCover() async {
     final files = await attach_pick.pickMediaAttachments(allowMultiple: false);
     if (files.isEmpty) return;
     final file = files.first;
-    pendingFile.value = file.path;
-    pendingFilename.value = file.displayName;
+    coverPath.value = file.path;
+    coverFilename.value = file.displayName;
+    _onFieldsChanged();
+  }
+
+  void clearCover() {
+    coverPath.value = null;
+    coverFilename.value = null;
+    _onFieldsChanged();
   }
 
   Future<void> publish() async {
     if (!canSend.value || isSending.value) return;
     isSending.value = true;
     try {
+      final categoryId = await _service.resolveDefaultMediaCategoryId();
       final album = await _service.createAlbum(
         title: titleCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
-        viewPrivacy: selectedPrivacy.value,
+        viewPrivacy: selectedViewPrivacy.value,
+        addPrivacy: selectedAddPrivacy.value,
+        viewUsers: viewMembersCtrl.text.trim(),
+        addUsers: addMembersCtrl.text.trim(),
+        categoryId: categoryId,
       );
-      final coverPath = pendingFile.value;
-      final coverName = pendingFilename.value;
-      if (coverPath != null &&
-          coverPath.isNotEmpty &&
+      final coverFile = coverPath.value;
+      final coverName = coverFilename.value;
+      if (coverFile != null &&
+          coverFile.isNotEmpty &&
           coverName != null &&
           coverName.isNotEmpty) {
+        final mediaCategoryId =
+            album.categoryId > 0 ? album.categoryId : categoryId;
         final cover = await _service.createMedia(
           title: titleCtrl.text.trim(),
           description: descriptionCtrl.text.trim(),
           albumId: album.albumId,
-          categoryId: album.categoryId,
-          filePath: coverPath,
+          categoryId: mediaCategoryId,
+          filePath: coverFile,
           filename: coverName,
         );
         await MediaNavigation.openPublishedMedia(cover.mediaId);

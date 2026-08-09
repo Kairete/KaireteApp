@@ -13,6 +13,8 @@ class AppTheme {
   static Color brandPrimary = primary;
   static Color brandAccent = accent;
   static Color brandAppBarBorder = appBarBorderBottom;
+  static Color brandHeader = primary;
+  static Color brandNavbar = primary;
 
   static const Color headerBg = Color(0xFFE8EAED);
   static const Color footerBg = Color(0xFFE8EAED);
@@ -30,6 +32,8 @@ class AppTheme {
     brandPrimary = profile.primary;
     brandAccent = profile.accent;
     brandAppBarBorder = profile.appBarBorderBottom;
+    brandHeader = profile.headerColor;
+    brandNavbar = profile.navbarColor;
   }
 
   static ThemeData get light => ThemeData(
@@ -41,7 +45,7 @@ class AppTheme {
         ),
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
-          backgroundColor: brandPrimary,
+          backgroundColor: brandHeader,
           foregroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
           elevation: 0,

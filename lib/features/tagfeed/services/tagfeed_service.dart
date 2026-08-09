@@ -38,6 +38,10 @@ class TagFeedService {
     }
   }
 
+  Future<bool> toggleBookmark(OmnifeedItem item) {
+    return OmnifeedService().toggleBookmark(item);
+  }
+
   String _cleanTag(String tag) =>
       tag.trim().replaceFirst(RegExp(r'^#'), '');
 
@@ -69,7 +73,11 @@ class TagFeedPage {
 
     return TagFeedPage(
       items: raw
-          .map((e) => OmnifeedItem.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => OmnifeedItem.fromFeedJson(
+              Map<String, dynamic>.from(e as Map),
+            ).withResolvedItemId(),
+          )
           .toList(),
       tagLabel: tag?['tag']?.toString() ?? '',
       currentPage: pagination['current_page'] as int? ?? 1,

@@ -1,4 +1,5 @@
 import 'package:kairete/core/utils/media_playback.dart';
+import 'package:kairete/features/feed/models/author_signature_fields.dart';
 
 class MediaAuthor {
   MediaAuthor({
@@ -6,15 +7,28 @@ class MediaAuthor {
     required this.username,
     this.avatarUrl,
     this.displayName,
+    this.signatureHtml,
+    this.signaturePlain,
+    this.contentShowSignature = true,
   });
 
   final int userId;
   final String username;
   final String? avatarUrl;
   final String? displayName;
+  final String? signatureHtml;
+  final String? signaturePlain;
+  final bool contentShowSignature;
 
   String get label =>
       displayName?.trim().isNotEmpty == true ? displayName! : username;
+
+  bool get hasVisibleSignature {
+    if (!contentShowSignature) return false;
+    final html = signatureHtml?.trim() ?? '';
+    final plain = signaturePlain?.trim() ?? '';
+    return html.isNotEmpty || plain.isNotEmpty;
+  }
 
   factory MediaAuthor.fromJson(Map<String, dynamic> json) {
     String? avatar;
@@ -30,11 +44,15 @@ class MediaAuthor {
       fullName = '$first $last'.trim();
       if (fullName.isEmpty) fullName = null;
     }
+    final sig = AuthorSignatureFields.fromJson(json);
     return MediaAuthor(
       userId: json['user_id'] as int? ?? 0,
       username: json['username']?.toString() ?? '',
       avatarUrl: avatar,
       displayName: fullName,
+      signatureHtml: sig.signatureHtml,
+      signaturePlain: sig.signaturePlain,
+      contentShowSignature: sig.contentShowSignature,
     );
   }
 }
@@ -46,9 +64,13 @@ class MediaAlbumRef {
   final String title;
 
   factory MediaAlbumRef.fromJson(Map<String, dynamic> json) {
+    final title = json['title']?.toString().trim() ??
+        json['album_title']?.toString().trim() ??
+        json['name']?.toString().trim() ??
+        '';
     return MediaAlbumRef(
       albumId: json['album_id'] as int? ?? 0,
-      title: json['title']?.toString() ?? '',
+      title: title,
     );
   }
 }
@@ -132,6 +154,31 @@ class MediaItem {
     final label = album?.title.trim();
     if (label != null && label.isNotEmpty) return label;
     return null;
+  }
+
+  MediaItem withAlbumTitle(String title) {
+    final albumId = album?.albumId ?? 0;
+    if (albumId <= 0) return this;
+    return MediaItem(
+      mediaId: mediaId,
+      title: title,
+      description: description,
+      mediaDate: mediaDate,
+      mediaType: mediaType,
+      mediaUrl: mediaUrl,
+      thumbnailUrl: thumbnailUrl,
+      mediaEmbedUrl: mediaEmbedUrl,
+      commentCount: commentCount,
+      reactionScore: reactionScore,
+      canReact: canReact,
+      visitorReactionId: visitorReactionId,
+      author: author,
+      album: MediaAlbumRef(albumId: albumId, title: title),
+      category: category,
+      tags: tags,
+      viewUrl: viewUrl,
+      durationSeconds: durationSeconds,
+    );
   }
 
   String get previewBody {
@@ -300,9 +347,11 @@ class MediaAlbum {
 
   factory MediaAlbum.fromJson(Map<String, dynamic> json) {
     var categoryId = json['category_id'] as int? ?? 0;
-    final category = json['Category'];
-    if (categoryId <= 0 && category is Map) {
-      categoryId = category['category_id'] as int? ?? 0;
+    for (final key in ['Category', 'category']) {
+      final nested = json[key];
+      if (categoryId <= 0 && nested is Map) {
+        categoryId = nested['category_id'] as int? ?? 0;
+      }
     }
     return MediaAlbum(
       albumId: json['album_id'] as int? ?? 0,

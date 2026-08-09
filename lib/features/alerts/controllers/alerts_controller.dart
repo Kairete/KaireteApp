@@ -8,6 +8,7 @@ import 'package:kairete/features/alerts/services/alerts_service.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/groups/pages/group_detail_page.dart';
+import 'package:kairete/features/media/pages/media_detail_page.dart';
 
 class AlertsController extends GetxController {
   final AlertsService _service = AlertsService();
@@ -111,7 +112,11 @@ class AlertsController extends GetxController {
         }
         return _navigateFromUrl(alert.alertUrl);
       case 'ubs_blog_entry':
+      case 'blog_post':
         Get.to(() => BlogDetailPage(entryId: contentId));
+        return true;
+      case 'xfmg_media':
+        Get.to(() => MediaDetailPage(mediaId: contentId));
         return true;
       case 'tl_group_post':
       case 'social_group':

@@ -7,8 +7,13 @@ import 'package:kairete/core/services/reaction_service.dart';
 import 'package:kairete/core/tenant/tenant_api_helpers.dart';
 import 'package:kairete/core/tenant/tenant_scope.dart';
 import 'package:kairete/core/tenant/tenant_service.dart';
+import 'package:kairete/features/blog/services/blog_service.dart';
+import 'package:kairete/features/forum/models/forum_feed_item.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
+import 'package:kairete/features/forum/utils/forum_quote_bbcode.dart';
+import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
+import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
 class ForumService {
   XenforoApi get _api => AppApi.instance.xenforo;
@@ -94,7 +99,75 @@ class ForumService {
     );
     _throwIfError(json);
     final threads = ForumThreadsPage.fromJson(json).threads;
-    return _hydrateFirstPostPreviews(threads);
+    final hydrated = await _hydrateFirstPostPreviews(threads);
+    final withPreviews = await _hydrateLinkPreviews(hydrated);
+    return _pinHighlightedThreads(withPreviews);
+  }
+
+  /// Blog collegato al forum (se configurato dall'admin nelle impostazioni blog).
+  Future<({int blogId, String title})?> fetchLinkedBlog(int forumId) async {
+    await AppApi.instance.applySession();
+    try {
+      final json = await _api.get(
+        ApiPaths.blogsForumLink,
+        query: {'node_id': forumId},
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return null;
+      if (json['linked'] != true) return null;
+      final blog = json['blog'];
+      if (blog is! Map) return null;
+      final blogId = blog['blog_id'] as int? ?? 0;
+      if (blogId <= 0) return null;
+      return (
+        blogId: blogId,
+        title: blog['title']?.toString() ?? '',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Discussioni forum + articoli del blog collegato, ordinati per data.
+  Future<List<ForumFeedItem>> fetchForumFeed(int forumId) async {
+    final threadsFuture = fetchThreads(forumId);
+    final linkedFuture = fetchLinkedBlog(forumId);
+
+    final threads = await threadsFuture;
+    final linked = await linkedFuture;
+
+    final items = <ForumFeedItem>[
+      for (final t in threads) ForumFeedItem.thread(t),
+    ];
+
+    if (linked != null) {
+      try {
+        final entries = await BlogService().fetchEntries(blogId: linked.blogId);
+        for (final entry in entries) {
+          items.add(ForumFeedItem.blog(entry));
+        }
+      } catch (_) {
+        // Lista forum resta utilizzabile anche se il merge blog fallisce.
+      }
+    }
+
+    items.sort((a, b) => b.sortDate.compareTo(a.sortDate));
+    return items;
+  }
+
+  Future<List<ForumThread>> _pinHighlightedThreads(
+    List<ForumThread> threads,
+  ) async {
+    try {
+      final page = await OmnifeedService().fetchHighlights('admin:forum');
+      if (page.contentIds.isEmpty) return threads;
+      return OmnifeedService.pinByContentIds(
+        items: threads,
+        highlightedContentIds: page.contentIds.toSet(),
+        contentIdOf: (t) => t.threadId,
+      );
+    } catch (_) {
+      return threads;
+    }
   }
 
   Future<List<ForumThread>> _hydrateFirstPostPreviews(
@@ -129,6 +202,67 @@ class ForumService {
     return results;
   }
 
+  Future<List<ForumThread>> _hydrateLinkPreviews(
+    List<ForumThread> threads,
+  ) async {
+    final messages = threads
+        .map((t) => t.messagePlainText?.trim().isNotEmpty == true
+            ? t.messagePlainText!.trim()
+            : t.previewBody)
+        .toList(growable: false);
+    final batches = await _fetchLinkPreviewBatches(messages);
+    if (batches.isEmpty) return threads;
+    return [
+      for (var i = 0; i < threads.length; i++)
+        threads[i].copyWith(
+          linkPreviews: i < batches.length ? batches[i] : const [],
+        ),
+    ];
+  }
+
+  Future<List<ForumPost>> _hydratePostLinkPreviews(List<ForumPost> posts) async {
+    final messages = posts
+        .map((p) =>
+            (p.messagePlainText ?? p.messageParsed ?? '').trim())
+        .toList(growable: false);
+    final batches = await _fetchLinkPreviewBatches(messages);
+    if (batches.isEmpty) return posts;
+    return [
+      for (var i = 0; i < posts.length; i++)
+        posts[i].copyWith(
+          linkPreviews: i < batches.length ? batches[i] : const [],
+        ),
+    ];
+  }
+
+  Future<List<List<FeedLinkPreviewData>>> _fetchLinkPreviewBatches(
+    List<String> messages,
+  ) async {
+    if (messages.every((m) => !m.contains(RegExp(r'https?://', caseSensitive: false)))) {
+      return List.generate(messages.length, (_) => const <FeedLinkPreviewData>[]);
+    }
+    try {
+      final json = await _api.post(
+        ApiPaths.newsfeedLinkPreview,
+        body: {'messages': messages},
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) {
+        return const [];
+      }
+      final rawBatches = json['link_preview_batches'];
+      if (rawBatches is! List) {
+        final single = FeedLinkPreviewData.listFromJson(json['link_previews']);
+        if (messages.length == 1) return [single];
+        return const [];
+      }
+      return rawBatches
+          .map((raw) => FeedLinkPreviewData.listFromJson(raw))
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<ForumThread> fetchThread(
     int threadId, {
     String? forumTitle,
@@ -152,6 +286,7 @@ class ForumService {
         canReact: first.canReact,
         firstPostReactionScore: first.reactionScore,
         attachments: first.attachments,
+        linkPreviews: first.linkPreviews,
         canEdit: first.canEdit,
         canDelete: first.canDelete,
       );
@@ -175,7 +310,9 @@ class ForumService {
       query: {'page': page, 'limit': limit},
     );
     _throwIfError(json);
-    return ForumPostsPage.fromJson(json);
+    final parsed = ForumPostsPage.fromJson(json);
+    final posts = await _hydratePostLinkPreviews(parsed.posts);
+    return ForumPostsPage(posts: posts, pagination: parsed.pagination);
   }
 
   Future<String> reactToPost({required int postId, int reactionId = 1}) async {
@@ -199,7 +336,11 @@ class ForumService {
       'title': title,
       'message': message,
     };
-    if (tags.trim().isNotEmpty) body['tags'] = tags.trim();
+    // XF API richiede str[] (array), non una stringa CSV.
+    final tagList = splitTagInput(tags);
+    if (tagList.isNotEmpty) {
+      body['tags'] = tagList;
+    }
     if (attachmentKey.isNotEmpty) body['attachment_key'] = attachmentKey;
 
     final json = await _api.post(
@@ -207,8 +348,21 @@ class ForumService {
       body: body,
     );
     _throwIfError(json);
-    final raw = json['thread'] as Map<String, dynamic>? ?? json;
-    return ForumThread.fromJson(raw);
+    final raw = json['thread'];
+    final map = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : Map<String, dynamic>.from(json);
+    return ForumThread.fromJson(map);
+  }
+
+  /// Tag da input utente (virgola/spazio/#).
+  static List<String> splitTagInput(String raw) {
+    return raw
+        .split(RegExp(r'[,;]+'))
+        .expand((part) => part.trim().split(RegExp(r'\s+')))
+        .map((tag) => tag.trim().replaceFirst(RegExp(r'^#'), ''))
+        .where((tag) => tag.isNotEmpty)
+        .toList();
   }
 
   Future<void> deleteThread(int threadId) async {
@@ -242,13 +396,19 @@ class ForumService {
   Future<ForumPost> postReply({
     required int threadId,
     required String message,
+    int parentPostId = 0,
+    ForumPost? quotedPost,
   }) async {
     await AppApi.instance.applySession();
+    var bodyMessage = message;
+    if (parentPostId > 0 && quotedPost != null) {
+      bodyMessage = '${prependForumQuoteBbCode(quotedPost)}\n\n$message';
+    }
     final json = await _api.post(
       ApiPaths.posts,
       body: {
         'thread_id': threadId,
-        'message': message,
+        'message': bodyMessage,
       },
     );
     _throwIfError(json);

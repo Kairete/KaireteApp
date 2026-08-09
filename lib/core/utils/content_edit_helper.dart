@@ -59,13 +59,12 @@ Future<ContentEditResult?> showContentEditDialog(
         FilledButton(
           onPressed: () {
             final message = messageCtrl.text.trim();
-            if (message.isEmpty) return;
+            final title = needsTitle ? titleCtrl.text.trim() : null;
+            final hasTitle = title != null && title.isNotEmpty;
+            if (message.isEmpty && !hasTitle) return;
             Navigator.pop(
               ctx,
-              ContentEditResult(
-                title: needsTitle ? titleCtrl.text.trim() : null,
-                message: message,
-              ),
+              ContentEditResult(title: title, message: message),
             );
           },
           child: const Text('Salva'),

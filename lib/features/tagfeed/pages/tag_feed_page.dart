@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
+import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_card.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/tagfeed/controllers/tagfeed_controller.dart';
 import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
@@ -22,7 +24,10 @@ class TagFeedPage extends StatelessWidget {
           return Text('#$display');
         }),
       ),
-      body: Obx(() {
+      body: Column(
+        children: [
+          Expanded(
+            child: Obx(() {
         if (c.isLoading.value && c.items.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -53,7 +58,8 @@ class TagFeedPage extends StatelessWidget {
                     itemCount: c.items.length,
                     itemBuilder: (_, i) {
                       final item = c.items[i];
-                      return OmnifeedCard(
+                      return OmnifeedFeedCard(
+                        key: ValueKey(item.itemId),
                         item: item,
                         onOpen: () => c.openDetail(item),
                         onComment: () => c.openDetail(item),
@@ -64,6 +70,9 @@ class TagFeedPage extends StatelessWidget {
                         onForumTap: item.contentType == 'thread'
                             ? () => c.openForum(item)
                             : null,
+                        onGroupTap: item.contentType == 'tl_group_post'
+                            ? () => OmnifeedNavigation.openGroup(item)
+                            : null,
                         onMediaTap: item.contentType == 'xfmg_media'
                             ? () => OmnifeedNavigation.openMediaAlbum(item)
                             : null,
@@ -72,16 +81,43 @@ class TagFeedPage extends StatelessWidget {
                             : null,
                         onReact: (reactionId) =>
                             c.react(item, reactionId: reactionId),
+                        onBookmark: () => c.toggleBookmark(item),
+                        onShareInternal: () async {
+                          final result = await showFeedShareInternal(
+                            context: context,
+                            itemId: item.itemId,
+                            previewText:
+                                item.messagePlainText ?? item.contentTitle,
+                          );
+                          if (result != null) {
+                            c.applyShareResult(item.itemId, result);
+                          }
+                        },
+                        onShareExternal: () async {
+                          final result = await showFeedShareExternal(
+                            context: context,
+                            itemId: item.itemId,
+                            viewUrl: item.viewUrl,
+                          );
+                          if (result != null) {
+                            c.applyShareResult(item.itemId, result);
+                          }
+                        },
                         onTagTap: TagFeedNavigation.openTag,
                         showOwnerActions: c.isOwnedByCurrentUser(item),
                         onEdit: () => c.editItem(item),
                         onDelete: () => c.deleteItem(item),
+                        onCommentsChanged: c.loadFeed,
                       );
                     },
                   ),
                 ),
         );
       }),
+          ),
+          const FeedInlineReplyBar(),
+        ],
+      ),
     );
   }
 }

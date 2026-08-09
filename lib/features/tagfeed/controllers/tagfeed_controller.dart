@@ -106,6 +106,50 @@ class TagFeedController extends GetxController {
     items.refresh();
   }
 
+  Future<void> toggleBookmark(OmnifeedItem item) async {
+    try {
+      final bookmarked = await _service.toggleBookmark(item);
+      _setBookmarked(item.itemId, bookmarked);
+      AppToast.success(bookmarked ? 'Salvato.' : 'Rimosso dai salvati.');
+    } on OmnifeedException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    }
+  }
+
+  void _setBookmarked(int itemId, bool bookmarked) {
+    final index = items.indexWhere((entry) => entry.itemId == itemId);
+    if (index < 0) return;
+    items[index] = items[index].copyWith(isBookmarked: bookmarked);
+    items.refresh();
+  }
+
+  /// Aggiorna [shareCount] e, se presente, inserisce il post creato in cima.
+  void applyShareResult(int itemId, FeedShareApiResult result) {
+    final index = items.indexWhere((entry) => entry.itemId == itemId);
+    if (index >= 0) {
+      items[index] = items[index].copyWith(shareCount: result.shareCount);
+    }
+    final created = result.createdItem;
+    if (created != null) {
+      prependItem(created);
+    } else {
+      items.refresh();
+    }
+  }
+
+  void prependItem(OmnifeedItem item) {
+    if (item.itemId <= 0) return;
+    final index = items.indexWhere((entry) => entry.itemId == item.itemId);
+    if (index >= 0) {
+      items[index] = item;
+    } else {
+      items.insert(0, item);
+    }
+    items.refresh();
+  }
+
   void openDetail(OmnifeedItem item) => OmnifeedNavigation.openDetail(item);
   void openAuthor(OmnifeedItem item) => OmnifeedNavigation.openAuthor(item);
   void openBlog(OmnifeedItem item) => OmnifeedNavigation.openBlog(item);

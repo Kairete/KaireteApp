@@ -1,18 +1,33 @@
+import 'package:kairete/features/feed/models/author_signature_fields.dart';
+
 class ForumAuthor {
   ForumAuthor({
     required this.userId,
     required this.username,
     this.avatarUrl,
     this.displayName,
+    this.signatureHtml,
+    this.signaturePlain,
+    this.contentShowSignature = true,
   });
 
   final int userId;
   final String username;
   final String? avatarUrl;
   final String? displayName;
+  final String? signatureHtml;
+  final String? signaturePlain;
+  final bool contentShowSignature;
 
   String get label =>
       displayName?.trim().isNotEmpty == true ? displayName! : username;
+
+  bool get hasVisibleSignature {
+    if (!contentShowSignature) return false;
+    final html = signatureHtml?.trim() ?? '';
+    final plain = signaturePlain?.trim() ?? '';
+    return html.isNotEmpty || plain.isNotEmpty;
+  }
 
   factory ForumAuthor.fromJson(Map<String, dynamic> json) {
     String? avatar;
@@ -20,10 +35,14 @@ class ForumAuthor {
     if (urls is Map) {
       avatar = urls['m']?.toString() ?? urls['s']?.toString();
     }
+    final sig = AuthorSignatureFields.fromJson(json);
     return ForumAuthor(
       userId: json['user_id'] as int? ?? 0,
       username: json['username']?.toString() ?? '',
       avatarUrl: avatar,
+      signatureHtml: sig.signatureHtml,
+      signaturePlain: sig.signaturePlain,
+      contentShowSignature: sig.contentShowSignature,
     );
   }
 }

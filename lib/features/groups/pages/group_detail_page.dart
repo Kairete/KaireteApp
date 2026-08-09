@@ -2,15 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/app_widgets/models/app_widget_models.dart';
+import 'package:kairete/features/app_widgets/services/app_widgets_service.dart';
+import 'package:kairete/features/app_widgets/utils/app_widget_injector.dart';
+import 'package:kairete/features/app_widgets/utils/app_widget_placements.dart';
+import 'package:kairete/features/app_widgets/widgets/app_widget_strip.dart';
+import 'package:kairete/features/feed/utils/feed_comment_reply.dart';
+import 'package:kairete/features/suggestions/widgets/suggestions_feed_rail.dart';
+import 'package:kairete/features/feed/utils/feed_comment_tree.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
 import 'package:kairete/features/feed/widgets/feed_compose_bar.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
 import 'package:kairete/features/groups/models/group_post.dart';
 import 'package:kairete/features/groups/models/group_post_comment.dart';
 import 'package:kairete/features/groups/models/social_group.dart';
 import 'package:kairete/features/groups/pages/group_compose_page.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/groups/widgets/group_cover_header.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
@@ -27,14 +39,17 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   final GroupsService _service = GroupsService();
   final _commentCtrl = TextEditingController();
   final _commentFocus = FocusNode();
-
+  final _replyDraft = FeedCommentReplyDraft();
   SocialGroup? _group;
   List<GroupPost> _posts = const [];
   Map<int, List<GroupPostComment>> _commentsByPost = const {};
+  final Map<int, int> _shareCounts = {};
+  AppWidgetPayload _widgetsPayload = AppWidgetPayload.empty();
   int? _composePostId;
   bool _loading = true;
   bool _sending = false;
   bool _joinLoading = false;
+  int? _highlightCommentId;
   String? _error;
 
   @override
@@ -59,11 +74,17 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       final group = await _service.fetchGroup(widget.groupId);
       final postsPage = await _service.fetchPosts(widget.groupId);
       final comments = await _loadComments(postsPage.posts);
+      final widgets = await AppWidgetsService.instance.fetch(
+        AppWidgetPlacements.groupPosts,
+        contextId: widget.groupId,
+        forceRefresh: true,
+      );
       if (!mounted) return;
       setState(() {
         _group = group;
         _posts = postsPage.posts;
         _commentsByPost = comments;
+        _widgetsPayload = widgets;
         _loading = false;
       });
     } on GroupsException catch (e) {
@@ -158,12 +179,39 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   }
 
   void _focusCommentOnPost(int groupPostId) {
+    _replyDraft.clear();
+    _commentCtrl.clear();
     setState(() => _composePostId = groupPostId);
     _commentFocus.requestFocus();
   }
 
   void _clearComposeTarget() {
-    setState(() => _composePostId = null);
+    _replyDraft.clear();
+    _commentCtrl.clear();
+    setState(() {
+      _composePostId = null;
+      _highlightCommentId = null;
+    });
+  }
+
+  void _beginReplyToComment(int groupPostId, FeedNestedCommentData comment) {
+    setState(() => _composePostId = groupPostId);
+    _replyDraft.beginFrom(comment);
+    _replyDraft.primeComposer(_commentCtrl);
+    setState(() {});
+    requestCommentFocusAfterFrame(_commentFocus, mountedOn: this);
+  }
+
+  Future<void> _sendFromBar() async {
+    if (_replyDraft.isActive && _composePostId != null) {
+      await _sendReplyToComment(
+        _composePostId!,
+        _replyDraft.parentCommentId!,
+        _replyDraft.messageForApi(_commentCtrl.text),
+      );
+    } else {
+      await _sendComment();
+    }
   }
 
   Future<void> _sendComment() async {
@@ -177,8 +225,47 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         message: text,
       );
       _commentCtrl.clear();
+      _replyDraft.clear();
       _clearComposeTarget();
       await _load();
+    } on GroupsException catch (e) {
+      AppToast.error(e.message);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _sendReplyToComment(
+    int groupPostId,
+    int parentCommentId,
+    String message,
+  ) async {
+    if (message.trim().isEmpty) return;
+    final beforeIds = (_commentsByPost[groupPostId] ?? const [])
+        .map((c) => c.commentId)
+        .toList();
+    setState(() => _sending = true);
+    try {
+      await _service.postComment(
+        groupPostId: groupPostId,
+        message: message.trim(),
+        parentCommentId: parentCommentId,
+      );
+      _replyDraft.clear();
+      _commentCtrl.clear();
+      await _load();
+      if (!mounted) return;
+      final nested = _mapGroupNestedComments(
+        _commentsByPost[groupPostId] ?? const [],
+      );
+      setState(() {
+        _composePostId = groupPostId;
+        _highlightCommentId = detectNewNestedCommentId(
+          previousIds: beforeIds,
+          current: nested,
+          parentCommentId: parentCommentId,
+        );
+      });
     } on GroupsException catch (e) {
       AppToast.error(e.message);
     } finally {
@@ -236,7 +323,18 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                                 hintText: 'Scrivi qualcosa nel gruppo…',
                                 onTapCompose: _openCompose,
                               ),
-                            ..._posts.map(_buildPostCard),
+                            ...AppWidgetInjector.inject(
+                              _posts,
+                              _widgetsPayload,
+                            ).map((slot) {
+                              if (slot is SuggestionsRailMarker) {
+                                return SuggestionsFeedRail(marker: slot);
+                              }
+                              if (slot is AppWidgetStripMarker) {
+                                return AppWidgetStrip(widgets: slot.widgets);
+                              }
+                              return _buildPostCard(slot as GroupPost);
+                            }),
                             if (_posts.isEmpty)
                               const Padding(
                                 padding: EdgeInsets.all(32),
@@ -253,8 +351,10 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                         controller: _commentCtrl,
                         focusNode: _commentFocus,
                         isSending: _sending,
-                        onSend: _sendComment,
-                        replyLabel: 'Risposta al post',
+                        onSend: _sendFromBar,
+                        replyLabel: _replyDraft.isActive
+                            ? _replyDraft.replyLabel
+                            : 'Commento al post',
                         onCancelReply: _clearComposeTarget,
                       ),
                   ],
@@ -264,8 +364,10 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildPostCard(GroupPost post) {
     final comments = _commentsByPost[post.groupPostId] ?? const [];
-    void openAuthor() =>
-        OmnifeedNavigation.openUserProfile(post.author?.userId);
+    void openAuthor() => OmnifeedNavigation.openUserProfile(
+          post.author?.userId,
+          username: post.author?.username,
+        );
 
     return FeedCardShell(
       header: FeedCardAuthorHeader(
@@ -292,29 +394,87 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         onReact: post.canReact
             ? (reactionId) => _reactToPost(post, reactionId: reactionId)
             : null,
+        shareCount: _shareCounts[post.groupPostId] ?? 0,
+        onShareInternal: () async {
+          final result = await showFeedShareInternal(
+            context: context,
+            itemId: OmnifeedItemId.encode(
+              OmnifeedItemId.typeGroupPost,
+              post.groupPostId,
+            ),
+            previewText: post.messagePlainText,
+          );
+          if (result != null && mounted) {
+            setState(() {
+              _shareCounts[post.groupPostId] = result.shareCount;
+            });
+          }
+        },
+        onShareExternal: () async {
+          final result = await showFeedShareExternal(
+            context: context,
+            itemId: OmnifeedItemId.encode(
+              OmnifeedItemId.typeGroupPost,
+              post.groupPostId,
+            ),
+            viewUrl: null,
+          );
+          if (result != null && mounted) {
+            setState(() {
+              _shareCounts[post.groupPostId] = result.shareCount;
+            });
+          }
+        },
       ),
-      comments: comments
-          .map(
-            (comment) => FeedCommentTile(
+      comments: comments.isEmpty
+          ? const []
+          : [
+              FeedNestedCommentThread(
+                comments: _mapGroupNestedComments(comments),
+                highlightCommentId: _highlightCommentId,
+                onReplyTap: (comment) =>
+                    _beginReplyToComment(post.groupPostId, comment),
+              ),
+            ],
+    );
+  }
+
+  List<FeedNestedCommentData> _mapGroupNestedComments(
+    List<GroupPostComment> comments,
+  ) {
+    final ids = comments.map((c) => c.commentId).toList();
+    final parents = comments.map((c) => c.parentCommentId).toList();
+    final depths = depthByCommentId(ids: ids, parentIds: parents);
+    return comments
+        .map(
+          (comment) {
+            final depth = depths[comment.commentId] ?? 0;
+            return FeedNestedCommentData(
+              id: comment.commentId,
+              parentId: comment.parentCommentId,
+              depthHint: depth,
               authorName: comment.author?.username ?? '',
               avatarUrl: comment.author?.avatarUrl,
-              dateLabel: formatOmnifeedCardDate(comment.commentDate),
+              dateLabel: formatFeedCommentDate(comment.commentDate),
               message: comment.messagePlainText,
               likeCount: comment.reactionScore,
               visitorReactionId: comment.visitorReactionId,
-              showCommentButton: false,
-              onAuthorTap: () =>
-                  OmnifeedNavigation.openUserProfile(comment.author?.userId),
+              canReply: nestedCommentCanReply(depth),
+              canLike: comment.canReact,
+              onAuthorTap: () => OmnifeedNavigation.openUserProfile(
+                comment.author?.userId,
+                username: comment.author?.username,
+              ),
               onLike: comment.canReact
                   ? (reactionId) => _reactToComment(
                         comment,
                         reactionId: reactionId,
                       )
                   : null,
-            ),
-          )
-          .toList(),
-    );
+            );
+          },
+        )
+        .toList();
   }
 }
 

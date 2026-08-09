@@ -2,19 +2,21 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
-import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/core/utils/app_toast.dart';
 import 'package:kairete/core/utils/content_edit_helper.dart';
+import 'package:kairete/features/app_widgets/utils/app_widget_placements.dart';
+import 'package:kairete/features/app_widgets/utils/app_widgets_list_mixin.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/blog/models/blog_profile.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_detail_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
-class BlogListController extends GetxController {
+class BlogListController extends GetxController with AppWidgetsListMixin {
   BlogListController({
     this.filterBlogId,
     this.filterCategoryId,
@@ -80,9 +82,6 @@ class BlogListController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      if (AppConfig.isTenantApp) {
-        await TenantService().syncScopeFromServer();
-      }
       final list = await _service
           .fetchEntries(
             blogId: filterBlogId,
@@ -90,6 +89,11 @@ class BlogListController extends GetxController {
           )
           .timeout(const Duration(seconds: 25));
       items.value = list;
+      await loadAppWidgets(
+        AppWidgetPlacements.blogEntries,
+        contextId: filterBlogId,
+        forceRefresh: true,
+      );
     } on TimeoutException {
       errorMessage.value =
           'Il blog impiega troppo tempo. Controlla la rete e riprova.';
@@ -185,6 +189,47 @@ class BlogListController extends GetxController {
       AppToast.error(XenforoApi.connectionMessage(e));
     } catch (_) {
       AppToast.error('Impossibile eliminare l\'articolo.');
+    }
+  }
+
+  Future<void> toggleHighlight(BlogEntry entry) async {
+    final blogId = entry.blog?.blogId ?? filterBlogId ?? 0;
+    final scope = (entry.highlightScope ?? '').trim().isNotEmpty
+        ? entry.highlightScope!.trim()
+        : (blogId > 0 ? 'owner:blog:$blogId' : 'admin:blog');
+    try {
+      final item = OmnifeedItem(
+        itemId: OmnifeedItemId.encode(
+          OmnifeedItemId.typeBlogPost,
+          entry.blogEntryId,
+        ),
+        contentType: 'ubs_blog_entry',
+        contentId: entry.blogEntryId,
+        canHighlight: true,
+        isHighlighted: entry.isHighlighted,
+        highlightScope: scope,
+      );
+      final highlighted = await OmnifeedService().toggleHighlight(item);
+      final index = items.indexWhere((e) => e.blogEntryId == entry.blogEntryId);
+      if (index >= 0) {
+        items[index] = items[index].copyWith(
+          isHighlighted: highlighted,
+          canHighlight: true,
+          highlightScope: scope,
+        );
+        final pinned = items.where((e) => e.isHighlighted).toList();
+        final rest = items.where((e) => !e.isHighlighted).toList();
+        items.assignAll([...pinned, ...rest]);
+      }
+      AppToast.success(
+        highlighted ? 'Fissato in alto sul blog.' : 'Tolto dall\'alto.',
+      );
+    } on OmnifeedException catch (e) {
+      AppToast.error(AppToast.mapApiError(e.message));
+    } on DioException catch (e) {
+      AppToast.error(XenforoApi.connectionMessage(e));
+    } catch (_) {
+      AppToast.error('Impossibile aggiornare il pin.');
     }
   }
 }

@@ -35,11 +35,16 @@ class AppToast {
 
   static String mapApiError(String message) {
     final lower = message.toLowerCase();
-    if (lower.contains('permission') ||
-        lower.contains('permess') ||
-        lower.contains('login_required') ||
-        lower.contains('logged-in')) {
-      return 'Accedi per reagire.';
+    if (lower.contains('login_required') || lower.contains('logged-in')) {
+      return 'Accedi per continuare.';
+    }
+    if (lower.contains('endpoint_not_found') ||
+        lower.contains('invalid_route') ||
+        lower.contains('cannot be found')) {
+      return 'Endpoint non disponibile sul server. Aggiorna OmniFeed.';
+    }
+    if (lower.contains('permission') || lower.contains('permess')) {
+      return 'Non hai i permessi necessari per questa azione.';
     }
     if (lower.contains('own content') ||
         lower.contains('cheating') ||

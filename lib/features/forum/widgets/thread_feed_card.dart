@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
@@ -13,6 +14,9 @@ class ThreadFeedCard extends StatelessWidget {
     this.onOpen,
     this.onComment,
     this.onReact,
+    this.onShareInternal,
+    this.onShareExternal,
+    this.shareCount = 0,
     this.onAuthorTap,
     this.onForumTap,
     this.onEdit,
@@ -26,6 +30,9 @@ class ThreadFeedCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onComment;
   final Future<void> Function(int reactionId)? onReact;
+  final VoidCallback? onShareInternal;
+  final VoidCallback? onShareExternal;
+  final int shareCount;
   final VoidCallback? onAuthorTap;
   final VoidCallback? onForumTap;
   final VoidCallback? onEdit;
@@ -82,11 +89,6 @@ class ThreadFeedCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (thread.listPreviewNeedsDetailLink)
-                  FeedCardDetailLink(
-                    onTap: onOpen,
-                    visible: true,
-                  ),
                 if (imageAttachments.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   FeedCardFullWidthImages(
@@ -96,19 +98,35 @@ class ThreadFeedCard extends StatelessWidget {
                     onTap: onOpen,
                   ),
                 ],
+                if (thread.linkPreviews.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  FeedLinkPreview(previews: thread.linkPreviews),
+                ],
+                FeedCardTagsContinueRow(
+                  tags: thread.tags,
+                  onTagTap: onTagTap,
+                  onContinue: onOpen,
+                  showContinue: thread.listPreviewNeedsDetailLink,
+                  embeddedInBody: true,
+                ),
               ],
             ),
           ),
         ),
       ),
-      beforeFooter: thread.tags.isNotEmpty
-          ? FeedCardTagsRow(tags: thread.tags, onTagTap: onTagTap)
-          : null,
+      beforeFooter: FeedAuthorSignature.maybe(
+        html: author?.signatureHtml,
+        plain: author?.signaturePlain,
+        show: author?.contentShowSignature ?? true,
+      ),
       footer: FeedCardActionBar(
         commentCount: thread.commentCount,
         likeCount: thread.firstPostReactionScore,
         onComment: onComment ?? onOpen,
         onReact: onReact,
+        shareCount: shareCount,
+        onShareInternal: onShareInternal,
+        onShareExternal: onShareExternal,
       ),
     );
   }

@@ -1,3 +1,6 @@
+import 'package:kairete/core/utils/json_parse.dart';
+import 'package:kairete/features/feed/utils/feed_comment_parent.dart';
+import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/forum/models/forum_node.dart';
 
 class ForumAttachment {
@@ -72,6 +75,7 @@ class ForumThread {
     this.canReact = true,
     this.tags = const [],
     this.attachments = const [],
+    this.linkPreviews = const [],
     this.canEdit = false,
     this.canDelete = false,
   });
@@ -92,6 +96,7 @@ class ForumThread {
   final bool canReact;
   final List<String> tags;
   final List<ForumAttachment> attachments;
+  final List<FeedLinkPreviewData> linkPreviews;
   final bool canEdit;
   final bool canDelete;
 
@@ -110,7 +115,13 @@ class ForumThread {
   }
 
   String get listPreviewBody {
-    final body = previewBody;
+    var body = previewBody;
+    if (body.isEmpty) return '';
+    for (final preview in linkPreviews) {
+      if (preview.url.isEmpty) continue;
+      body = body.replaceAll(preview.url, '').trim();
+    }
+    body = body.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
     if (body.isEmpty) return '';
     if (body.length <= 280) return body;
     return '${body.substring(0, 277).trimRight()}…';
@@ -167,25 +178,9 @@ class ForumThread {
   }
 
   static List<String> parseTags(Map<String, dynamic> json) {
-    final tags = <String>[];
-    final rawTags = json['tags'];
-    if (rawTags is List) {
-      for (final tag in rawTags) {
-        if (tag is String && tag.trim().isNotEmpty) {
-          tags.add(tag.trim());
-        } else if (tag is Map) {
-          final label = tag['tag']?.toString() ?? tag['text']?.toString();
-          if (label != null && label.trim().isNotEmpty) tags.add(label.trim());
-        }
-      }
-    }
-    final tagList = json['tag_list'];
-    if (tagList is List) {
-      for (final tag in tagList) {
-        if (tag is String && tag.trim().isNotEmpty) tags.add(tag.trim());
-      }
-    }
-    return tags;
+    final fromTags = JsonParse.parseFeedTags(json['tags']);
+    if (fromTags.isNotEmpty) return fromTags;
+    return JsonParse.parseFeedTags(json['tag_list']);
   }
 
   factory ForumThread.fromJson(Map<String, dynamic> json) {
@@ -224,6 +219,7 @@ class ForumThread {
           parseAttachments(json['FirstPost'] is Map
               ? (json['FirstPost'] as Map)['Attachments']
               : null),
+      linkPreviews: FeedLinkPreviewData.listFromJson(json['link_previews']),
       canEdit: json['can_edit'] as bool? ?? false,
       canDelete: json['can_delete'] as bool? ?? json['can_soft_delete'] as bool? ?? false,
     );
@@ -237,6 +233,7 @@ class ForumThread {
     int? firstPostReactionScore,
     List<String>? tags,
     List<ForumAttachment>? attachments,
+    List<FeedLinkPreviewData>? linkPreviews,
     bool? canEdit,
     bool? canDelete,
   }) {
@@ -258,6 +255,7 @@ class ForumThread {
       canReact: canReact ?? this.canReact,
       tags: tags ?? this.tags,
       attachments: attachments ?? this.attachments,
+      linkPreviews: linkPreviews ?? this.linkPreviews,
       canEdit: canEdit ?? this.canEdit,
       canDelete: canDelete ?? this.canDelete,
     );
@@ -273,8 +271,8 @@ class ForumThreadsPage {
     final list = <ForumThread>[];
     if (json['threads'] is List) {
       for (final raw in json['threads'] as List) {
-        if (raw is Map<String, dynamic>) {
-          list.add(ForumThread.fromJson(raw));
+        if (raw is Map) {
+          list.add(ForumThread.fromJson(Map<String, dynamic>.from(raw)));
         }
       }
     }
@@ -291,9 +289,11 @@ class ForumPost {
     this.postDate,
     this.reactionScore = 0,
     this.isFirstPost = false,
+    this.parentPostId = 0,
     this.author,
     this.canReact = true,
     this.attachments = const [],
+    this.linkPreviews = const [],
     this.canEdit = false,
     this.canDelete = false,
   });
@@ -305,9 +305,11 @@ class ForumPost {
   final int? postDate;
   final int reactionScore;
   final bool isFirstPost;
+  final int parentPostId;
   final ForumAuthor? author;
   final bool canReact;
   final List<ForumAttachment> attachments;
+  final List<FeedLinkPreviewData> linkPreviews;
   final bool canEdit;
   final bool canDelete;
 
@@ -320,8 +322,10 @@ class ForumPost {
       postDate: json['post_date'] as int?,
       reactionScore: json['reaction_score'] as int? ?? 0,
       isFirstPost: json['is_first_post'] as bool? ?? false,
+      parentPostId: FeedCommentParent.readParentId(json),
       canReact: json['can_react'] as bool? ?? true,
       attachments: ForumThread.parseAttachments(json['Attachments']),
+      linkPreviews: FeedLinkPreviewData.listFromJson(json['link_previews']),
       canEdit: json['can_edit'] as bool? ?? false,
       canDelete: json['can_delete'] as bool? ?? json['can_soft_delete'] as bool? ?? false,
       author: json['User'] is Map<String, dynamic>
@@ -330,6 +334,36 @@ class ForumPost {
               userId: json['user_id'] as int? ?? 0,
               username: json['username']?.toString() ?? '',
             ),
+    );
+  }
+
+  ForumPost copyWith({List<FeedLinkPreviewData>? linkPreviews}) {
+    return ForumPost(
+      postId: postId,
+      threadId: threadId,
+      messagePlainText: messagePlainText,
+      messageParsed: messageParsed,
+      postDate: postDate,
+      reactionScore: reactionScore,
+      isFirstPost: isFirstPost,
+      parentPostId: parentPostId,
+      author: author,
+      canReact: canReact,
+      attachments: attachments,
+      linkPreviews: linkPreviews ?? this.linkPreviews,
+      canEdit: canEdit,
+      canDelete: canDelete,
+    );
+  }
+
+  int resolvedParentPostId(Set<int> knownPostIds) {
+    if (parentPostId > 0 && knownPostIds.contains(parentPostId)) {
+      return parentPostId;
+    }
+    return FeedCommentParent.inferQuotedId(
+      messagePlainText ?? messageParsed,
+      validIds: knownPostIds,
+      posts: true,
     );
   }
 }

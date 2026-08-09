@@ -1,35 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kairete/config/app_build.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/features/media/controllers/media_compose_controller.dart';
 
 class MediaComposePage extends StatefulWidget {
-  const MediaComposePage({super.key});
+  const MediaComposePage({super.key, this.tenantMapped = false});
+
+  final bool tenantMapped;
 
   @override
   State<MediaComposePage> createState() => _MediaComposePageState();
 }
 
 class _MediaComposePageState extends State<MediaComposePage> {
+  late final String _controllerTag;
+
   @override
   void initState() {
     super.initState();
-    Get.put(MediaComposeController());
+    final tenantMode = widget.tenantMapped || AppConfig.isTenantApp;
+    _controllerTag = tenantMode ? 'media_compose_tenant' : 'media_compose_hub';
+    if (Get.isRegistered<MediaComposeController>(tag: _controllerTag)) {
+      Get.delete<MediaComposeController>(tag: _controllerTag, force: true);
+    }
+    Get.put(
+      MediaComposeController(tenantMapped: tenantMode),
+      tag: _controllerTag,
+    );
   }
 
   @override
   void dispose() {
-    if (Get.isRegistered<MediaComposeController>()) {
-      Get.delete<MediaComposeController>();
+    if (Get.isRegistered<MediaComposeController>(tag: _controllerTag)) {
+      Get.delete<MediaComposeController>(tag: _controllerTag, force: true);
     }
     super.dispose();
   }
 
+  MediaComposeController get _controller =>
+      Get.find<MediaComposeController>(tag: _controllerTag);
+
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<MediaComposeController>();
+    final c = _controller;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aggiungi media'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Aggiungi media'),
+            Text(
+              AppBuild.appBarTitle,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ],
+        ),
         actions: [
           Obx(
             () => TextButton(
@@ -101,41 +127,55 @@ class _MediaComposePageState extends State<MediaComposePage> {
               ),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              value: c.selectedCategoryId.value,
-              decoration: const InputDecoration(
-                labelText: 'Categoria',
-                helperText:
-                    'Scegli la categoria XFMG (permessi video/foto/audio).',
-              ),
-              items: c.categories
-                  .map(
-                    (cat) => DropdownMenuItem(
-                      value: cat.categoryId,
-                      child: Text(cat.title),
+            Obx(() {
+              if (c.isTenantUpload &&
+                  c.categories.length <= 1 &&
+                  c.albums.length <= 1) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (c.categories.length > 1)
+                    DropdownButtonFormField<int>(
+                      value: c.selectedCategoryId.value,
+                      decoration: const InputDecoration(
+                        labelText: 'Categoria',
+                        helperText:
+                            'Scegli la categoria XFMG (permessi video/foto/audio).',
+                      ),
+                      items: c.categories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat.categoryId,
+                              child: Text(cat.title),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: c.setCategoryId,
                     ),
-                  )
-                  .toList(),
-              onChanged: c.setCategoryId,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              value: c.visibleAlbums
-                      .any((a) => a.albumId == c.selectedAlbumId.value)
-                  ? c.selectedAlbumId.value
-                  : null,
-              decoration: const InputDecoration(labelText: 'Album'),
-              items: c.visibleAlbums
-                  .map(
-                    (a) => DropdownMenuItem(
-                      value: a.albumId,
-                      child: Text(a.title),
+                  if (c.categories.length > 1) const SizedBox(height: 12),
+                  if (c.visibleAlbums.length > 1)
+                    DropdownButtonFormField<int>(
+                      value: c.visibleAlbums
+                              .any((a) => a.albumId == c.selectedAlbumId.value)
+                          ? c.selectedAlbumId.value
+                          : null,
+                      decoration: const InputDecoration(labelText: 'Album'),
+                      items: c.visibleAlbums
+                          .map(
+                            (a) => DropdownMenuItem(
+                              value: a.albumId,
+                              child: Text(a.title),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: c.setAlbumId,
                     ),
-                  )
-                  .toList(),
-              onChanged: c.setAlbumId,
-            ),
-            const SizedBox(height: 16),
+                  if (c.visibleAlbums.length > 1) const SizedBox(height: 16),
+                ],
+              );
+            }),
             OutlinedButton.icon(
               onPressed: c.pickAttachment,
               icon: const Icon(Icons.attach_file),

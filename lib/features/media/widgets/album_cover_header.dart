@@ -4,9 +4,14 @@ import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/media/models/media_album_profile.dart';
 
 class AlbumCoverHeader extends StatelessWidget {
-  const AlbumCoverHeader({super.key, required this.profile});
+  const AlbumCoverHeader({
+    super.key,
+    required this.profile,
+    this.onTapCreateAlbum,
+  });
 
   final MediaAlbumProfile profile;
+  final VoidCallback? onTapCreateAlbum;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +44,30 @@ class AlbumCoverHeader extends StatelessWidget {
                           Colors.black.withOpacity(0.05),
                           Colors.black.withOpacity(0.45),
                         ],
+                      ),
+                    ),
+                  ),
+                if (onTapCreateAlbum != null)
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: FilledButton.icon(
+                      onPressed: onTapCreateAlbum,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.create_new_folder_outlined, size: 18),
+                      label: const Text(
+                        'Add album',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

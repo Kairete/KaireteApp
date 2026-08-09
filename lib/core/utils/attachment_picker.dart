@@ -62,7 +62,7 @@ Future<List<PickedAttachment>> _pickFiles({
   required List<String> extensions,
   bool withData = true,
 }) async {
-  final result = await FilePicker.platform.pickFiles(
+  final result = await FilePicker.pickFiles(
     allowMultiple: allowMultiple,
     type: FileType.custom,
     allowedExtensions: extensions,

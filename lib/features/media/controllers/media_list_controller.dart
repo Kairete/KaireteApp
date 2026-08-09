@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/app_widgets/utils/app_widget_placements.dart';
+import 'package:kairete/features/app_widgets/utils/app_widgets_list_mixin.dart';
 import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_item.dart';
 import 'package:kairete/features/media/pages/media_detail_page.dart';
@@ -12,11 +14,16 @@ import 'package:kairete/features/media/services/media_service.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
-class MediaListController extends GetxController {
-  MediaListController({this.filterAlbumId, this.filterCategoryId});
+class MediaListController extends GetxController with AppWidgetsListMixin {
+  MediaListController({
+    this.filterAlbumId,
+    this.filterCategoryId,
+    this.tenantMapped = false,
+  });
 
   final int? filterAlbumId;
   final int? filterCategoryId;
+  final bool tenantMapped;
   final MediaService _service = MediaService();
 
   final items = <MediaItem>[].obs;
@@ -75,13 +82,22 @@ class MediaListController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final list = await _service
-          .fetchMedia(
-            albumId: filterAlbumId,
-            categoryId: filterCategoryId,
-          )
-          .timeout(const Duration(seconds: 25));
+      final list = tenantMapped
+          ? await _service
+              .fetchTenantMappedMedia()
+              .timeout(const Duration(seconds: 25))
+          : await _service
+              .fetchMedia(
+                albumId: filterAlbumId,
+                categoryId: filterCategoryId,
+              )
+              .timeout(const Duration(seconds: 25));
       items.value = list;
+      await loadAppWidgets(
+        AppWidgetPlacements.mediaList,
+        contextId: filterAlbumId ?? filterCategoryId,
+        forceRefresh: true,
+      );
     } on TimeoutException {
       errorMessage.value =
           'Il caricamento impiega troppo tempo. Controlla la rete e riprova.';
@@ -130,7 +146,7 @@ class MediaListController extends GetxController {
     Get.to(
       () => MediaListPage(
         filterAlbumId: albumId,
-        pageTitle: item.album?.title ?? 'Album',
+        pageTitle: item.albumHeaderLabel ?? item.album?.title ?? 'Album',
       ),
     );
   }
@@ -147,5 +163,8 @@ class MediaListController extends GetxController {
   }
 
   void openAuthorProfile(MediaItem item) =>
-      OmnifeedNavigation.openUserProfile(item.author?.userId);
+      OmnifeedNavigation.openUserProfile(
+        item.author?.userId,
+        username: item.author?.username,
+      );
 }

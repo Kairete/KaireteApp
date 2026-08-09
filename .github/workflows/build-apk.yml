@@ -18,6 +18,42 @@ on:
         description: Carica APK sul server FTP
         type: boolean
         default: true
+      apk_basename:
+        description: Nome file APK (senza .apk). Vuoto = default variante
+        type: string
+        default: ""
+      ftp_remote_dir:
+        description: Cartella FTP remota
+        type: string
+        default: "/public_html"
+      app_display_name:
+        description: Nome app (dart-define)
+        type: string
+        default: ""
+      color_primary:
+        description: Colore primario #RRGGBB
+        type: string
+        default: ""
+      color_accent:
+        description: Colore accent #RRGGBB
+        type: string
+        default: ""
+      color_header:
+        description: Colore header #RRGGBB
+        type: string
+        default: ""
+      color_navbar:
+        description: Colore navbar/tab #RRGGBB
+        type: string
+        default: ""
+      color_appbar_border:
+        description: Bordo header #RRGGBB
+        type: string
+        default: ""
+      launcher_icon_url:
+        description: URL PNG icona launcher (opzionale)
+        type: string
+        default: ""
   push:
     branches: [main, master]
 
@@ -26,7 +62,6 @@ permissions:
 
 env:
   FTP_HOST: 178.132.0.4
-  FTP_REMOTE_DIR: /public_html
   APK_PUBLIC_BASE: https://www.kairete.it
 
 jobs:
@@ -38,10 +73,35 @@ jobs:
       - id: set
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            MATRIX=$(printf '[{"app_variant":"%s","tenant_id":"%s","do_ftp":"%s"}]' \
-              "${{ inputs.app_variant }}" "${{ inputs.tenant_id }}" "${{ inputs.upload_ftp }}")
+            MATRIX=$(jq -cn \
+              --arg app_variant "${{ inputs.app_variant }}" \
+              --arg tenant_id "${{ inputs.tenant_id }}" \
+              --arg do_ftp "${{ inputs.upload_ftp }}" \
+              --arg apk_basename "${{ inputs.apk_basename }}" \
+              --arg ftp_remote_dir "${{ inputs.ftp_remote_dir }}" \
+              --arg app_display_name "${{ inputs.app_display_name }}" \
+              --arg color_primary "${{ inputs.color_primary }}" \
+              --arg color_accent "${{ inputs.color_accent }}" \
+              --arg color_header "${{ inputs.color_header }}" \
+              --arg color_navbar "${{ inputs.color_navbar }}" \
+              --arg color_appbar_border "${{ inputs.color_appbar_border }}" \
+              --arg launcher_icon_url "${{ inputs.launcher_icon_url }}" \
+              '[{
+                app_variant:$app_variant,
+                tenant_id:$tenant_id,
+                do_ftp:$do_ftp,
+                apk_basename:$apk_basename,
+                ftp_remote_dir:$ftp_remote_dir,
+                app_display_name:$app_display_name,
+                color_primary:$color_primary,
+                color_accent:$color_accent,
+                color_header:$color_header,
+                color_navbar:$color_navbar,
+                color_appbar_border:$color_appbar_border,
+                launcher_icon_url:$launcher_icon_url
+              }]')
           else
-            MATRIX='[{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true"}]'
+            MATRIX='[{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true","apk_basename":"","ftp_remote_dir":"/public_html","app_display_name":"","color_primary":"","color_accent":"","color_header":"","color_navbar":"","color_appbar_border":"","launcher_icon_url":""}]'
           fi
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
@@ -64,18 +124,34 @@ jobs:
           VARIANT="${{ matrix.cfg.app_variant }}"
           TENANT_ID="${{ matrix.cfg.tenant_id }}"
           DO_FTP="${{ matrix.cfg.do_ftp }}"
+          CUSTOM_BASE="${{ matrix.cfg.apk_basename }}"
+          FTP_DIR="${{ matrix.cfg.ftp_remote_dir }}"
           echo "APP_VARIANT=$VARIANT" >> "$GITHUB_ENV"
           echo "TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
           echo "DO_FTP=$DO_FTP" >> "$GITHUB_ENV"
+          echo "APP_DISPLAY_NAME=${{ matrix.cfg.app_display_name }}" >> "$GITHUB_ENV"
+          echo "COLOR_PRIMARY=${{ matrix.cfg.color_primary }}" >> "$GITHUB_ENV"
+          echo "COLOR_ACCENT=${{ matrix.cfg.color_accent }}" >> "$GITHUB_ENV"
+          echo "COLOR_HEADER=${{ matrix.cfg.color_header }}" >> "$GITHUB_ENV"
+          echo "COLOR_NAVBAR=${{ matrix.cfg.color_navbar }}" >> "$GITHUB_ENV"
+          echo "COLOR_APPBAR_BORDER=${{ matrix.cfg.color_appbar_border }}" >> "$GITHUB_ENV"
+          echo "LAUNCHER_ICON_URL=${{ matrix.cfg.launcher_icon_url }}" >> "$GITHUB_ENV"
+          if [ -z "$FTP_DIR" ]; then FTP_DIR="/public_html"; fi
+          echo "FTP_REMOTE_DIR=$FTP_DIR" >> "$GITHUB_ENV"
           if [ "$VARIANT" = "juve_social" ]; then
             echo "FLAVOR=juveSocial" >> "$GITHUB_ENV"
-            echo "APK_BASENAME=JuveSocial" >> "$GITHUB_ENV"
+            DEFAULT_BASE="JuveSocial"
             echo "VERSION_FILE=JuveSocial-app-version.txt" >> "$GITHUB_ENV"
           else
             echo "FLAVOR=hub" >> "$GITHUB_ENV"
-            echo "APK_BASENAME=Kairete" >> "$GITHUB_ENV"
+            DEFAULT_BASE="Kairete"
             echo "VERSION_FILE=app-version.txt" >> "$GITHUB_ENV"
           fi
+          if [ -n "$CUSTOM_BASE" ]; then
+            SAFE=$(echo "$CUSTOM_BASE" | sed 's/[^A-Za-z0-9._-]//g' | sed 's/\.apk$//I')
+            if [ -n "$SAFE" ]; then DEFAULT_BASE="$SAFE"; fi
+          fi
+          echo "APK_BASENAME=$DEFAULT_BASE" >> "$GITHUB_ENV"
 
       - name: Read build label
         run: |
@@ -83,7 +159,26 @@ jobs:
           STAMP=$(grep "static const stamp" lib/config/app_build.dart | sed "s/.*= '\(.*\)';/\1/")
           echo "BUILD_LABEL=$LABEL" >> "$GITHUB_ENV"
           echo "BUILD_STAMP=$STAMP" >> "$GITHUB_ENV"
-          echo "Build label: $LABEL ($STAMP) variant=$APP_VARIANT"
+          echo "Build label: $LABEL ($STAMP) variant=$APP_VARIANT basename=$APK_BASENAME"
+
+      - name: Apply launcher icon from URL
+        if: matrix.cfg.launcher_icon_url != ''
+        run: |
+          set -e
+          ICON_URL="${{ matrix.cfg.launcher_icon_url }}"
+          if [ "$FLAVOR" = "juveSocial" ]; then
+            ICON_ROOT="android/app/src/juveSocial/res"
+          else
+            ICON_ROOT="android/app/src/main/res"
+          fi
+          DEST_DIR="${ICON_ROOT}/mipmap-xxxhdpi"
+          mkdir -p "$DEST_DIR"
+          curl -fsSL "$ICON_URL" -o "$DEST_DIR/ic_launcher.png"
+          for d in mdpi hdpi xhdpi xxhdpi; do
+            mkdir -p "${ICON_ROOT}/mipmap-$d"
+            cp "$DEST_DIR/ic_launcher.png" "${ICON_ROOT}/mipmap-$d/ic_launcher.png"
+          done
+          echo "Launcher icon applicata in $ICON_ROOT da $ICON_URL"
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -107,14 +202,32 @@ jobs:
       - name: Build debug APK (arm64)
         run: |
           set -o pipefail
+          DEFINES=(
+            "--dart-define=APP_VARIANT=$APP_VARIANT"
+          )
           if [ "$APP_VARIANT" = "juve_social" ]; then
-            flutter build apk --debug --flavor juveSocial --target-platform android-arm64 \
-              --dart-define=APP_VARIANT=juve_social \
-              --dart-define=TENANT_ID="$TENANT_ID" 2>&1 | tee build.log
-          else
-            flutter build apk --debug --flavor hub --target-platform android-arm64 \
-              --dart-define=APP_VARIANT=hub 2>&1 | tee build.log
+            DEFINES+=("--dart-define=TENANT_ID=$TENANT_ID")
           fi
+          if [ -n "$APP_DISPLAY_NAME" ]; then
+            DEFINES+=("--dart-define=APP_DISPLAY_NAME=$APP_DISPLAY_NAME")
+          fi
+          if [ -n "$COLOR_PRIMARY" ]; then
+            DEFINES+=("--dart-define=COLOR_PRIMARY=$COLOR_PRIMARY")
+          fi
+          if [ -n "$COLOR_ACCENT" ]; then
+            DEFINES+=("--dart-define=COLOR_ACCENT=$COLOR_ACCENT")
+          fi
+          if [ -n "$COLOR_HEADER" ]; then
+            DEFINES+=("--dart-define=COLOR_HEADER=$COLOR_HEADER")
+          fi
+          if [ -n "$COLOR_NAVBAR" ]; then
+            DEFINES+=("--dart-define=COLOR_NAVBAR=$COLOR_NAVBAR")
+          fi
+          if [ -n "$COLOR_APPBAR_BORDER" ]; then
+            DEFINES+=("--dart-define=COLOR_APPBAR_BORDER=$COLOR_APPBAR_BORDER")
+          fi
+          flutter build apk --debug --flavor "$FLAVOR" --target-platform android-arm64 \
+            "${DEFINES[@]}" 2>&1 | tee build.log
 
       - name: Dump build log on failure
         if: failure()
@@ -164,16 +277,16 @@ jobs:
           name: Kairete · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
           body: |
             ## Hub Kairete
-            - **Scarica:** `Kairete-${{ env.BUILD_LABEL }}.apk`
-            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/Kairete-debug.apk
+            - **Scarica:** `${{ env.APK_BASENAME }}-${{ env.BUILD_LABEL }}.apk`
+            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/${{ env.APK_BASENAME }}-debug.apk
             - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
 
             Juve Social: https://github.com/${{ github.repository }}/releases/tag/juve-social-latest
           make_latest: true
           files: |
-            Kairete-debug.apk
-            Kairete-${{ env.BUILD_LABEL }}.apk
-            app-version.txt
+            ${{ env.APK_BASENAME }}-debug.apk
+            ${{ env.APK_BASENAME }}-${{ env.BUILD_LABEL }}.apk
+            ${{ env.VERSION_FILE }}
 
       - name: Publish GitHub Release (Juve Social)
         if: env.APP_VARIANT == 'juve_social'
@@ -183,17 +296,17 @@ jobs:
           name: Juve Social · ${{ env.BUILD_LABEL }} — SCARICA QUESTO
           body: |
             ## Juve Social (tenant ${{ env.TENANT_ID }})
-            - **Scarica:** `JuveSocial-${{ env.BUILD_LABEL }}.apk`
-            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/JuveSocial-debug.apk
+            - **Scarica:** `${{ env.APK_BASENAME }}-${{ env.BUILD_LABEL }}.apk`
+            - **FTP:** ${{ env.APK_PUBLIC_BASE }}/${{ env.APK_BASENAME }}-debug.apk
             - **Package:** `com.kairete.tenant.juve_social`
             - **Build:** ${{ env.BUILD_LABEL }} · ${{ env.BUILD_STAMP }}
 
-            Richiede Multisite **1.9.98+** + OmniFeed **1.7.79+** su kairete.it.
+            Richiede Multisite **1.9.170+** su kairete.it.
           make_latest: true
           files: |
-            JuveSocial-debug.apk
-            JuveSocial-${{ env.BUILD_LABEL }}.apk
-            JuveSocial-app-version.txt
+            ${{ env.APK_BASENAME }}-debug.apk
+            ${{ env.APK_BASENAME }}-${{ env.BUILD_LABEL }}.apk
+            ${{ env.VERSION_FILE }}
 
       - name: Upload APK to FTP server
         if: env.DO_FTP == 'true'

@@ -33,7 +33,7 @@ class OmnifeedComposeBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
         child: mode == OmnifeedComposeBarMode.newsfeed
             ? _NewsfeedLayout(
                 onTapCompose: onTapCompose,
@@ -78,7 +78,7 @@ class _NewsfeedLayout extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: AppTheme.cardBorder),
@@ -88,18 +88,19 @@ class _NewsfeedLayout extends StatelessWidget {
                 'Scrivi qualcosa…',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Row(
           children: [
             FeedRefreshButton(
               onTap: onTapRefresh,
               isLoading: isRefreshing,
+              compact: true,
             ),
             const Spacer(),
             if (onTapBlog != null) _BlogButton(onTap: onTapBlog!),
@@ -131,6 +132,7 @@ class _BlogLayout extends StatelessWidget {
           FeedRefreshButton(
             onTap: onTapRefresh,
             isLoading: isRefreshing,
+            compact: true,
           ),
         if (onTapRefresh != null) const SizedBox(width: 8),
         if (onTapBlog != null)
@@ -201,7 +203,7 @@ class _ActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: border),
@@ -210,13 +212,14 @@ class _ActionButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: foreground),
-              const SizedBox(width: 6),
+              Icon(icon, size: 15, color: foreground),
+              const SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
                   color: foreground,
                   fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
               ),
             ],

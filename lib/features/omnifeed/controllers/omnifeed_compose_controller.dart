@@ -83,7 +83,7 @@ class OmnifeedComposeController extends GetxController {
           groupId: TenantScope.groupId,
           message: text.isEmpty ? ' ' : text,
         );
-        Get.back(result: true);
+        Get.back();
         return;
       }
 
@@ -106,12 +106,12 @@ class OmnifeedComposeController extends GetxController {
         attachmentHash = session.hash;
       }
 
-      await _service.createProfilePost(
+      final created = await _service.createProfilePost(
         message: text.isEmpty ? ' ' : text,
         attachmentKey: attachmentKey,
         attachmentHash: attachmentHash,
       );
-      Get.back(result: true);
+      Get.back(result: created);
     } on OmnifeedException catch (e) {
       Get.snackbar('Errore', e.message);
     } on GroupsException catch (e) {

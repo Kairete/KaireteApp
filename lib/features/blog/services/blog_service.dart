@@ -13,6 +13,7 @@ import 'package:kairete/features/blog/models/blog_comment.dart';
 import 'package:kairete/features/blog/models/blog_compose_options.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
 import 'package:kairete/features/blog/models/blog_profile.dart';
+import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
 class BlogService {
   XenforoApi get _api => AppApi.instance.xenforo;
@@ -35,7 +36,44 @@ class BlogService {
 
     final json = await _api.get(ApiPaths.blogEntries, query: query);
     _throwIfError(json);
-    return BlogEntriesPage.fromJson(json).entries;
+    final entries = BlogEntriesPage.fromJson(json).entries;
+    return _pinHighlightedEntries(entries, blogId: blogId);
+  }
+
+  Future<List<BlogEntry>> _pinHighlightedEntries(
+    List<BlogEntry> entries, {
+    int? blogId,
+  }) async {
+    try {
+      final contentIds = <int>{};
+      var canManageOwner = false;
+      var ownerScope = '';
+      final admin = await OmnifeedService().fetchHighlights('admin:blog');
+      contentIds.addAll(admin.contentIds);
+      if (blogId != null && blogId > 0) {
+        final owner = await OmnifeedService().fetchHighlights('owner:blog:$blogId');
+        contentIds.addAll(owner.contentIds);
+        canManageOwner = owner.canManage;
+        ownerScope = 'owner:blog:$blogId';
+      }
+      if (contentIds.isEmpty && !canManageOwner) return entries;
+      return entries.map((e) {
+        final pinned = contentIds.contains(e.blogEntryId);
+        return e.copyWith(
+          isHighlighted: pinned || e.isHighlighted,
+          canHighlight: canManageOwner || e.canHighlight || pinned,
+          highlightScope: e.highlightScope ?? (ownerScope.isEmpty ? null : ownerScope),
+        );
+      }).toList()
+        ..sort((a, b) {
+          final ap = a.isHighlighted ? 1 : 0;
+          final bp = b.isHighlighted ? 1 : 0;
+          if (ap != bp) return bp.compareTo(ap);
+          return 0;
+        });
+    } catch (_) {
+      return entries;
+    }
   }
 
   Future<List<BlogEntry>> _fetchTenantMappedEntries() async {
@@ -142,6 +180,38 @@ class BlogService {
     throw BlogException('Articolo blog non trovato.');
   }
 
+  /// Articoli correlati (stessa categoria e/o tag in comune).
+  Future<List<BlogEntry>> fetchRelatedEntries(
+    int blogEntryId, {
+    int limit = 8,
+  }) async {
+    if (blogEntryId <= 0) return const [];
+    await AppApi.instance.applySession();
+    try {
+      final json = await _api.get(
+        '${ApiPaths.blogEntries}/$blogEntryId/related/',
+        query: {'limit': limit},
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) {
+        return const [];
+      }
+      final raw = json['relatedEntries'] ?? json['related_entries'];
+      if (raw is! List) return const [];
+      final out = <BlogEntry>[];
+      for (final item in raw) {
+        if (item is Map) {
+          final entry = BlogEntry.fromJson(Map<String, dynamic>.from(item));
+          if (entry.blogEntryId > 0 && entry.blogEntryId != blogEntryId) {
+            out.add(entry);
+          }
+        }
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<String> react({
     required int blogEntryId,
     int? authorUserId,
@@ -170,11 +240,16 @@ class BlogService {
   Future<void> postComment({
     required int blogEntryId,
     required String message,
+    int parentCommentId = 0,
   }) async {
     await AppApi.instance.applySession();
+    final body = <String, dynamic>{'message': message};
+    if (parentCommentId > 0) {
+      body['parent_comment_id'] = parentCommentId;
+    }
     final json = await _api.post(
       '${ApiPaths.blogEntries}/$blogEntryId/comments/',
-      body: {'message': message},
+      body: body,
     );
     _throwIfError(json);
   }
@@ -288,7 +363,14 @@ class BlogService {
 
     final blog = json['blog'];
     if (blog is Map<String, dynamic>) {
-      return CreatedBlog.fromJson(blog);
+      final created = CreatedBlog.fromJson(blog);
+      if (AppConfig.isTenantApp && created.blogId > 0) {
+        await TenantService().registerContentMapping(
+          contentId: created.blogId,
+          serverContentType: TenantService.tenantMapBlog,
+        );
+      }
+      return created;
     }
     throw BlogException('Blog creato ma risposta non valida.');
   }

@@ -2,9 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
+import 'package:kairete/features/feed/utils/feed_comment_reply.dart';
+import 'package:kairete/features/feed/utils/feed_comment_tree.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
+import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/forum/services/forum_service.dart';
 import 'package:kairete/features/forum/utils/forum_react_guard.dart';
+import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class ThreadDetailController extends GetxController {
   ThreadDetailController({
@@ -16,6 +21,8 @@ class ThreadDetailController extends GetxController {
   final String? forumTitle;
   final ForumService _service = ForumService();
   final replyCtrl = TextEditingController();
+  final replyFocus = FocusNode();
+  final replyDraft = FeedCommentReplyDraft();
   final repliesKey = GlobalKey();
 
   final thread = Rxn<ForumThread>();
@@ -27,6 +34,7 @@ class ThreadDetailController extends GetxController {
   final errorMessage = ''.obs;
   final hasMoreReplies = false.obs;
   final totalReplies = 0.obs;
+  final highlightReplyId = RxnInt();
 
   int _repliesPage = 1;
   int? _mainPostId;
@@ -40,6 +48,7 @@ class ThreadDetailController extends GetxController {
   @override
   void onClose() {
     replyCtrl.dispose();
+    replyFocus.dispose();
     super.onClose();
   }
 
@@ -198,8 +207,12 @@ class ThreadDetailController extends GetxController {
       postDate: post.postDate,
       reactionScore: score < 0 ? 0 : score,
       isFirstPost: post.isFirstPost,
+      parentPostId: post.parentPostId,
       author: post.author,
       canReact: post.canReact,
+      attachments: post.attachments,
+      canEdit: post.canEdit,
+      canDelete: post.canDelete,
     );
     replies.refresh();
   }
@@ -221,15 +234,91 @@ class ThreadDetailController extends GetxController {
     }
   }
 
-  Future<void> sendReply() async {
-    final text = replyCtrl.text.trim();
+  void beginReply(FeedNestedCommentData comment) {
+    replyDraft.beginFrom(comment);
+    replyDraft.primeComposer(replyCtrl);
+    requestCommentFocusAfterFrame(replyFocus);
+  }
+
+  void cancelReply() {
+    replyDraft.clear();
+    replyCtrl.clear();
+  }
+
+  Future<void> sendFromBar() async {
+    if (replyDraft.isActive) {
+      await sendReply(replyDraft.parentCommentId!, replyDraft.messageForApi(replyCtrl.text));
+    } else {
+      await sendTopLevelReply();
+    }
+  }
+
+  List<FeedNestedCommentData> nestedReplies() {
+    final knownIds = replies.map((p) => p.postId).toSet();
+    final ids = replies.map((p) => p.postId).toList();
+    final parents = replies
+        .map((p) => p.resolvedParentPostId(knownIds))
+        .toList();
+    final depths = depthByCommentId(ids: ids, parentIds: parents);
+    return replies
+        .map(
+          (post) {
+            final parentId = post.resolvedParentPostId(knownIds);
+            final depth = depths[post.postId] ?? 0;
+            final message = post.messagePlainText?.trim().isNotEmpty == true
+                ? post.messagePlainText!.trim()
+                : _stripHtml(post.messageParsed);
+            return FeedNestedCommentData(
+              id: post.postId,
+              parentId: parentId,
+              depthHint: depth,
+              authorName:
+                  post.author?.label ?? post.author?.username ?? '',
+              avatarUrl: post.author?.avatarUrl,
+              dateLabel: formatFeedCommentDate(post.postDate),
+              message: message,
+              messageHtml: post.messageParsed,
+              likeCount: post.reactionScore,
+              canReply: nestedCommentCanReply(depth),
+              canLike: post.canReact,
+              onLike: post.canReact
+                  ? (reactionId) => reactToReply(post, reactionId: reactionId)
+                  : null,
+            );
+          },
+        )
+        .toList();
+  }
+
+  Future<void> sendReply(int parentPostId, String message) async {
+    final text = message.trim();
     if (text.isEmpty) return;
+    final beforeIds = replies.map((p) => p.postId).toList();
     isSending.value = true;
     try {
-      await _service.postReply(threadId: threadId, message: text);
+      ForumPost? quoted;
+      if (parentPostId > 0) {
+        for (final post in replies) {
+          if (post.postId == parentPostId) {
+            quoted = post;
+            break;
+          }
+        }
+      }
+      await _service.postReply(
+        threadId: threadId,
+        message: text,
+        parentPostId: parentPostId,
+        quotedPost: quoted,
+      );
+      replyDraft.clear();
       replyCtrl.clear();
       await load();
-      focusReplies();
+      highlightReplyId.value = detectNewNestedCommentId(
+        previousIds: beforeIds,
+        current: nestedReplies(),
+        parentCommentId: parentPostId,
+      );
     } on ForumException catch (e) {
       ForumReactGuard.notifyError(e.message);
     } finally {
@@ -237,7 +326,12 @@ class ThreadDetailController extends GetxController {
     }
   }
 
+  Future<void> sendTopLevelReply() async {
+    await sendReply(0, replyCtrl.text);
+  }
+
   void focusReplies() {
+    cancelReply();
     final ctx = repliesKey.currentContext;
     if (ctx != null) {
       Scrollable.ensureVisible(
@@ -247,4 +341,14 @@ class ThreadDetailController extends GetxController {
       );
     }
   }
+}
+
+String _stripHtml(String? html) {
+  if (html == null) return '';
+  return html
+      .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+      .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
+      .replaceAll(RegExp(r'<[^>]*>'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
 }

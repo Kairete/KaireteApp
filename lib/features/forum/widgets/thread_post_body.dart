@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 
 class ThreadPostBody extends StatelessWidget {
@@ -26,6 +27,9 @@ class ThreadPostBody extends StatelessWidget {
             ? thread.messagePlainText!
             : '';
     final html = htmlSource ?? '<p>$plain</p>';
+    final previews = (post?.linkPreviews.isNotEmpty == true)
+        ? post!.linkPreviews
+        : thread.linkPreviews;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -56,6 +60,10 @@ class ThreadPostBody extends StatelessWidget {
               'p': Style(margin: Margins.only(bottom: 12)),
             },
           ),
+          if (previews.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            FeedLinkPreview(previews: previews),
+          ],
         ],
       ),
     );

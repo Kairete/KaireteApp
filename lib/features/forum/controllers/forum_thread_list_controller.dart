@@ -4,13 +4,20 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/app_toast.dart';
+import 'package:kairete/features/app_widgets/utils/app_widget_placements.dart';
+import 'package:kairete/features/app_widgets/utils/app_widgets_list_mixin.dart';
+import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/blog/pages/blog_detail_page.dart';
+import 'package:kairete/features/blog/pages/blog_list_page.dart';
+import 'package:kairete/features/blog/services/blog_service.dart';
+import 'package:kairete/features/forum/models/forum_feed_item.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
 import 'package:kairete/features/forum/pages/thread_create_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/forum/services/forum_service.dart';
 import 'package:kairete/features/forum/utils/forum_react_guard.dart';
 
-class ForumThreadListController extends GetxController {
+class ForumThreadListController extends GetxController with AppWidgetsListMixin {
   ForumThreadListController({
     required this.forumId,
     required this.forumTitle,
@@ -19,11 +26,13 @@ class ForumThreadListController extends GetxController {
   final int forumId;
   final String forumTitle;
   final ForumService _service = ForumService();
+  final BlogService _blogService = BlogService();
 
-  final items = <ForumThread>[].obs;
+  final items = <ForumFeedItem>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
   final reactingThreadId = Rxn<int>();
+  final reactingBlogEntryId = Rxn<int>();
   final isWatched = false.obs;
   final canWatch = true.obs;
   final watchLoading = false.obs;
@@ -71,8 +80,13 @@ class ForumThreadListController extends GetxController {
     errorMessage.value = '';
     try {
       items.value = await _service
-          .fetchThreads(forumId)
+          .fetchForumFeed(forumId)
           .timeout(const Duration(seconds: 25));
+      await loadAppWidgets(
+        AppWidgetPlacements.forumThreads,
+        contextId: forumId,
+        forceRefresh: true,
+      );
     } on TimeoutException {
       errorMessage.value =
           'Il caricamento impiega troppo tempo. Controlla la rete e riprova.';
@@ -124,11 +138,49 @@ class ForumThreadListController extends GetxController {
     }
   }
 
+  Future<void> reactBlog(BlogEntry entry, {int reactionId = 1}) async {
+    if (reactingBlogEntryId.value == entry.blogEntryId) return;
+    reactingBlogEntryId.value = entry.blogEntryId;
+    try {
+      final action = await _blogService.react(
+        blogEntryId: entry.blogEntryId,
+        authorUserId: entry.author?.userId,
+        reactionId: reactionId,
+      );
+      await loadThreads();
+      ForumReactGuard.notifySuccess(
+        action == 'delete' ? 'Reazione rimossa.' : 'Reazione inviata.',
+      );
+    } on BlogException catch (e) {
+      ForumReactGuard.notifyError(e.message);
+    } on DioException catch (e) {
+      ForumReactGuard.notifyError(XenforoApi.connectionMessage(e));
+    } finally {
+      reactingBlogEntryId.value = null;
+    }
+  }
+
   void openDetail(ForumThread thread) {
     Get.to(
       () => ThreadDetailPage(
         threadId: thread.threadId,
         forumTitle: forumTitle,
+      ),
+    );
+  }
+
+  /// Continua / tap su card blog → articolo blog (non thread forum).
+  void openBlogDetail(BlogEntry entry) {
+    Get.to(() => BlogDetailPage(entryId: entry.blogEntryId));
+  }
+
+  void openBlogFilter(BlogEntry entry) {
+    final blogId = entry.blog?.blogId;
+    if (blogId == null || blogId <= 0) return;
+    Get.to(
+      () => BlogListPage(
+        filterBlogId: blogId,
+        pageTitle: entry.blog?.title ?? 'Blog',
       ),
     );
   }

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/theme/app_theme.dart';
+import 'package:kairete/features/app_widgets/models/app_widget_models.dart';
+import 'package:kairete/features/app_widgets/widgets/app_widget_strip.dart';
+import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
+import 'package:kairete/features/suggestions/widgets/suggestions_feed_rail.dart';
 import 'package:kairete/features/omnifeed/controllers/omnifeed_controller.dart';
-import 'package:kairete/features/omnifeed/widgets/omnifeed_card.dart';
+import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
+import 'package:kairete/features/omnifeed/widgets/omnifeed_feed_card_tile.dart';
 import 'package:kairete/features/omnifeed/widgets/omnifeed_content_filters.dart';
-import 'package:kairete/features/tagfeed/utils/tagfeed_navigation.dart';
-import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 
 class OmnifeedPage extends StatelessWidget {
   const OmnifeedPage({super.key});
@@ -20,17 +23,24 @@ class OmnifeedPage extends StatelessWidget {
         if (!AppConfig.isTenantApp)
           Obx(
             () => OmnifeedContentFilters(
+              tabs: c.feedTabs.toList(),
               selectedModeIndex: c.feedModeIndex.value,
-              sortByLastComment: c.sortByLastComment.value,
+              sortMode: c.sortMode.value,
               onModeSelected: c.setFeedModeIndex,
-              onSortChanged: c.setSortByLastComment,
+              tabsReady: c.feedTabsReady.value,
+              allowLegacyFallback: c.feedTabsApiFailed.value,
+              showSortToggle: c.feedTabsApiFailed.value && c.feedTabs.isEmpty,
+              onSortChanged:
+                  c.feedTabsApiFailed.value && c.feedTabs.isEmpty
+                      ? c.setSortMode
+                      : null,
             ),
           ),
         Expanded(
           child: Obx(() {
             if (c.isLoading.value && c.items.isEmpty) {
               return Center(
-                child: CircularProgressIndicator(color: AppTheme.brandAccent),
+                child: CircularProgressIndicator(color: AppTheme.brandPrimary),
               );
             }
             if (c.errorMessage.value.isNotEmpty && c.items.isEmpty) {
@@ -43,45 +53,76 @@ class OmnifeedPage extends StatelessWidget {
               onRefresh: c.loadFeed,
               child: c.items.isEmpty
                   ? ListView(
-                      children: const [
-                        SizedBox(height: 120),
-                        Center(child: Text('Nessun contenuto nel feed.')),
+                      children: [
+                        const SizedBox(height: 120),
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              c.emptyFeedHint.value.isNotEmpty
+                                  ? c.emptyFeedHint.value
+                                  : 'Nessun contenuto nel feed.',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
                       ],
                     )
-                  : ListView.builder(
+                  : Builder(builder: (_) {
+                      // Osserva payload widget del placement corrente.
+                      c.appWidgetsPayload.value;
+                      c.followedAuthorIds.length;
+                      final slots = c.injectedSlots(c.items.toList());
+                      final footer = c.hasMorePages.value ? 1 : 0;
+                      return ListView.builder(
                       padding: const EdgeInsets.only(bottom: 16),
-                      itemCount: c.items.length,
+                      itemCount: slots.length + footer,
                       itemBuilder: (_, i) {
-                        final item = c.items[i];
-                        return OmnifeedCard(
+                        if (i >= slots.length) {
+                          if (!c.isLoadingMore.value) {
+                            // ignore: discarded_futures
+                            c.loadMoreFeed();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: c.isLoadingMore.value
+                                  ? CircularProgressIndicator(
+                                      color: AppTheme.brandPrimary,
+                                    )
+                                  : const SizedBox(height: 24),
+                            ),
+                          );
+                        }
+                        final slot = slots[i];
+                        // Confronti espliciti: dopo hot-reload `is` a volte fallisce.
+                        if (slot is SuggestionsRailMarker ||
+                            slot.runtimeType.toString() ==
+                                'SuggestionsRailMarker') {
+                          final marker = slot is SuggestionsRailMarker
+                              ? slot
+                              : const SuggestionsRailMarker();
+                          return SuggestionsFeedRail(marker: marker);
+                        }
+                        if (slot is AppWidgetStripMarker) {
+                          return AppWidgetStrip(widgets: slot.widgets);
+                        }
+                        if (slot is! OmnifeedItem) {
+                          return const SizedBox.shrink();
+                        }
+                        final item = slot;
+                        return OmnifeedFeedCardTile(
                           item: item,
-                          onOpen: () => c.openDetail(item),
-                          onComment: () => c.openDetail(item),
-                          onAuthorTap: () => c.openAuthor(item),
-                          onBlogTap: item.contentType == 'ubs_blog_entry'
-                              ? () => c.openBlog(item)
-                              : null,
-                          onForumTap: item.contentType == 'thread'
-                              ? () => c.openForum(item)
-                              : null,
-                          onMediaTap: item.contentType == 'xfmg_media'
-                              ? () => OmnifeedNavigation.openMediaAlbum(item)
-                              : null,
-                          onMediaCategoryTap: item.contentType == 'xfmg_media'
-                              ? () => OmnifeedNavigation.openMediaCategory(item)
-                              : null,
-                          onReact: (reactionId) =>
-                              c.react(item, reactionId: reactionId),
-                          onTagTap: TagFeedNavigation.openTag,
-                          showOwnerActions: c.isOwnedByCurrentUser(item),
-                          onEdit: () => c.editItem(item),
-                          onDelete: () => c.deleteItem(item),
+                          controller: c,
+                          onCommentsChanged: c.loadFeed,
                         );
                       },
-                    ),
+                    );
+                    }),
             );
           }),
         ),
+        const FeedInlineReplyBar(),
       ],
     );
   }

@@ -3,14 +3,22 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:kairete/config/api_paths.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/utils/media_upload_kind.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:kairete/core/services/reaction_service.dart';
+import 'package:kairete/core/tenant/tenant_scope.dart';
+import 'package:kairete/core/tenant/tenant_scope_filter.dart';
+import 'package:kairete/core/tenant/tenant_service.dart';
+import 'package:kairete/features/feed/utils/feed_comment_parent.dart';
 import 'package:kairete/features/media/models/media_album_profile.dart';
 import 'package:kairete/features/media/models/media_comment.dart';
+import 'package:kairete/features/media/utils/media_comment_ui.dart';
+import 'package:kairete/features/media/utils/media_quote_bbcode.dart';
 import 'package:kairete/features/media/models/media_item.dart';
+import 'package:kairete/features/omnifeed/services/omnifeed_service.dart';
 
 class MediaService {
   XenforoApi get _api => AppApi.instance.xenforo;
@@ -26,6 +34,10 @@ class MediaService {
     int page = 1,
     int limit = 20,
   }) async {
+    if (albumId != null && userId == null) {
+      return fetchAlbumMedia(albumId: albumId, page: page, limit: limit);
+    }
+
     await AppApi.instance.applySession();
     final query = <String, dynamic>{
       'page': page,
@@ -38,7 +50,384 @@ class MediaService {
 
     final json = await _api.get(ApiPaths.media, query: query);
     _throwIfError(json);
-    return _parseMediaList(json);
+    final items = await enrichMediaItemAlbumHeaders(_parseMediaList(json));
+    return _pinHighlightedMedia(items, albumId: albumId);
+  }
+
+  /// Tutti i media in un album (qualsiasi autore), non solo quelli dell'utente loggato.
+  Future<List<MediaItem>> fetchAlbumMedia({
+    required int albumId,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    await AppApi.instance.applySession();
+    final json = await _api.get(
+      '${ApiPaths.mediaAlbums}$albumId/media',
+      query: {
+        'page': page,
+        'limit': limit,
+        'with': 'Album,Category,User',
+      },
+    );
+    _throwIfError(json);
+    final items = await enrichMediaItemAlbumHeaders(_parseMediaList(json));
+    return _pinHighlightedMedia(items, albumId: albumId);
+  }
+
+  Future<List<MediaItem>> _pinHighlightedMedia(
+    List<MediaItem> items, {
+    int? albumId,
+  }) async {
+    try {
+      final contentIds = <int>{};
+      final admin = await OmnifeedService().fetchHighlights('admin:media');
+      contentIds.addAll(admin.contentIds);
+      if (albumId != null && albumId > 0) {
+        final owner =
+            await OmnifeedService().fetchHighlights('owner:album:$albumId');
+        contentIds.addAll(owner.contentIds);
+      }
+      if (contentIds.isEmpty) return items;
+      return OmnifeedService.pinByContentIds(
+        items: items,
+        highlightedContentIds: contentIds,
+        contentIdOf: (m) => m.mediaId,
+      );
+    } catch (_) {
+      return items;
+    }
+  }
+  Future<List<MediaItem>> fetchTenantMappedMedia({int limit = 50}) async {
+    await AppApi.instance.applySession();
+    await TenantService().ensureTenantReady();
+
+    final albumIds = await _collectMappedAlbumIds();
+    if (albumIds.isEmpty) {
+      throw MediaException('Nessun album mappato per questa community.');
+    }
+
+    final futures = albumIds
+        .map((albumId) => fetchAlbumMedia(albumId: albumId, limit: limit));
+    final merged = <MediaItem>[];
+    final seen = <int>{};
+    for (final batch in await Future.wait(futures)) {
+      for (final item in batch) {
+        if (item.mediaId <= 0 || seen.contains(item.mediaId)) continue;
+        seen.add(item.mediaId);
+        merged.add(item);
+      }
+    }
+
+    merged.sort(
+      (a, b) => (b.mediaDate ?? 0).compareTo(a.mediaDate ?? 0),
+    );
+    final filtered = TenantScopeFilter.filterMediaItems(merged);
+    return enrichMediaItemAlbumHeaders(filtered);
+  }
+
+  /// Unione album mappati in ACP + album delle categorie mappate.
+  Future<Set<int>> _collectMappedAlbumIds() async {
+    final albumIds = TenantScope.mediaAlbumIds.toSet();
+    final categoryIds = TenantScope.mediaCategoryIds.toSet();
+    if (categoryIds.isEmpty) {
+      return albumIds.where((id) => id > 0).toSet();
+    }
+
+    final fromList = await fetchAlbums();
+    final fromCategories =
+        await _fetchAlbumsForMappedCategories(categoryIds, fromList);
+    albumIds.addAll(fromCategories.map((a) => a.albumId));
+
+    return albumIds.where((id) => id > 0).toSet();
+  }
+
+  /// Titolo album mancante nell'header feed (`nickname > album`).
+  Future<List<MediaItem>> enrichMediaItemAlbumHeaders(
+    List<MediaItem> items, {
+    int maxLookups = 20,
+  }) async {
+    if (items.isEmpty) return items;
+
+    final titles = <int, String>{};
+    for (final item in items) {
+      final albumId = item.album?.albumId ?? 0;
+      if (albumId <= 0) continue;
+      final title = item.album?.title.trim() ?? '';
+      if (title.isNotEmpty) titles[albumId] = title;
+    }
+
+    try {
+      final albums = await fetchAlbums();
+      for (final album in albums) {
+        final id = album.albumId;
+        final title = album.title.trim();
+        if (id > 0 && title.isNotEmpty) {
+          titles.putIfAbsent(id, () => title);
+        }
+      }
+    } catch (_) {}
+
+    final missingAlbumIds = <int>{};
+    for (final item in items) {
+      final albumId = item.album?.albumId ?? 0;
+      if (albumId <= 0 || titles.containsKey(albumId)) continue;
+      missingAlbumIds.add(albumId);
+    }
+
+    var lookups = 0;
+    for (final albumId in missingAlbumIds) {
+      if (lookups >= maxLookups) break;
+      lookups++;
+      try {
+        final fetched = await _fetchAlbumById(albumId);
+        final title = fetched?.title.trim() ?? '';
+        if (title.isNotEmpty) {
+          titles[albumId] = title;
+          continue;
+        }
+      } catch (_) {}
+      try {
+        final profile = await fetchAlbumProfile(albumId);
+        if (profile.title.trim().isNotEmpty) {
+          titles[albumId] = profile.title.trim();
+        }
+      } catch (_) {}
+    }
+
+    return items.map((item) {
+      final albumId = item.album?.albumId ?? 0;
+      if (albumId <= 0) return item;
+      final current = item.album?.title.trim() ?? '';
+      if (current.isNotEmpty) return item;
+      final resolved = titles[albumId];
+      if (resolved != null && resolved.isNotEmpty) {
+        return item.withAlbumTitle(resolved);
+      }
+      return item;
+    }).toList();
+  }
+
+  /// Album XFMG in cui gli iscritti tenant possono caricare media.
+  Future<List<MediaAlbum>> fetchTenantUploadAlbums() async {
+    await AppApi.instance.applySession();
+    await TenantService().ensureTenantReady();
+
+    final albumIds = TenantScope.mediaAlbumIds.toSet();
+    final categoryIds = TenantScope.mediaCategoryIds.toSet();
+    if (albumIds.isEmpty && categoryIds.isEmpty) {
+      throw MediaException('Nessun album mappato per questa community.');
+    }
+
+    final all = await fetchAlbums();
+    var mapped = <MediaAlbum>[];
+
+    if (albumIds.isNotEmpty) {
+      mapped = await _fetchMappedAlbumsById(albumIds, all);
+    }
+    if (mapped.isEmpty && categoryIds.isNotEmpty) {
+      mapped = await _fetchAlbumsForMappedCategories(categoryIds, all);
+    }
+
+    return _enrichAlbumsWithCategory(mapped);
+  }
+
+  Future<String> describeTenantUploadMappingIssue() async {
+    await TenantService().ensureTenantReady();
+    final albumIds = TenantScope.mediaAlbumIds;
+    final categoryIds = TenantScope.mediaCategoryIds;
+    return 'Nessun album disponibile per il caricamento.\n'
+        'Mapping ACP: album=${albumIds.isEmpty ? "—" : albumIds.join(", ")}, '
+        'categorie=${categoryIds.isEmpty ? "—" : categoryIds.join(", ")}.\n'
+        'In Multisite mappa almeno un album XFMG con permesso "aggiungi media" per gli iscritti.';
+  }
+
+  Future<List<MediaAlbum>> _fetchAlbumsForMappedCategories(
+    Set<int> categoryIds,
+    List<MediaAlbum> fromList,
+  ) async {
+    final byId = <int, MediaAlbum>{
+      for (final album in fromList)
+        if (categoryIds.contains(album.categoryId)) album.albumId: album,
+    };
+
+    for (final catId in categoryIds) {
+      try {
+        final json = await _api.get(
+          ApiPaths.mediaAlbums,
+          query: {'category_id': catId, 'with': 'Category'},
+        );
+        _throwIfError(json);
+        final raw = json['albums'];
+        if (raw is List) {
+          for (final item in raw.whereType<Map>()) {
+            final album =
+                MediaAlbum.fromJson(Map<String, dynamic>.from(item));
+            if (album.albumId > 0) byId[album.albumId] = album;
+          }
+        }
+      } catch (_) {}
+
+      try {
+        final items = await fetchMedia(categoryId: catId, limit: 25);
+        for (final item in items) {
+          final aid = item.album?.albumId ?? 0;
+          if (aid <= 0) continue;
+          byId.putIfAbsent(
+            aid,
+            () => MediaAlbum(
+              albumId: aid,
+              title: item.album?.title ?? 'Album #$aid',
+              categoryId: item.category?.categoryId ?? catId,
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+
+    return byId.values.toList();
+  }
+
+  /// Carica ogni album mappato per ID: la lista generica spesso non include
+  /// album condivisi/community e può omettere category_id.
+  Future<List<MediaAlbum>> _fetchMappedAlbumsById(
+    Set<int> albumIds,
+    List<MediaAlbum> fromList,
+  ) async {
+    final byId = <int, MediaAlbum>{
+      for (final album in fromList)
+        if (albumIds.contains(album.albumId)) album.albumId: album,
+    };
+
+    for (final id in albumIds) {
+      if (byId.containsKey(id) && byId[id]!.categoryId > 0) continue;
+      final fetched = await _fetchAlbumById(id);
+      if (fetched != null) {
+        byId[id] = fetched;
+      } else if (!byId.containsKey(id)) {
+        byId[id] = MediaAlbum(albumId: id, title: 'Album #$id');
+      }
+    }
+
+    return albumIds.map((id) => byId[id]).whereType<MediaAlbum>().toList();
+  }
+
+  Future<MediaAlbum?> _fetchAlbumById(int albumId) async {
+    try {
+      final json = await _api.get(
+        '${ApiPaths.mediaAlbums}$albumId/',
+        query: {'with': 'Category'},
+      );
+      _throwIfError(json);
+      final raw = json['album'];
+      if (raw is Map<String, dynamic>) {
+        final album = MediaAlbum.fromJson(raw);
+        return album.albumId > 0 ? album : null;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Categorie XFMG per upload tenant. [uploadAlbums] evita un secondo fetch
+  /// album quando già caricati dal compose controller.
+  Future<List<MediaCategory>> fetchTenantUploadCategories({
+    List<MediaAlbum>? uploadAlbums,
+  }) async {
+    await AppApi.instance.applySession();
+    await TenantService().ensureTenantReady();
+
+    final neededIds = TenantScope.mediaCategoryIds.toSet();
+    if (neededIds.isEmpty) {
+      final albums = uploadAlbums ?? await fetchTenantUploadAlbums();
+      neededIds.addAll(
+        albums.map((a) => a.categoryId).where((id) => id > 0),
+      );
+    }
+    if (neededIds.isEmpty) return const [];
+    return _resolveCategories(neededIds);
+  }
+
+  Future<List<MediaAlbum>> _enrichAlbumsWithCategory(
+    List<MediaAlbum> albums,
+  ) async {
+    if (albums.every((a) => a.categoryId > 0)) return albums;
+
+    final enriched = <MediaAlbum>[];
+    for (final album in albums) {
+      if (album.categoryId > 0) {
+        enriched.add(album);
+        continue;
+      }
+
+      var resolved = album;
+      final fetched = await _fetchAlbumById(album.albumId);
+      if (fetched != null && fetched.categoryId > 0) {
+        resolved = fetched;
+      } else {
+        resolved = await _resolveAlbumCategoryFromMedia(album);
+      }
+      enriched.add(resolved);
+    }
+    return enriched;
+  }
+
+  Future<MediaAlbum> _resolveAlbumCategoryFromMedia(MediaAlbum album) async {
+    if (album.categoryId > 0) return album;
+    try {
+      final items = await fetchMedia(albumId: album.albumId, limit: 1);
+      final categoryId = items.isNotEmpty
+          ? (items.first.category?.categoryId ?? 0)
+          : 0;
+      if (categoryId > 0) {
+        return MediaAlbum(
+          albumId: album.albumId,
+          title: album.title,
+          categoryId: categoryId,
+        );
+      }
+    } catch (_) {}
+    return album;
+  }
+
+  Future<List<MediaCategory>> _resolveCategories(Set<int> neededIds) async {
+    final all = await fetchCategories();
+    final result = <MediaCategory>[];
+    final resolved = <int>{};
+
+    for (final category in all) {
+      if (neededIds.contains(category.categoryId)) {
+        result.add(category);
+        resolved.add(category.categoryId);
+      }
+    }
+
+    for (final id in neededIds) {
+      if (resolved.contains(id)) continue;
+      final fetched = await _fetchCategoryById(id);
+      if (fetched != null) {
+        result.add(fetched);
+        resolved.add(id);
+      }
+    }
+
+    for (final id in neededIds) {
+      if (resolved.contains(id)) continue;
+      result.add(MediaCategory(categoryId: id, title: 'Categoria'));
+    }
+
+    return result;
+  }
+
+  Future<MediaCategory?> _fetchCategoryById(int categoryId) async {
+    try {
+      final json = await _api.get('${ApiPaths.mediaCategories}$categoryId/');
+      _throwIfError(json);
+      final raw = json['category'];
+      if (raw is Map<String, dynamic>) {
+        final category = MediaCategory.fromJson(raw);
+        return category.categoryId > 0 ? category : null;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<MediaItem> fetchMediaItem(int mediaId) async {
@@ -49,18 +438,23 @@ class MediaService {
     );
     _throwIfError(json);
 
+    MediaItem? item;
     final direct = json['media'];
     if (direct is Map<String, dynamic>) {
-      return MediaItem.fromJson(direct);
+      item = MediaItem.fromJson(direct);
+    } else {
+      json = await _api.get(ApiPaths.media, query: {'media_id': mediaId});
+      _throwIfError(json);
+      for (final parsed in _parseMediaList(json)) {
+        if (parsed.mediaId == mediaId) {
+          item = parsed;
+          break;
+        }
+      }
     }
-
-    json = await _api.get(ApiPaths.media, query: {'media_id': mediaId});
-    _throwIfError(json);
-    final list = _parseMediaList(json);
-    for (final item in list) {
-      if (item.mediaId == mediaId) return item;
-    }
-    throw MediaException('Media non trovato.');
+    if (item == null) throw MediaException('Media non trovato.');
+    final enriched = await enrichMediaItemAlbumHeaders([item], maxLookups: 1);
+    return enriched.first;
   }
 
   Future<List<MediaAlbum>> fetchAlbums({int? userId}) async {
@@ -156,22 +550,238 @@ class MediaService {
 
   Future<MediaCommentsPage> fetchComments(int mediaId) async {
     await AppApi.instance.applySession();
+
+    MediaCommentsPage? kairetePage;
+    Object? primaryError;
+    for (final path in [
+      '${ApiPaths.kaireteMedia}$mediaId/comments',
+      '${ApiPaths.kaireteMedia}$mediaId/comments/',
+    ]) {
+      try {
+        final json = await _api.get(path);
+        _throwIfError(json);
+        final parsed = MediaCommentsPage.fromJson(json);
+        if (parsed.comments.isNotEmpty) {
+          kairetePage = parsed;
+          break;
+        }
+        kairetePage ??= parsed;
+      } catch (e) {
+        primaryError ??= e;
+      }
+    }
+
+    MediaCommentsPage page;
+    if (kairetePage != null && kairetePage.comments.isNotEmpty) {
+      page = kairetePage;
+    } else {
+      try {
+        page = await _fetchNativeCommentsFallback(mediaId);
+      } catch (e) {
+        if (kairetePage != null) {
+          page = kairetePage;
+        } else if (primaryError is MediaException) {
+          throw primaryError;
+        } else {
+          rethrow;
+        }
+      }
+    }
+
+    if (page.comments.isEmpty && primaryError is MediaException) {
+      throw primaryError;
+    }
+
+    var comments = page.comments;
+    if (!_hasNestedComments(comments)) {
+      comments = await _applyParentMap(comments, mediaId);
+    }
+    if (!_hasNestedComments(comments)) {
+      comments = _enrichCommentParentsFromQuotes(comments);
+    }
+    comments = _enrichCommentParentsFromDepth(comments);
+
+    return MediaCommentsPage(comments: comments);
+  }
+
+  List<MediaComment> _enrichCommentParentsFromQuotes(List<MediaComment> comments) {
+    if (comments.isEmpty) return comments;
+
+    final ids = comments.map((c) => c.commentId).toList();
+    final parents = comments.map((c) => c.parentCommentId).toList();
+    final messages = comments
+        .map(
+          (c) => c.messageRaw ?? c.messageParsed ?? c.messagePlainText,
+        )
+        .toList();
+
+    final enriched = FeedCommentParent.enrichParentIds(
+      ids: ids,
+      parentIds: parents,
+      messages: messages,
+    );
+
+    final out = <MediaComment>[];
+    for (var i = 0; i < comments.length; i++) {
+      final parent = enriched[i];
+      out.add(
+        parent != comments[i].parentCommentId
+            ? comments[i].withParentCommentId(parent)
+            : comments[i],
+      );
+    }
+    return out;
+  }
+
+  List<MediaComment> _enrichCommentParentsFromDepth(List<MediaComment> comments) {
+    if (comments.isEmpty) return comments;
+
+    final ids = comments.map((c) => c.commentId).toList();
+    final parents = comments.map((c) => c.parentCommentId).toList();
+    final depths = comments.map((c) => c.depth).toList();
+
+    var enriched = FeedCommentParent.inferParentsFromDepth(
+      ids: ids,
+      parentIds: parents,
+      depths: depths,
+    );
+
+    final depthById = _depthByCommentId(ids, enriched);
+
+    final out = <MediaComment>[];
+    for (var i = 0; i < comments.length; i++) {
+      final parent = enriched[i];
+      var comment = comments[i];
+      if (parent != comment.parentCommentId) {
+        comment = comment.withParentCommentId(parent);
+      }
+      final depth = comment.depth > 0
+          ? comment.depth
+          : (depthById[comment.commentId] ?? 0);
+      if (depth != comment.depth) {
+        comment = comment.withDepth(depth);
+      }
+      out.add(comment);
+    }
+    return out;
+  }
+
+  bool _hasNestedComments(List<MediaComment> comments) {
+    return comments.any((c) => c.parentCommentId > 0 || c.depth > 0);
+  }
+
+  Future<MediaCommentsPage> _fetchNativeCommentsFallback(int mediaId) async {
     final json = await _api.get('${ApiPaths.media}$mediaId/comments');
     _throwIfError(json);
     return MediaCommentsPage.fromJson(json);
   }
 
+  Future<Map<int, int>> _fetchMediaCommentParentMap(int mediaId) async {
+    for (final path in [
+      '${ApiPaths.kaireteMedia}$mediaId/comment-parents',
+      '${ApiPaths.kaireteMedia}$mediaId/comment-parents/',
+    ]) {
+      try {
+        final json = await _api.get(path);
+        _throwIfError(json);
+        final map = parseMediaCommentParentMap(json);
+        if (map.isNotEmpty) return map;
+      } catch (_) {}
+    }
+    return const {};
+  }
+
+  List<MediaComment> _enrichCommentParents(List<MediaComment> comments) {
+    return _enrichCommentParentsFromDepth(
+      _enrichCommentParentsFromQuotes(comments),
+    );
+  }
+
+  Map<int, int> _depthByCommentId(List<int> ids, List<int> parentIds) {
+    final children = <int, List<int>>{};
+    for (var i = 0; i < ids.length; i++) {
+      final id = ids[i];
+      final parent = parentIds[i];
+      if (id <= 0) continue;
+      if (parent > 0 && parent != id) {
+        children.putIfAbsent(parent, () => []).add(id);
+      }
+    }
+
+    final depthById = <int, int>{};
+    void walk(int id, int depth) {
+      depthById[id] = depth;
+      for (final child in children[id] ?? const []) {
+        walk(child, depth + 1);
+      }
+    }
+
+    for (var i = 0; i < ids.length; i++) {
+      final id = ids[i];
+      final parent = parentIds[i];
+      if (id <= 0 || depthById.containsKey(id)) continue;
+      if (parent <= 0 || parent == id || !ids.contains(parent)) {
+        walk(id, 0);
+      }
+    }
+    return depthById;
+  }
+
+  Future<List<MediaComment>> _applyParentMap(
+    List<MediaComment> comments,
+    int mediaId,
+  ) async {
+    final parentMap = await _fetchMediaCommentParentMap(mediaId);
+    if (parentMap.isEmpty) return comments;
+
+    return comments
+        .map(
+          (c) => c.withParentCommentId(
+            parentMap[c.commentId] ?? c.parentCommentId,
+          ),
+        )
+        .toList();
+  }
+
   Future<void> postComment({
     required int mediaId,
     required String message,
+    int parentCommentId = 0,
+    String? quotedAuthorName,
+    int quotedAuthorUserId = 0,
   }) async {
     await AppApi.instance.applySession();
+    final body = <String, dynamic>{'message': message.trim()};
+    if (parentCommentId > 0) {
+      body['parent_media_comment_id'] = parentCommentId;
+      body['parent_comment_id'] = parentCommentId;
+    }
+
+    try {
+      final json = await _api.post(
+        '${ApiPaths.kaireteMedia}$mediaId/comments',
+        body: body,
+      );
+      _throwIfError(json);
+      return;
+    } catch (_) {}
+
+    var text = message.trim();
+    if (parentCommentId > 0) {
+      text = prependMediaQuoteBbCode(
+            commentId: parentCommentId,
+            authorName: quotedAuthorName ?? '',
+            authorUserId: quotedAuthorUserId,
+          ) +
+          text;
+    }
+    final fallbackBody = <String, dynamic>{
+      'media_id': mediaId,
+      'message': text,
+    };
     final json = await _api.post(
       ApiPaths.mediaComments,
-      body: {
-        'media_id': mediaId,
-        'message': message,
-      },
+      body: fallbackBody,
     );
     _throwIfError(json);
   }
@@ -461,13 +1071,27 @@ class MediaService {
     required String title,
     required String description,
     required String viewPrivacy,
+    required String addPrivacy,
+    String viewUsers = '',
+    String addUsers = '',
+    int categoryId = 0,
   }) async {
     await AppApi.instance.applySession();
     final fields = <String, dynamic>{
       'title': title.trim(),
       'description': description.trim(),
       'view_privacy': viewPrivacy,
+      'add_privacy': addPrivacy,
     };
+    if (categoryId > 0) {
+      fields['category_id'] = categoryId;
+    }
+    if (viewPrivacy == 'shared' && viewUsers.trim().isNotEmpty) {
+      fields['view_users'] = viewUsers.trim();
+    }
+    if (addPrivacy == 'shared' && addUsers.trim().isNotEmpty) {
+      fields['add_users'] = addUsers.trim();
+    }
 
     final json = await _api.postMultipart(
       ApiPaths.mediaAlbums,
@@ -477,9 +1101,31 @@ class MediaService {
 
     final album = json['album'];
     if (album is Map<String, dynamic>) {
-      return MediaAlbum.fromJson(album);
+      final created = MediaAlbum.fromJson(album);
+      if (AppConfig.isTenantApp && created.albumId > 0) {
+        await TenantService().registerContentMapping(
+          contentId: created.albumId,
+          serverContentType: TenantService.tenantMapAlbum,
+        );
+      }
+      return created;
     }
     throw MediaException('Album creato ma risposta non valida.');
+  }
+
+  Future<int> resolveDefaultMediaCategoryId() async {
+    await AppApi.instance.applySession();
+    if (AppConfig.isTenantApp) {
+      await TenantService().ensureTenantReady();
+      final scoped = TenantScope.mediaCategoryIds;
+      if (scoped.isNotEmpty) return scoped.first;
+      try {
+        final uploadCats = await fetchTenantUploadCategories();
+        if (uploadCats.isNotEmpty) return uploadCats.first.categoryId;
+      } catch (_) {}
+    }
+    final all = await fetchCategories();
+    return all.isNotEmpty ? all.first.categoryId : 0;
   }
 
   List<MediaItem> _parseMediaList(Map<String, dynamic> json) {

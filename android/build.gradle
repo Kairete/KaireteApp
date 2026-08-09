@@ -1,13 +1,10 @@
 buildscript {
-    ext.kotlin_version = '1.9.22'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.0'
     }
 }
@@ -16,6 +13,14 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    configurations.configureEach {
+        resolutionStrategy {
+            // Compatibilità con AGP 8.7.3 (plugin recenti tirano androidx che chiedono AGP 8.9+).
+            force 'androidx.browser:browser:1.8.0'
+            force 'androidx.core:core:1.16.0'
+            force 'androidx.core:core-ktx:1.16.0'
+        }
     }
 }
 

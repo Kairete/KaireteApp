@@ -1,18 +1,34 @@
+import 'package:kairete/core/utils/json_parse.dart';
+import 'package:kairete/features/feed/models/author_signature_fields.dart';
+
 class BlogAuthor {
   BlogAuthor({
     required this.userId,
     required this.username,
     this.avatarUrl,
     this.displayName,
+    this.signatureHtml,
+    this.signaturePlain,
+    this.contentShowSignature = true,
   });
 
   final int userId;
   final String username;
   final String? avatarUrl;
   final String? displayName;
+  final String? signatureHtml;
+  final String? signaturePlain;
+  final bool contentShowSignature;
 
   String get label =>
       displayName?.trim().isNotEmpty == true ? displayName! : username;
+
+  bool get hasVisibleSignature {
+    if (!contentShowSignature) return false;
+    final html = signatureHtml?.trim() ?? '';
+    final plain = signaturePlain?.trim() ?? '';
+    return html.isNotEmpty || plain.isNotEmpty;
+  }
 
   factory BlogAuthor.fromJson(Map<String, dynamic> json) {
     String? avatar;
@@ -28,11 +44,15 @@ class BlogAuthor {
       fullName = '$first $last'.trim();
       if (fullName.isEmpty) fullName = null;
     }
+    final sig = AuthorSignatureFields.fromJson(json);
     return BlogAuthor(
       userId: json['user_id'] as int? ?? 0,
       username: json['username']?.toString() ?? '',
       avatarUrl: avatar,
       displayName: fullName,
+      signatureHtml: sig.signatureHtml,
+      signaturePlain: sig.signaturePlain,
+      contentShowSignature: sig.contentShowSignature,
     );
   }
 }
@@ -101,6 +121,9 @@ class BlogEntry {
     this.canComment = false,
     this.canEdit = false,
     this.canDelete = false,
+    this.canHighlight = false,
+    this.isHighlighted = false,
+    this.highlightScope,
     this.visitorReactionId,
     this.author,
     this.blog,
@@ -110,6 +133,9 @@ class BlogEntry {
     this.attachments = const [],
     this.viewUrl,
     this.previewHasMore = false,
+    this.isPaidContent = false,
+    this.canViewFull = true,
+    this.previewCtaLabel,
   });
 
   final int blogEntryId;
@@ -123,6 +149,9 @@ class BlogEntry {
   final bool canComment;
   final bool canEdit;
   final bool canDelete;
+  final bool canHighlight;
+  final bool isHighlighted;
+  final String? highlightScope;
   final int? visitorReactionId;
   final BlogAuthor? author;
   final BlogInfo? blog;
@@ -132,6 +161,15 @@ class BlogEntry {
   final List<BlogAttachment> attachments;
   final String? viewUrl;
   final bool previewHasMore;
+  final bool isPaidContent;
+  final bool canViewFull;
+  final String? previewCtaLabel;
+
+  String? get continueLabel {
+    final cta = previewCtaLabel?.trim();
+    if (cta != null && cta.isNotEmpty) return cta;
+    return null;
+  }
 
   String? get thumbnailUrl {
     final cover = coverImage?.thumbnailUrl ?? coverImage?.directUrl;
@@ -151,6 +189,7 @@ class BlogEntry {
 
   bool get previewHasMoreVisible {
     if (previewHasMore) return true;
+    if (isPaidContent && !canViewFull) return true;
     final plain = messagePlainText?.trim() ?? '';
     if (plain.length >= 280) return true;
     return _stripHtml(messageParsed).length >= 280;
@@ -193,7 +232,10 @@ class BlogEntry {
     }
 
     return BlogEntry(
-      blogEntryId: json['blog_entry_id'] as int? ?? 0,
+      blogEntryId: json['blog_entry_id'] as int? ??
+          json['post_id'] as int? ??
+          json['content_id'] as int? ??
+          0,
       title: json['title']?.toString(),
       messagePlainText: json['message_plain_text']?.toString(),
       messageParsed: json['message_parsed']?.toString(),
@@ -205,8 +247,12 @@ class BlogEntry {
       reactionScore: json['reaction_score'] as int? ?? 0,
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
-      canEdit: json['can_edit'] as bool? ?? false,
-      canDelete: json['can_delete'] as bool? ?? false,
+      canEdit: JsonParse.boolValue(json['can_edit']),
+      canDelete: JsonParse.boolValue(json['can_delete']),
+      canHighlight: JsonParse.boolValue(json['can_highlight']),
+      isHighlighted: JsonParse.boolValue(json['is_highlighted']) ||
+          JsonParse.boolValue(json['isHighlighted']),
+      highlightScope: json['highlight_scope']?.toString(),
       visitorReactionId: json['visitor_reaction_id'] as int?,
       author: json['User'] is Map<String, dynamic>
           ? BlogAuthor.fromJson(json['User'] as Map<String, dynamic>)
@@ -217,11 +263,16 @@ class BlogEntry {
       category: json['Category'] is Map<String, dynamic>
           ? BlogCategory.fromJson(json['Category'] as Map<String, dynamic>)
           : null,
-      tags: _parseTags(json['tags']),
+      tags: JsonParse.parseFeedTags(json['tags']),
       coverImage: cover,
       attachments: attachments,
       viewUrl: json['view_url']?.toString(),
       previewHasMore: _parsePreviewHasMore(json),
+      isPaidContent: JsonParse.boolValue(json['is_paid_content']),
+      canViewFull: json.containsKey('can_view_full')
+          ? JsonParse.boolValue(json['can_view_full'])
+          : true,
+      previewCtaLabel: json['preview_cta_label']?.toString(),
     );
   }
 
@@ -229,6 +280,11 @@ class BlogEntry {
     final raw = json['preview_has_more'] ?? json['previewHasMore'];
     if (raw == true || raw == 1) return true;
     if (raw == false || raw == 0) return false;
+    if (JsonParse.boolValue(json['is_paid_content']) &&
+        json.containsKey('can_view_full') &&
+        !JsonParse.boolValue(json['can_view_full'])) {
+      return true;
+    }
     final plain = json['message_plain_text']?.toString().trim() ?? '';
     if (plain.length >= 280) return true;
     final parsed = json['message_parsed']?.toString() ?? '';
@@ -244,19 +300,15 @@ class BlogEntry {
     );
   }
 
-  static List<String> _parseTags(dynamic raw) {
-    if (raw is! List) return const [];
-    return raw
-        .map((tag) {
-          if (tag is String) return tag.trim();
-          if (tag is Map) return tag['tag']?.toString().trim() ?? '';
-          return '';
-        })
-        .where((tag) => tag.isNotEmpty)
-        .toList();
-  }
 
-  BlogEntry copyWith({int? reactionScore}) {
+  BlogEntry copyWith({
+    int? reactionScore,
+    bool? canEdit,
+    bool? canDelete,
+    bool? canHighlight,
+    bool? isHighlighted,
+    String? highlightScope,
+  }) {
     return BlogEntry(
       blogEntryId: blogEntryId,
       title: title,
@@ -267,8 +319,12 @@ class BlogEntry {
       reactionScore: reactionScore ?? this.reactionScore,
       canReact: canReact,
       canComment: canComment,
-      canEdit: canEdit,
-      canDelete: canDelete,
+      canEdit: canEdit ?? this.canEdit,
+      canDelete: canDelete ?? this.canDelete,
+      canHighlight: canHighlight ?? this.canHighlight,
+      isHighlighted: isHighlighted ?? this.isHighlighted,
+      highlightScope: highlightScope ?? this.highlightScope,
+      visitorReactionId: visitorReactionId,
       author: author,
       blog: blog,
       category: category,
@@ -277,6 +333,9 @@ class BlogEntry {
       attachments: attachments,
       viewUrl: viewUrl,
       previewHasMore: previewHasMore,
+      isPaidContent: isPaidContent,
+      canViewFull: canViewFull,
+      previewCtaLabel: previewCtaLabel,
     );
   }
 }
