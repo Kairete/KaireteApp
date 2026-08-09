@@ -68,8 +68,8 @@ class ForumService {
     final allNodes = <ForumNode>[];
     if (json['nodes'] is List) {
       for (final raw in json['nodes'] as List) {
-        if (raw is Map<String, dynamic>) {
-          allNodes.add(ForumNode.fromJson(raw));
+        if (raw is Map) {
+          allNodes.add(ForumNode.fromJson(Map<String, dynamic>.from(raw)));
         }
       }
     }
@@ -97,28 +97,46 @@ class ForumService {
       );
     }).toSet();
 
-    final scoped = allNodes
-        .where(
-          (n) =>
-              (n.isCategory || n.isForum) &&
-              underMappedRoot(n) &&
-              !containerRoots.contains(n.nodeId),
-        )
+    // Forum nello scope (anche se lo scope ACP ha solo ID forum espansi).
+    final scopedForums = allNodes
+        .where((n) => n.isForum && underMappedRoot(n) && !containerRoots.contains(n.nodeId))
         .toList();
-    if (scoped.isEmpty) {
+    if (scopedForums.isEmpty) {
       throw ForumException(
         'Nessun forum/categoria sotto i nodi mappati. '
         'Verifica il mapping in ACP e Multisite 1.9.177+.',
       );
     }
 
-    final scopedIds = scoped.map((n) => n.nodeId).toSet();
+    // Riporta le Category antenate (es. "Juventus Forum") anche se non sono in forumNodeIds.
+    final byNodeId = <int, ForumNode>{
+      for (final f in scopedForums) f.nodeId: f,
+    };
+    for (final forum in scopedForums) {
+      var parentId = forum.parentNodeId;
+      final seen = <int>{};
+      while (parentId > 0 && seen.add(parentId)) {
+        if (containerRoots.contains(parentId)) break;
+        final parent = byId[parentId];
+        if (parent == null) break;
+        // Forum antenato non in lista = contenitore (es. root "Juve Social"): stop.
+        if (parent.isForum && !byNodeId.containsKey(parentId)) {
+          break;
+        }
+        if (parent.isCategory) {
+          byNodeId[parentId] = parent;
+        }
+        parentId = parent.parentNodeId;
+      }
+    }
+
+    final scoped = byNodeId.values.toList();
+    final scopedIds = byNodeId.keys.toSet();
     final treeMap = <String, List<int>>{'0': []};
     for (final n in scoped) {
       final parentInScope =
           scopedIds.contains(n.parentNodeId) ? n.parentNodeId : 0;
-      final key = '$parentInScope';
-      treeMap.putIfAbsent(key, () => []).add(n.nodeId);
+      treeMap.putIfAbsent('$parentInScope', () => []).add(n.nodeId);
     }
 
     return ForumNodesPage.fromJson({

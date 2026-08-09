@@ -173,6 +173,19 @@ class ForumNodesPage {
       });
     }
 
+    // Fallback: ricostruisci figli da parent_node_id se tree_map assente/incompleta.
+    final hasCategoryInTree = childIds.keys.any(
+      (id) => id > 0 && byId[id]?.isCategory == true,
+    );
+    if (childIds.isEmpty ||
+        (nodes.any((n) => n.isCategory) && !hasCategoryInTree)) {
+      childIds.clear();
+      for (final n in nodes) {
+        final parentId = byId.containsKey(n.parentNodeId) ? n.parentNodeId : 0;
+        childIds.putIfAbsent(parentId, () => []).add(n.nodeId);
+      }
+    }
+
     List<int> childrenOf(int parentId) => childIds[parentId] ?? [];
 
     ForumNode withSubForums(ForumNode forum) {
