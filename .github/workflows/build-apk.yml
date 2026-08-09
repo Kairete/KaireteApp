@@ -345,9 +345,14 @@ jobs:
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          # Alias comuni se i secret sono stati creati con altri nomi
+          FTP_USER_ALT: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS_ALT: ${{ secrets.FTP_PASS }}
         run: |
-          if [ -z "$FTP_USER" ] || [ -z "$FTP_PASSWORD" ]; then
-            echo "::error::FTP non configurato. Aggiungi secret FTP_USER e FTP_PASSWORD su GitHub → Settings → Secrets → Actions."
+          USER="${FTP_USER:-$FTP_USER_ALT}"
+          PASS="${FTP_PASSWORD:-$FTP_PASS_ALT}"
+          if [ -z "$USER" ] || [ -z "$PASS" ]; then
+            echo "::error::FTP non configurato. Crea i repository secret FTP_USER e FTP_PASSWORD (Settings → Secrets → Actions)."
             exit 1
           fi
           BASE="ftp://${FTP_HOST}${FTP_REMOTE_DIR}"
@@ -357,7 +362,7 @@ jobs:
               -T "${local}" \
               --ftp-create-dirs \
               --ftp-pasv \
-              -u "${FTP_USER}:${FTP_PASSWORD}" \
+              -u "${USER}:${PASS}" \
               "${BASE}/${local}"
           done
           echo "APK pubblico: ${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk"

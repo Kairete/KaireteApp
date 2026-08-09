@@ -2,8 +2,9 @@ import 'package:kairete/features/forum/models/forum_node.dart';
 
 /// Raggruppa i forum tenant sotto le Category XF (header sezione).
 ///
-/// Usa i `breadcrumbs` dell'API nodi: più affidabile del solo parent_node_id
-/// quando lo scope ACP contiene solo ID forum espansi.
+/// - Nasconde i Forum-root mappati con figli (es. "Juve Social")
+/// - Header = Category più vicina sotto quel root (es. "Juventus Forum")
+/// - Non sale a Category hub tipo "Sports Italia"
 List<ForumNodeGroup> buildTenantForumGroups({
   required List<Map<String, dynamic>> rawNodes,
   required Set<int> mappedNodeIds,
@@ -35,7 +36,6 @@ List<ForumNodeGroup> buildTenantForumGroups({
       if (mappedNodeIds.contains(parentId)) return true;
       parentId = byId[parentId]?.parentNodeId ?? 0;
     }
-    // Breadcrumb fallback (se parent chain incompleta nella pagina nodi).
     for (final crumb in breadcrumbsById[node.nodeId] ?? const []) {
       final id = _asInt(crumb['node_id']);
       if (id > 0 && mappedNodeIds.contains(id)) return true;
@@ -43,7 +43,10 @@ List<ForumNodeGroup> buildTenantForumGroups({
     return false;
   }
 
-  final containerRoots = mappedNodeIds.where((id) {
+  /// Solo Forum mappati con figli = contenitore indice (non Category).
+  final indexForumRoots = mappedNodeIds.where((id) {
+    final node = byId[id];
+    if (node != null && !node.isForum) return false;
     return allNodes.any(
       (n) =>
           n.parentNodeId == id &&
@@ -54,32 +57,38 @@ List<ForumNodeGroup> buildTenantForumGroups({
 
   final forums = allNodes
       .where(
-        (n) => n.isForum && underMappedRoot(n) && !containerRoots.contains(n.nodeId),
+        (n) =>
+            n.isForum &&
+            underMappedRoot(n) &&
+            !indexForumRoots.contains(n.nodeId),
       )
       .toList();
   if (forums.isEmpty) return const [];
 
   ({int id, String title})? categoryForForum(ForumNode forum) {
-    final crumbs = breadcrumbsById[forum.nodeId];
-    if (crumbs != null && crumbs.isNotEmpty) {
+    final crumbs = breadcrumbsById[forum.nodeId] ?? const <Map<String, dynamic>>[];
+    if (crumbs.isNotEmpty) {
       for (final crumb in crumbs.reversed) {
-        if (crumb['node_type_id']?.toString() != 'Category') continue;
         final id = _asInt(crumb['node_id']);
+        final type = crumb['node_type_id']?.toString() ?? '';
+        // Usciti dal root mappato → non usare Category hub (Sports Italia).
+        if (type == 'Forum' && indexForumRoots.contains(id)) {
+          break;
+        }
+        if (type != 'Category') continue;
         final title = crumb['title']?.toString().trim() ?? '';
         if (id <= 0 || title.isEmpty) continue;
-        if (containerRoots.contains(id)) continue;
         return (id: id, title: title);
       }
     }
 
-    // Fallback parent walk.
     var parentId = forum.parentNodeId;
     final seen = <int>{};
     while (parentId > 0 && seen.add(parentId)) {
-      if (containerRoots.contains(parentId)) break;
+      if (indexForumRoots.contains(parentId)) break;
       final parent = byId[parentId];
       if (parent == null) break;
-      if (parent.isForum && !mappedNodeIds.contains(parentId)) break;
+      if (parent.isForum) break;
       if (parent.isCategory) {
         return (id: parent.nodeId, title: parent.title);
       }
@@ -112,8 +121,7 @@ List<ForumNodeGroup> buildTenantForumGroups({
     }
   }
 
-  // Categorie vuote figlie del root mappato (es. Assistenza senza thread ancora).
-  for (final rootId in containerRoots) {
+  for (final rootId in indexForumRoots) {
     for (final n in allNodes) {
       if (!n.isCategory || n.parentNodeId != rootId) continue;
       if (groupsByCategory.containsKey(n.nodeId)) continue;
@@ -141,7 +149,6 @@ List<ForumNodeGroup> buildTenantForumGroups({
     ));
   }
 
-  // Preferisci sezioni con nome categoria; "Forum" generico in coda.
   groups.sort((a, b) {
     if (a.categoryId == 0 && b.categoryId != 0) return 1;
     if (a.categoryId != 0 && b.categoryId == 0) return -1;
