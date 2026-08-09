@@ -316,8 +316,8 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           if [ -z "$FTP_USER" ] || [ -z "$FTP_PASSWORD" ]; then
-            echo "::warning::FTP non configurato. Aggiungi secret FTP_USER e FTP_PASSWORD su GitHub."
-            exit 0
+            echo "::error::FTP non configurato. Aggiungi secret FTP_USER e FTP_PASSWORD su GitHub → Settings → Secrets → Actions."
+            exit 1
           fi
           BASE="ftp://${FTP_HOST}${FTP_REMOTE_DIR}"
           for local in "${APK_BASENAME}-debug.apk" "${APK_BASENAME}-${BUILD_LABEL}.apk" "$VERSION_FILE"; do
@@ -330,6 +330,7 @@ jobs:
               "${BASE}/${local}"
           done
           echo "APK pubblico: ${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk"
+          echo "FTP_PUBLIC_URL=${APK_PUBLIC_BASE}/${APK_BASENAME}-debug.apk" >> "$GITHUB_ENV"
 
       - name: Riepilogo build
         run: |

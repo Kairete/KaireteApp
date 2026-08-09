@@ -1,36 +1,45 @@
 {
   "project_info": {
-    "project_number": "934645630230",
-    "project_id": "kairete-1ba8a",
-    "storage_bucket": "kairete-1ba8a.appspot.com"
+    "project_number": "147136240241",
+    "project_id": "kairete-aa10e",
+    "storage_bucket": "kairete-aa10e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:934645630230:android:56c900450c6b503f52bc37",
+        "mobilesdk_app_id": "1:147136240241:android:c0d544b97de06d11d619d0",
         "android_client_info": {
-          "package_name": "com.example.kairete"
+          "package_name": "com.kairete.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "934645630230-s4mg4003dou57r7rrroa8b6ed86todab.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBL-Rn85sVNgB3TY3zMRoAI6lSYg3Z-1bA"
+          "current_key": "AIzaSyBU5Rp7tj0rJWqpp-ZssbQa5LDHruX89PI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "934645630230-s4mg4003dou57r7rrroa8b6ed86todab.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:147136240241:android:c0d544b97de06d11d619d0",
+        "android_client_info": {
+          "package_name": "com.kairete.tenant.juve_social"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBU5Rp7tj0rJWqpp-ZssbQa5LDHruX89PI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
         }
       }
     }
