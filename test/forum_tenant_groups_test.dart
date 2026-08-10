@@ -67,6 +67,12 @@ void main() {
     expect(groups.map((g) => g.title), contains('Assistenza Juve Social'));
     expect(groups.any((g) => g.title == 'Juve Social'), isFalse);
 
+    // display_order 1 prima di 20 (non alfabetico: Assistenza < Juventus).
+    expect(groups.map((g) => g.title).toList(), [
+      'Juventus Forum',
+      'Assistenza Juve Social',
+    ]);
+
     final juve = groups.firstWhere((g) => g.title == 'Juventus Forum');
     expect(juve.forums.map((f) => f.title), containsAll(['Juventus Forum', 'Juve Live']));
 

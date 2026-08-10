@@ -13,10 +13,19 @@ List<ForumNodeGroup> buildTenantForumGroups({
 
   final allNodes = <ForumNode>[];
   final breadcrumbsById = <int, List<Map<String, dynamic>>>{};
+  // Ordine ACP: display_order tra fratelli; lft se presente (ordine albero XF).
+  final displayOrderById = <int, int>{};
+  final lftById = <int, int>{};
+  var listIndex = 0;
+  final listIndexById = <int, int>{};
   for (final raw in rawNodes) {
     final node = ForumNode.fromJson(raw);
     if (node.nodeId <= 0) continue;
     allNodes.add(node);
+    displayOrderById[node.nodeId] = node.displayOrder;
+    final lft = _asInt(raw['lft']);
+    if (lft > 0) lftById[node.nodeId] = lft;
+    listIndexById[node.nodeId] = listIndex++;
     final crumbs = raw['breadcrumbs'];
     if (crumbs is List) {
       breadcrumbsById[node.nodeId] = crumbs
@@ -27,6 +36,21 @@ List<ForumNodeGroup> buildTenantForumGroups({
   }
 
   final byId = {for (final n in allNodes) n.nodeId: n};
+
+  int compareCategoryIds(int a, int b) {
+    if (a <= 0 && b > 0) return 1;
+    if (a > 0 && b <= 0) return -1;
+    final la = lftById[a];
+    final lb = lftById[b];
+    if (la != null && lb != null && la != lb) return la.compareTo(lb);
+    final oa = displayOrderById[a] ?? 0;
+    final ob = displayOrderById[b] ?? 0;
+    if (oa != ob) return oa.compareTo(ob);
+    final ia = listIndexById[a] ?? a;
+    final ib = listIndexById[b] ?? b;
+    if (ia != ib) return ia.compareTo(ib);
+    return a.compareTo(b);
+  }
 
   bool underMappedRoot(ForumNode node) {
     if (mappedNodeIds.contains(node.nodeId)) return true;
@@ -139,8 +163,13 @@ List<ForumNodeGroup> buildTenantForumGroups({
     final g = groupsByCategory[id];
     if (g == null) continue;
     final forumsSorted = [...g.forums]..sort((a, b) {
+        final byLft = (lftById[a.nodeId] ?? 0).compareTo(lftById[b.nodeId] ?? 0);
+        if (lftById.containsKey(a.nodeId) && lftById.containsKey(b.nodeId) && byLft != 0) {
+          return byLft;
+        }
         final o = a.displayOrder.compareTo(b.displayOrder);
-        return o != 0 ? o : a.title.compareTo(b.title);
+        if (o != 0) return o;
+        return a.nodeId.compareTo(b.nodeId);
       });
     groups.add(ForumNodeGroup(
       categoryId: g.categoryId,
@@ -149,11 +178,8 @@ List<ForumNodeGroup> buildTenantForumGroups({
     ));
   }
 
-  groups.sort((a, b) {
-    if (a.categoryId == 0 && b.categoryId != 0) return 1;
-    if (a.categoryId != 0 && b.categoryId == 0) return -1;
-    return a.title.compareTo(b.title);
-  });
+  // Ordine categorie = lft / display_order ACP (non alfabetico).
+  groups.sort((a, b) => compareCategoryIds(a.categoryId, b.categoryId));
 
   return groups;
 }
