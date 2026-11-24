@@ -13,12 +13,12 @@ class OAuthSession {
   static const _refreshKey = 'oauth_refresh_token';
   static const _expiresKey = 'oauth_expires_at';
 
-  static const redirectUrl = 'com.kairete.app:/oauth2redirect';
+  static const redirectUrl = 'https://kairete.net/mobile/oauth/callback';
   static const scopes = <String>['user:read'];
 
   static const configuration = AuthorizationServiceConfiguration(
-    authorizationEndpoint: 'https://www.kairete.net/oauth2/authorize',
-    tokenEndpoint: 'https://www.kairete.net/api/oauth2/token',
+    authorizationEndpoint: 'https://kairete.net/oauth2/authorize',
+    tokenEndpoint: 'https://kairete.net/api/oauth2/token',
   );
 
   bool get isConfigured => AppConfig.oauthClientId.isNotEmpty;
