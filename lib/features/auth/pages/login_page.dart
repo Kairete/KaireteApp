@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _auth.tryRestoreSession());
+    // Diagnostic guest build: do not attempt OAuth/session restoration.
   }
 
   @override
@@ -54,11 +54,9 @@ class _LoginPageState extends State<LoginPage> {
                       style: const TextStyle(color: Colors.red)),
                 ],
                 const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: (_auth.isLoading.value || _auth.isRestoringSession.value)
-                      ? null
-                      : _auth.loginWithOAuth,
-                  child: Text(_auth.isLoading.value ? 'Accesso in corso…' : 'Accedi con Kairete'),
+                const Text(
+                  'Accesso con account temporaneamente disattivato in questa versione diagnostica.',
+                  style: TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
