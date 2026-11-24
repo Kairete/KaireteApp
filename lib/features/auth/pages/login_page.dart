@@ -13,12 +13,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _loginCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  bool _obscurePassword = true;
+
   AuthFlowController get _auth => Get.find<AuthFlowController>();
 
   @override
-  void initState() {
-    super.initState();
-    // Diagnostic guest build: do not attempt OAuth/session restoration.
+  void dispose() {
+    _loginCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -27,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(title: Text(AppConfig.appName)),
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Obx(() => Column(
               mainAxisSize: MainAxisSize.min,
@@ -36,27 +41,41 @@ class _LoginPageState extends State<LoginPage> {
                 const Text('Accedi a Kairete',
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                const Text(
-                  'Accedi con il tuo account XenForo nel browser sicuro. '
-                  'La password non viene salvata nell’app.',
-                ),
+                const Text('L’accesso avverrà direttamente nell’app, senza aprire il browser.'),
                 if (kDebugMode) ...[
                   const SizedBox(height: 8),
-                  Text(AppConfig.apiBaseUrl, style: const TextStyle(color: Colors.grey)),
-                ],
-                if (_auth.isRestoringSession.value) ...[
-                  const SizedBox(height: 20),
-                  const LinearProgressIndicator(),
-                ],
-                if (_auth.errorMessage.value.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(_auth.errorMessage.value,
-                      style: const TextStyle(color: Colors.red)),
+                  Text(AppConfig.apiBaseUrl,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
                 const SizedBox(height: 24),
+                TextField(
+                  controller: _loginCtrl,
+                  enabled: false,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Nome utente o email'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _passwordCtrl,
+                  enabled: false,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 const Text(
-                  'Accesso con account temporaneamente disattivato in questa versione diagnostica.',
-                  style: TextStyle(color: Colors.grey),
+                  'Accesso con account in preparazione: prima dobbiamo collegare l’autenticazione sicura al server. Non inserire ancora le credenziali.',
+                  style: TextStyle(color: Colors.orange),
+                ),
+                const SizedBox(height: 24),
+                const FilledButton(
+                  onPressed: null,
+                  child: Text('Accedi'),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -64,9 +83,6 @@ class _LoginPageState extends State<LoginPage> {
                   icon: const Icon(Icons.visibility_outlined),
                   label: const Text('Esplora Kairete come ospite'),
                 ),
-                const SizedBox(height: 8),
-                const Text('Versione di prova: le funzioni personali richiedono un login non ancora disponibile.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => launchUrl(
