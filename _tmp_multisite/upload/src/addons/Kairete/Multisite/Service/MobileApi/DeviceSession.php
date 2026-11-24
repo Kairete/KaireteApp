@@ -85,6 +85,74 @@ class DeviceSession
 		];
 	}
 
+
+	public function updatePresence(int $userId, string $deviceKey, string $appState, string $appId = ''): bool
+	{
+		$deviceKey = $this->normalizeKey($deviceKey);
+		if ($userId <= 0 || $deviceKey === '')
+		{
+			return false;
+		}
+
+		$appState = ($appState === 'foreground') ? 'foreground' : 'background';
+		$now = \XF::$time;
+		$values = [
+			'app_state' => $appState,
+			'presence_date' => $now,
+			'last_used_date' => $now,
+			'app_id' => substr($appId, 0, 100),
+		];
+
+		$affected = $this->app->db()->update(
+			'xf_ms_mobile_device_session',
+			$values,
+			'user_id = ? AND device_key = ?',
+			[$userId, $deviceKey]
+		);
+
+		if ($affected > 0)
+		{
+			return true;
+		}
+
+		// Riga assente (race con device-sessions): crea sessione e riprova una volta.
+		if ($this->issue($userId, $deviceKey, $appId) === '')
+		{
+			return false;
+		}
+
+		return $this->app->db()->update(
+			'xf_ms_mobile_device_session',
+			$values,
+			'user_id = ? AND device_key = ?',
+			[$userId, $deviceKey]
+		) > 0;
+	}
+
+	/**
+	 * True when the user has a device session marked foreground within the grace window.
+	 * Call from the push/FCM addon before sending a notification.
+	 */
+	public function shouldSuppressPush(int $userId, int $graceSeconds = 90): bool
+	{
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		$graceSeconds = max(30, min(300, $graceSeconds));
+		$cutoff = \XF::$time - $graceSeconds;
+
+		return (bool) $this->app->db()->fetchOne('
+			SELECT session_id
+			FROM xf_ms_mobile_device_session
+			WHERE user_id = ?
+				AND app_state = ?
+				AND presence_date >= ?
+			LIMIT 1
+		', [$userId, 'foreground', $cutoff]);
+	}
+
 	protected function normalizeKey(string $key): string
 	{
 		$key = trim($key);
