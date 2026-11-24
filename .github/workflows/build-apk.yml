@@ -9,7 +9,7 @@ on:
         options:
           - hub
           - juve_social
-        default: juve_social
+        default: hub
       tenant_id:
         description: Tenant Multisite (solo juve_social)
         type: string
@@ -17,7 +17,7 @@ on:
       upload_ftp:
         description: Carica APK sul server FTP
         type: boolean
-        default: true
+        default: false
       apk_basename:
         description: Nome file APK (senza .apk). Vuoto = default variante
         type: string
@@ -62,7 +62,7 @@ permissions:
 
 env:
   FTP_HOST: 178.132.0.4
-  APK_PUBLIC_BASE: https://www.kairete.it
+  APK_PUBLIC_BASE: https://www.kairete.net
 
 jobs:
   prepare:
@@ -101,7 +101,7 @@ jobs:
                 launcher_icon_url:$launcher_icon_url
               }]')
           else
-            MATRIX='[{"app_variant":"juve_social","tenant_id":"3","do_ftp":"true","apk_basename":"","ftp_remote_dir":"/public_html","app_display_name":"","color_primary":"","color_accent":"","color_header":"","color_navbar":"","color_appbar_border":"","launcher_icon_url":""}]'
+            MATRIX='[{"app_variant":"hub","tenant_id":"0","do_ftp":"false","apk_basename":"","ftp_remote_dir":"/public_html","app_display_name":"","color_primary":"","color_accent":"","color_header":"","color_navbar":"","color_appbar_border":"","launcher_icon_url":""}]'
           fi
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
