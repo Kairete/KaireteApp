@@ -55,7 +55,7 @@ on:
         type: string
         default: ""
   push:
-    branches: [main, master]
+    branches: [main, master, feature/oauth-pkce-login]
 
 permissions:
   contents: write
@@ -236,6 +236,7 @@ jobs:
           set -o pipefail
           DEFINES=(
             "--dart-define=APP_VARIANT=$APP_VARIANT"
+            "--dart-define=KAIRETE_OAUTH_CLIENT_ID=${{ vars.KAIRETE_OAUTH_CLIENT_ID }}"
           )
           if [ "$APP_VARIANT" = "juve_social" ]; then
             DEFINES+=("--dart-define=TENANT_ID=$TENANT_ID")
@@ -302,7 +303,7 @@ jobs:
             ${{ env.VERSION_FILE }}
 
       - name: Publish GitHub Release (hub)
-        if: env.APP_VARIANT == 'hub'
+        if: env.APP_VARIANT == 'hub' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
@@ -321,7 +322,7 @@ jobs:
             ${{ env.VERSION_FILE }}
 
       - name: Publish GitHub Release (Juve Social)
-        if: env.APP_VARIANT == 'juve_social'
+        if: env.APP_VARIANT == 'juve_social' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: juve-social-latest
