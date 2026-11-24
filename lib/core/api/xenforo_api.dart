@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/session/oauth_session.dart';
 
 class XenforoApi {
   XenforoApi() {
@@ -9,10 +10,26 @@ class XenforoApi {
     _dio.options.sendTimeout = const Duration(seconds: 20);
     _dio.options.validateStatus = (status) => status != null && status < 500;
     _dio.options.headers['Accept'] = 'application/json';
-    _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        try {
+          final token = await OAuthSession.instance.validToken();
+          options.headers.remove('XF-Api-Key');
+          options.headers.remove('XF-Api-User');
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          } else {
+            options.headers.remove('Authorization');
+          }
+          handler.next(options);
+        } catch (error) {
+          handler.reject(DioException(requestOptions: options, error: error));
+        }
+      },
+    ));
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
     _applyTenantHeader();
-    _applyUserHeader();
+
   }
 
   final Dio _dio = Dio();
@@ -20,23 +37,19 @@ class XenforoApi {
 
   void setUserId(int? userId) {
     _userId = userId;
-    _applyUserHeader();
+    // User context derives from the verified OAuth bearer token.
   }
 
   /// Esegue [action] impersonando [userId] su XF-Api-User (come app legacy profilo).
   Future<T> runAsUser<T>(int userId, Future<T> Function() action) async {
     if (userId <= 0) return action();
     final previous = _userId;
-    setUserId(userId);
+    // OAuth users cannot impersonate another user with XF-Api-User.
     try {
       return await action();
     } finally {
       setUserId(previous);
     }
-  }
-
-  void _applyUserHeader() {
-    _dio.options.headers['XF-Api-User'] = (_userId ?? 0).toString();
   }
 
   void _applyTenantHeader() {
