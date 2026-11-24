@@ -145,7 +145,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
                   IconButton(
                     tooltip: 'Notifiche',
                     icon: const Icon(Icons.notifications_none),
-                    onPressed: _openAlerts,
+                    onPressed: _auth.currentUser.value == null ? null : _openAlerts,
                   ),
                   if (badge > 0)
                     Positioned(
@@ -207,13 +207,19 @@ class _HomeShellPageState extends State<HomeShellPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Obx(() => _auth.currentUser.value == null
+              ? const MaterialBanner(
+                  content: Text('Modalità ospite · Puoi esplorare le sezioni pubbliche. Accesso e pubblicazione non disponibili in questa Alpha.'),
+                  actions: [SizedBox.shrink()],
+                )
+              : const SizedBox.shrink()),
           OmnifeedFeedTabs(
             selectedIndex: _tabIndex,
             onSelected: _onTabSelected,
             hiddenTabs: _hiddenTabIndexes(),
             layout: tabLayout,
           ),
-          if (_showComposeBar(isTenant))
+          if (_showComposeBar(isTenant) && _auth.currentUser.value != null)
             Obx(
               () => OmnifeedComposeBar(
                 mode: _tabIndex == 0
