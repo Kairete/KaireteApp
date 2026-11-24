@@ -35,3 +35,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/juve_social/
+
+# Compatibility: flutter_html 3.0.0 calls query_selector.matches,
+# which was removed from package:html 0.15.7.
+dependency_overrides:
+  html: 0.15.6
