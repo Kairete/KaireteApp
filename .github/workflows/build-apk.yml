@@ -236,7 +236,7 @@ jobs:
           set -o pipefail
           DEFINES=(
             "--dart-define=APP_VARIANT=$APP_VARIANT"
-            "--dart-define=KAIRETE_OAUTH_CLIENT_ID=${{ vars.KAIRETE_OAUTH_CLIENT_ID }}"
+            "--dart-define=KAIRETE_OAUTH_CLIENT_ID=3384525086438012"
           )
           if [ "$APP_VARIANT" = "juve_social" ]; then
             DEFINES+=("--dart-define=TENANT_ID=$TENANT_ID")
