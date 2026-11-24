@@ -4,7 +4,7 @@ import 'package:kairete/config/app_branding.dart';
 class AppConfig {
   AppConfig._();
 
-  static const AppEnvironment environment = AppEnvironment.stagingIt;
+  static const AppEnvironment environment = AppEnvironment.production;
 
   static String get apiBaseUrl {
     switch (environment) {
@@ -23,18 +23,10 @@ class AppConfig {
 
   static const String tenantHeader = 'X-Ms-Tenant-Id';
 
-  /// Chiave XenForo REST API (ACP → API keys).
-  /// Override build: --dart-define=KAIRETE_API_KEY=...
-  static String get xenforoApiKey {
-    const override = String.fromEnvironment('KAIRETE_API_KEY');
-    if (override.isNotEmpty) return override;
-    switch (environment) {
-      case AppEnvironment.stagingIt:
-        return 'Plv1OkxfSNp5IWpCfevYxG5loF9lJptQ';
-      case AppEnvironment.production:
-        return 'Bj-iF2DqxqJcBEolg9H6Qjp94ekWVM1Y';
-    }
-  }
+  /// Authentication credentials are provided by a future server-side auth flow.
+  /// Never embed an administrative XenForo API key in a mobile app.
+  static String get xenforoApiKey => '';
+
 }
 
 enum AppEnvironment { stagingIt, production }
