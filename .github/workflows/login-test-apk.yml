@@ -1,0 +1,39 @@
+name: Login test APK (debug)
+
+on:
+  push:
+    branches:
+      - test/login-apk-20261125
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-login-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Flutter dependencies
+        run: flutter pub get
+      - name: Build debug APK for isolated login test
+        run: flutter build apk --debug --flavor hub -t lib/login_test_main.dart
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairete-login-test-debug
+          path: build/app/outputs/flutter-apk/*debug.apk
+          if-no-files-found: error
+          retention-days: 7
