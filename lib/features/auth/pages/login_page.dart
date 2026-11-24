@@ -61,6 +61,15 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(_auth.isLoading.value ? 'Accesso in corso…' : 'Accedi con Kairete'),
                 ),
                 const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _auth.isLoading.value ? null : _auth.enterAsGuest,
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Esplora Kairete come ospite'),
+                ),
+                const SizedBox(height: 8),
+                const Text('Versione di prova: le funzioni personali richiedono un login non ancora disponibile.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => launchUrl(
                     Uri.parse('${AppConfig.apiBaseUrl}register/'),
