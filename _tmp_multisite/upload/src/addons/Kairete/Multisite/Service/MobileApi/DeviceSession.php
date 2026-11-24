@@ -51,25 +51,18 @@ class DeviceSession
 		$db = $this->app->db();
 		$row = null;
 
-		if ($sessionToken !== '')
+		// Both credentials are mandatory. Never fall back to device-key-only
+		// authentication when the token is missing, invalid or expired.
+		if ($sessionToken === '')
 		{
-			$row = $db->fetchRow('
-				SELECT user_id, session_token
-				FROM xf_ms_mobile_device_session
-				WHERE device_key = ? AND session_token = ? AND expires_date > ?
-			', [$deviceKey, $sessionToken, \XF::$time]);
+			return null;
 		}
 
-		if (!$row)
-		{
-			$row = $db->fetchRow('
-				SELECT user_id, session_token
-				FROM xf_ms_mobile_device_session
-				WHERE device_key = ? AND expires_date > ?
-				ORDER BY last_used_date DESC
-				LIMIT 1
-			', [$deviceKey, \XF::$time]);
-		}
+		$row = $db->fetchRow('
+			SELECT user_id, session_token
+			FROM xf_ms_mobile_device_session
+			WHERE device_key = ? AND session_token = ? AND expires_date > ?
+		', [$deviceKey, $sessionToken, \XF::$time]);
 
 		if (!$row)
 		{
