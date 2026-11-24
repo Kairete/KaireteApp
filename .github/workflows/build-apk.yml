@@ -55,7 +55,7 @@ on:
         type: string
         default: ""
   push:
-    branches: [main, master, feature/oauth-pkce-login]
+    branches: [main, master, feature/oauth-pkce-login, feature/guest-preview-alpha]
 
 permissions:
   contents: write
