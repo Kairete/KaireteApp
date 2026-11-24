@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - test/login-apk-20261125
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
