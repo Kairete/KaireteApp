@@ -96,6 +96,15 @@ class AuthFlowController extends GetxController {
     });
   }
 
+  /// Preview-only guest navigation; no user identity or session is fabricated.
+  void enterAsGuest() {
+    currentUser.value = null;
+    AppApi.instance.clearSession();
+    errorMessage.value = '';
+    isLoading.value = false;
+    _openHome();
+  }
+
   Future<void> loginWithOAuth() async {
     if (!OAuthSession.instance.isConfigured) {
       errorMessage.value =
