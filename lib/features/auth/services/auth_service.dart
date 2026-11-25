@@ -16,7 +16,7 @@ class AuthService {
     required String password,
   }) async {
     final deviceKey = await DeviceSessionStore.instance.getOrCreateDeviceKey();
-    final json = await _api.post(
+    final json = await _api.postMobileAuth(
       'api/ms-auth-login',
       body: {
         'login': login.trim(),
@@ -75,7 +75,7 @@ class AuthService {
     final token = await DeviceSessionStore.instance.getSessionToken();
     if (token == null || token.isEmpty) return null;
     try {
-      final json = await _api.post('api/ms-auth-verify', body: {
+      final json = await _api.postMobileAuth('api/ms-auth-verify', body: {
         'session_token': token,
         'device_key': await DeviceSessionStore.instance.getOrCreateDeviceKey(),
         'app_id': AppConfig.mobileAppId,
@@ -138,7 +138,7 @@ class AuthService {
     final token = await DeviceSessionStore.instance.getSessionToken();
     if (token != null && token.isNotEmpty) {
       try {
-        await _api.post('api/ms-auth-logout', body: {
+        await _api.postMobileAuth('api/ms-auth-logout', body: {
           'session_token': token,
           'device_key': await DeviceSessionStore.instance.getOrCreateDeviceKey(),
           'app_id': AppConfig.mobileAppId,
