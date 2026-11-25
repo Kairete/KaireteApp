@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Chiave device persistente per SSO cross-APK (network Kairete).
@@ -13,7 +14,9 @@ class DeviceSessionStore {
   Future<String> getOrCreateDeviceKey() async {
     final existing = await _storage.read(key: _deviceKey);
     if (existing != null && existing.isNotEmpty) return existing;
-    final key = 'kd_${DateTime.now().millisecondsSinceEpoch}_${_randomSuffix()}';
+    final random = Random.secure();
+    final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+    final key = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     await _storage.write(key: _deviceKey, value: key);
     return key;
   }
@@ -28,8 +31,4 @@ class DeviceSessionStore {
     await _storage.delete(key: _sessionToken);
   }
 
-  String _randomSuffix() {
-    final n = DateTime.now().microsecondsSinceEpoch;
-    return n.toRadixString(36);
-  }
 }
