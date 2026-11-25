@@ -65,22 +65,61 @@ class XenforoApi {
     String path, {
     required Map<String, dynamic> body,
   }) async {
-    final form = FormData.fromMap(body);
-    final Response<String> response;
-    try {
-      response = await _dio.post<String>(
-        path,
-        data: form,
-        options: Options(
-          responseType: ResponseType.plain,
-          validateStatus: (status) => status != null && status < 600,
-          headers: {'Accept': 'application/json'},
-        ),
-      );
-    } on DioException catch (e) {
-      throw MobileAuthApiException(
-        'Rete: ${e.type.name}; causa: ${e.error?.runtimeType ?? 'non disponibile'}.',
-      );
+    // Apache/XenForo can issue 301 redirects for API URLs. Automatic
+    // redirects may turn a credential POST into GET. Follow only safe HTTPS
+    // redirects within the Kairete .net API and explicitly POST again.
+    Uri destination = Uri.parse(AppConfig.apiBaseUrl).resolve(path);
+    Response<String>? response;
+    for (var hop = 0; hop < 4; hop++) {
+      try {
+        response = await _dio.post<String>(
+          destination.toString(),
+          data: FormData.fromMap(body),
+          options: Options(
+            responseType: ResponseType.plain,
+            followRedirects: false,
+            validateStatus: (status) => status != null && status < 600,
+            headers: {'Accept': 'application/json'},
+          ),
+        );
+      } on DioException catch (e) {
+        throw MobileAuthApiException(
+          'Rete: ${e.type.name}; causa: ${e.error?.runtimeType ?? 'non disponibile'}.',
+        );
+      }
+      final code = response.statusCode ?? 0;
+      if (code != 301 && code != 302 && code != 303 &&
+          code != 307 && code != 308) {
+        break;
+      }
+      if (hop == 3) {
+        throw const MobileAuthApiException('Troppi redirect HTTP sul login.');
+      }
+      final location = response.headers.value('location');
+      if (location == null || location.isEmpty) {
+        throw MobileAuthApiException('HTTP $code — redirect senza destinazione.');
+      }
+      final next = destination.resolve(location);
+      final host = next.host.toLowerCase();
+      final pathAllowed = next.path == '/api/ms-auth-login' ||
+          next.path == '/api/ms-auth-login/' ||
+          next.path == '/api/ms-auth-verify' ||
+          next.path == '/api/ms-auth-verify/' ||
+          next.path == '/api/ms-auth-logout' ||
+          next.path == '/api/ms-auth-logout/';
+      if (next.scheme != 'https' ||
+          (host != 'www.kairete.net' && host != 'kairete.net') ||
+          next.userInfo.isNotEmpty ||
+          (next.hasPort && next.port != 443) ||
+          !pathAllowed) {
+        throw MobileAuthApiException(
+          'HTTP $code — redirect non sicuro o verso una route inattesa.',
+        );
+      }
+      destination = next;
+    }
+    if (response == null) {
+      throw const MobileAuthApiException('Nessuna risposta del server.');
     }
 
     final status = response.statusCode ?? 0;
