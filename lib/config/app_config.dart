@@ -11,7 +11,7 @@ class AppConfig {
       case AppEnvironment.stagingIt:
         return 'https://www.kairete.it/';
       case AppEnvironment.production:
-        return 'https://www.kairete.net/';
+        return 'https://kairete.net/';
     }
   }
 
