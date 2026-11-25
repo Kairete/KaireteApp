@@ -201,7 +201,10 @@ class AuthFlowController extends GetxController {
   }
 
   void _goAfterAuth(UserAccount user) {
-    if (user.needsProfileFields) {
+    // Keyless mobile login responses do not contain profile custom fields.
+    // Do not redirect a successfully authenticated user to an editor that
+    // depends on unrelated API privileges before showing the app.
+    if (user.customFields.isNotEmpty && user.needsProfileFields) {
       _navigateTo(AppRoutes.profileFields);
     } else {
       _openHomeAfterBootstrap();
