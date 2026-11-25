@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
 
@@ -55,6 +56,63 @@ class XenforoApi {
   void syncAppIdentity() {
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
     _applyTenantHeader();
+  }
+
+  /// Mobile login endpoints may return HTML (PHP/host errors). Retrieve raw
+  /// bytes as text first to avoid DioExceptionType.unknown during JSON decode.
+  /// Never expose response bodies: they may contain sensitive server details.
+  Future<Map<String, dynamic>> postMobileAuth(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    final form = FormData.fromMap(body);
+    final Response<String> response;
+    try {
+      response = await _dio.post<String>(
+        path,
+        data: form,
+        options: Options(
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 600,
+          headers: {'Accept': 'application/json'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw MobileAuthApiException(
+        'Rete: ${e.type.name}; causa: ${e.error?.runtimeType ?? 'non disponibile'}.',
+      );
+    }
+
+    final status = response.statusCode ?? 0;
+    final contentType = response.headers.value('content-type') ?? 'assente';
+    final raw = response.data ?? '';
+    Map<String, dynamic>? json;
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is Map) json = Map<String, dynamic>.from(parsed);
+    } catch (_) {}
+
+    if (json == null) {
+      final type = contentType.split(';').first.trim();
+      throw MobileAuthApiException(
+        'HTTP $status — il server ha restituito una risposta non JSON '
+        '(Content-Type: $type).',
+      );
+    }
+    final errorCode = json['errors'];
+    if (errorCode is List && errorCode.isNotEmpty) {
+      final first = errorCode.first;
+      if (first is Map) {
+        final code = first['code']?.toString() ?? 'api_error';
+        final message = first['message']?.toString() ?? 'Richiesta respinta';
+        throw MobileAuthApiException('HTTP $status — $code: $message');
+      }
+      throw MobileAuthApiException('HTTP $status — richiesta rifiutata.');
+    }
+    if (status >= 400) {
+      throw MobileAuthApiException('HTTP $status — errore del server XenForo.');
+    }
+    return json;
   }
 
   Future<Map<String, dynamic>> post(
@@ -176,4 +234,11 @@ class XenforoApi {
         return 'Errore di connessione. Riprova.';
     }
   }
+}
+
+class MobileAuthApiException implements Exception {
+  const MobileAuthApiException(this.message);
+  final String message;
+  @override
+  String toString() => message;
 }
