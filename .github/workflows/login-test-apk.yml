@@ -31,6 +31,19 @@ jobs:
           cache: true
       - name: Flutter dependencies
         run: flutter pub get
+      - name: Probe keyless XenForo login POST safely (empty credentials)
+        shell: bash
+        run: |
+          curl --silent --show-error --max-time 25 --output /tmp/kairete-auth-body --dump-header /tmp/kairete-auth-headers \
+            --request POST 'https://www.kairete.net/api/ms-auth-login' \
+            --data-urlencode 'login=' --data-urlencode 'password=' \
+            --data-urlencode 'device_key=ci-probe' --data-urlencode 'app_id=kairete' || true
+          echo '--- HTTP response status ---'
+          head -n 1 /tmp/kairete-auth-headers 2>/dev/null || true
+          echo '--- Content-Type ---'
+          grep -i '^content-type:' /tmp/kairete-auth-headers 2>/dev/null || true
+          echo '--- Public API error code/message (if JSON) ---'
+          jq -r '.errors[0] | "code=\\(.code) message=\\(.message)"' /tmp/kairete-auth-body 2>/dev/null || echo 'No JSON API error; response may be HTML.'
       - name: Build debug APK for isolated login test
         run: flutter build apk --debug --flavor hub -t lib/main.dart
       - name: Upload APK
