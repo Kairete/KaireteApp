@@ -111,6 +111,8 @@ class AuthFlowController extends GetxController {
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
+    } on MobileAuthApiException catch (e) {
+      errorMessage.value = e.message;
     } on DioException catch (e) {
       final response = e.response;
       final httpCode = response?.statusCode;
