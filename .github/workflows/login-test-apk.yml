@@ -1,4 +1,4 @@
-name: Login test APK (debug)
+name: Kairete original app APK (debug)
 
 on:
   push:
@@ -32,11 +32,11 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
       - name: Build debug APK for isolated login test
-        run: flutter build apk --debug --flavor hub -t lib/login_test_main.dart
+        run: flutter build apk --debug --flavor hub -t lib/main.dart
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kairete-login-test-debug
+          name: kairete-original-ui-debug
           path: build/app/outputs/flutter-apk/*debug.apk
           if-no-files-found: error
           retention-days: 7
