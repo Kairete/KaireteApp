@@ -43,7 +43,7 @@ jobs:
           echo '--- Content-Type ---'
           grep -i '^content-type:' /tmp/kairete-auth-headers 2>/dev/null || true
           echo '--- Public API error code/message (if JSON) ---'
-          jq -r '.errors[0] | "code=\\(.code) message=\\(.message)"' /tmp/kairete-auth-body 2>/dev/null || echo 'No JSON API error; response may be HTML.'
+          jq -r '.errors[0] | [.code, .message] | @tsv' /tmp/kairete-auth-body 2>/dev/null || echo 'No JSON API error; response may be HTML.'
       - name: Build debug APK for isolated login test
         run: flutter build apk --debug --flavor hub -t lib/main.dart
       - name: Upload APK
