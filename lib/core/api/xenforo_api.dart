@@ -9,7 +9,8 @@ class XenforoApi {
     _dio.options.sendTimeout = const Duration(seconds: 20);
     _dio.options.validateStatus = (status) => status != null && status < 500;
     _dio.options.headers['Accept'] = 'application/json';
-    _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;
+    // Never embed a privileged XF API key in a distributable APK.
+    // Login, verify and logout use narrowly unauthenticated mobile endpoints.
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
     _applyTenantHeader();
     _applyUserHeader();
@@ -36,7 +37,9 @@ class XenforoApi {
   }
 
   void _applyUserHeader() {
-    _dio.options.headers['XF-Api-User'] = (_userId ?? 0).toString();
+    // User IDs are not credentials; never send XF-Api-User without a
+    // server-authenticated super-user context (not available to the app).
+    _dio.options.headers.remove('XF-Api-User');
   }
 
   void _applyTenantHeader() {
