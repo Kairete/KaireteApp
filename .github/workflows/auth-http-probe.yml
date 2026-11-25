@@ -1,0 +1,25 @@
+name: Kairete API login POST check
+on:
+  push:
+    branches: [test/login-apk-20261125]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST with empty credentials (no account accessed)
+        shell: bash
+        run: |
+          curl --silent --show-error --max-time 20 --output /tmp/auth-result --dump-header /tmp/auth-headers \
+            --request POST https://www.kairete.net/api/ms-auth-login \
+            --data-urlencode 'login=' --data-urlencode 'password=' \
+            --data-urlencode 'device_key=ci-blank-probe' --data-urlencode 'app_id=kairete' || true
+          echo HTTP_STATUS
+          head -n 1 /tmp/auth-headers 2>/dev/null || true
+          echo CONTENT_TYPE
+          grep -i '^content-type:' /tmp/auth-headers 2>/dev/null || true
+          echo API_ERROR
+          jq -r '.errors[0] | [.code, .message] | @tsv' /tmp/auth-result 2>/dev/null || echo 'non-JSON response'
