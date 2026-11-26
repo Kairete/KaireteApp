@@ -159,6 +159,11 @@ class GroupsService {
       'comment_count': post.commentCount,
       'reaction_score': post.reactionScore,
       'visitor_reaction_id': post.visitorReactionId,
+      'Attachments': post.attachments.map((attachment) => {
+        'thumbnail_url': attachment.thumbnailUrl,
+        'direct_url': attachment.directUrl,
+        'filename': attachment.filename,
+      }).toList(),
       if (title != null && title.isNotEmpty)
         'Group': {
           'group_id': post.groupId,
