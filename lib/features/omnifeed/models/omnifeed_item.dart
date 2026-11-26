@@ -1,3 +1,4 @@
+import 'package:kairete/core/utils/group_reaction_usernames.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/models/feed_attachment.dart';
 import 'package:kairete/core/utils/json_parse.dart';
@@ -616,29 +617,6 @@ class OmnifeedItem {
     return const [];
   }
 
-  static List<String> _reactionUsernamesFromApi(Map<String, dynamic> json) {
-    final names = <String>[];
-    final seen = <String>{};
-    final nested = json['GroupPost'];
-    for (final source in [json, if (nested is Map) Map<String, dynamic>.from(nested)]) {
-      for (final field in ['reaction_users', 'ReactionUsers', 'reaction_user_list', 'reacted_users']) {
-        final raw = source[field];
-        if (raw is! List) continue;
-        for (final value in raw) {
-          final name = value is Map
-              ? (value['username'] ?? value['display_name'] ??
-                (value['User'] is Map ? value['User']['username'] : null))?.toString().trim()
-              : value is String ? value.trim() : null;
-          if (name != null && name.isNotEmpty && seen.add(name.toLowerCase())) {
-            names.add(name);
-          }
-        }
-        if (names.isNotEmpty) return names;
-      }
-    }
-    return names;
-  }
-
   static List<int> _reactionIdsFromApi(Map<String, dynamic> json) {
     final ids = <int>{};
     final nested = json['GroupPost'];
@@ -694,7 +672,7 @@ class OmnifeedItem {
       reactionScore: json['reaction_score'] as int? ?? 0,
       visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
       reactionIds: _reactionIdsFromApi(json),
-      reactionUsernames: _reactionUsernamesFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
       attachments: _groupAttachments(json),
       author: user is Map<String, dynamic>
           ? OmnifeedAuthor.fromJson(user)
@@ -734,7 +712,7 @@ class OmnifeedItem {
       viewUrl: json['view_url']?.toString(),
       attachments: FeedAttachment.parseList(json['Attachments']),
       reactionIds: _reactionIdsFromApi(json),
-      reactionUsernames: _reactionUsernamesFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
     );
   }
 
@@ -1125,7 +1103,7 @@ class OmnifeedItem {
           ? _groupAttachments(json)
           : FeedAttachment.parseList(json['Attachments']),
       reactionIds: _reactionIdsFromApi(json),
-      reactionUsernames: _reactionUsernamesFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
       linkPreviews: FeedLinkPreviewData.listFromJson(json['link_previews']),
       isPaidContent: isPaidContent,
       canViewFull: canViewFull,
