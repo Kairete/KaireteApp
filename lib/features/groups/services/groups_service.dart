@@ -158,6 +158,7 @@ class GroupsService {
       'post_date': post.postDate,
       'comment_count': post.commentCount,
       'reaction_score': post.reactionScore,
+      'reaction_users': post.reactionNames,
       'visitor_reaction_id': post.visitorReactionId,
       if (title != null && title.isNotEmpty)
         'Group': {
