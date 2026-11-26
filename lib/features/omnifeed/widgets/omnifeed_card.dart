@@ -146,6 +146,14 @@ class OmnifeedCard extends StatelessWidget {
           ),
         ),
       ),
+      // Preserve the existing signature above the reaction summary.
+      afterBody: isGroupPost
+          ? FeedAuthorSignature.maybe(
+              html: author?.signatureHtml,
+              plain: author?.signaturePlain,
+              show: author?.contentShowSignature ?? true,
+            )
+          : null,
       // The XF-style reaction summary belongs immediately before the footer.
       beforeFooter: isGroupPost && item.reactionScore > 0
           ? GroupReactionBar(
