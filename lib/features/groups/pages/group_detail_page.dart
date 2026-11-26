@@ -462,7 +462,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           ],
         ),
       ),
-      afterBody: (postReaction?.score ?? post.reactionScore) > 0
+      beforeFooter: (postReaction?.score ?? post.reactionScore) > 0
           ? GroupReactionBar(
               total: postReaction?.score ?? post.reactionScore,
               reactionIds: post.reactionIds,
