@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kairete/features/feed/widgets/feed_reaction_summary.dart';
 import 'package:kairete/core/models/feed_attachment.dart';
 import 'package:kairete/core/utils/json_parse.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
@@ -109,6 +110,7 @@ class OmnifeedItem {
     this.activityDate,
     this.commentCount = 0,
     this.reactionScore = 0,
+    this.reactionNames = const [],
     this.visitorReactionId,
     this.isBookmarked = false,
     this.isHighlighted = false,
@@ -152,6 +154,7 @@ class OmnifeedItem {
   final int? activityDate;
   final int commentCount;
   final int reactionScore;
+  final List<String> reactionNames;
   final int? visitorReactionId;
   final bool isBookmarked;
   final bool isHighlighted;
@@ -968,6 +971,7 @@ class OmnifeedItem {
           JsonParse.intOrNull(json['sort_date']),
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
+      reactionNames: parseReactionNames(json),
       visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
       isBookmarked: JsonParse.boolValue(json['is_bookmarked']),
       isHighlighted: JsonParse.boolValue(json['is_highlighted']) ||
@@ -1063,6 +1067,7 @@ class OmnifeedItem {
       activityDate: activityDate ?? this.activityDate,
       commentCount: commentCount,
       reactionScore: reactionScore ?? this.reactionScore,
+      reactionNames: reactionNames,
       visitorReactionId: visitorReactionId ?? this.visitorReactionId,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isHighlighted: isHighlighted ?? this.isHighlighted,
@@ -1103,6 +1108,7 @@ class OmnifeedItem {
       itemDate: itemDate ?? other.itemDate,
       commentCount: commentCount > 0 ? commentCount : other.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : other.reactionScore,
+      reactionNames: reactionNames.isNotEmpty ? reactionNames : other.reactionNames,
       visitorReactionId: visitorReactionId ?? other.visitorReactionId,
       isBookmarked: isBookmarked || other.isBookmarked,
       isHighlighted: isHighlighted || other.isHighlighted,
@@ -1150,6 +1156,7 @@ class OmnifeedItem {
       itemDate: itemDate ?? media.mediaDate,
       commentCount: commentCount > 0 ? commentCount : media.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : media.reactionScore,
+      reactionNames: reactionNames,
       visitorReactionId: visitorReactionId ?? media.visitorReactionId,
       isBookmarked: isBookmarked,
       isHighlighted: isHighlighted,
