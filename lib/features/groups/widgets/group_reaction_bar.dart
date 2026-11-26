@@ -40,11 +40,21 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
       if ((widget.visitorReactionId ?? 0) > 0) widget.visitorReactionId!,
     }.take(4).toList();
 
-    final names = widget.reactionUsernames.take(3).toList();
-    final remaining = widget.total - names.length;
-    final label = names.isEmpty
-        ? '${widget.total} ${widget.total == 1 ? 'reazione' : 'reazioni'}'
-        : '${names.join(', ')}${remaining > 0 ? ' e $remaining ${remaining == 1 ? 'altra persona' : 'altre persone'}' : ''}';
+    // XenForo-style summary: two real names, then the remaining people.
+    final names = widget.reactionUsernames.take(2).toList();
+    final remaining = (widget.total - names.length).clamp(0, 1 << 30);
+    String label;
+    if (names.length == 2) {
+      label = remaining > 0
+          ? '${names[0]}, ${names[1]} e $remaining ${remaining == 1 ? 'persona' : 'persone'} hanno reagito'
+          : '${names[0]} e ${names[1]} hanno reagito';
+    } else if (names.length == 1) {
+      label = remaining > 0
+          ? '${names[0]} e $remaining ${remaining == 1 ? 'persona' : 'persone'} hanno reagito'
+          : '${names[0]} ha reagito';
+    } else {
+      label = '${widget.total} ${widget.total == 1 ? 'persona ha' : 'persone hanno'} reagito';
+    }
 
     return Container(
       width: double.infinity,
