@@ -75,8 +75,8 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
                             width: 0.6,
                           ),
                         ),
-                        child: catalog.iconFor(shown[i]) case final icon?
-                            ? ReactionFace(icon: icon, size: 18)
+                        child: catalog.iconFor(shown[i]) != null
+                            ? ReactionFace(icon: catalog.iconFor(shown[i])!, size: 18)
                             : const Icon(
                                 Icons.thumb_up,
                                 color: Color(0xFF667085),
