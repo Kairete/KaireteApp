@@ -5,6 +5,8 @@ import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/forum/pages/forum_thread_list_page.dart';
 import 'package:kairete/features/forum/pages/thread_detail_page.dart';
 import 'package:kairete/features/groups/pages/group_detail_page.dart';
+import 'package:kairete/features/groups/models/group_post.dart';
+import 'package:kairete/features/groups/models/social_group.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/media/pages/media_detail_page.dart';
 import 'package:kairete/features/media/pages/media_list_page.dart';
@@ -60,6 +62,25 @@ class OmnifeedNavigation {
             groupId: groupId,
             focusPostId: item.nativeContentId > 0 ? item.nativeContentId : null,
             singlePost: true,
+            initialPost: item.nativeContentId > 0
+                ? GroupPost(
+                    groupPostId: item.nativeContentId,
+                    groupId: groupId,
+                    messagePlainText: item.displayBody,
+                    postDate: item.itemDate,
+                    commentCount: item.commentCount,
+                    reactionScore: item.reactionScore,
+                    visitorReactionId: item.visitorReactionId,
+                    reactionIds: item.reactionIds,
+                    reactionUsernames: item.reactionUsernames,
+                    attachments: item.attachments,
+                    author: item.author == null ? null : SocialGroupMember(
+                      userId: item.author!.userId,
+                      username: item.author!.username,
+                      avatarUrl: item.author!.avatarUrl,
+                    ),
+                  )
+                : null,
           ));
           return;
         }
