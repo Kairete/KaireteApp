@@ -583,6 +583,7 @@ class OmnifeedItem {
       itemDate: json['post_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      reactionNames: parseReactionNames(json),
       author: user is Map<String, dynamic>
           ? OmnifeedAuthor.fromJson(user)
           : OmnifeedAuthor(
@@ -615,6 +616,7 @@ class OmnifeedItem {
       itemDate: JsonParse.intOrNull(json['post_date']),
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
+      reactionNames: parseReactionNames(json),
       author: userMap != null
           ? OmnifeedAuthor.fromJson(userMap)
           : OmnifeedAuthor(userId: authorId, username: authorName),
@@ -651,6 +653,7 @@ class OmnifeedItem {
       map['item_date'] ??= post['post_date'];
       map['comment_count'] ??= post['comment_count'];
       map['reaction_score'] ??= post['reaction_score'];
+      map['reaction_users'] ??= post['reaction_users'];
       if (map['User'] == null && post['User'] is Map) {
         map['User'] = post['User'];
       }
