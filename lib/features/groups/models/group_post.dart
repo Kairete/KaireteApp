@@ -55,6 +55,47 @@ class GroupPost {
     return ids.toList();
   }
 
+  static List<FeedAttachment> _groupPostAttachments(Map<String, dynamic> json) {
+    // Same file can be returned as a thumbnail attachment and as an
+    // image_urls direct URL. The attachment list is the authoritative source.
+    final nested = json['GroupPost'];
+    for (final source in [
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ]) {
+      final attachments = FeedAttachment.parseList(
+        source['Attachments'] ?? source['attachments'],
+      );
+      final seen = <String>{};
+      final unique = <FeedAttachment>[];
+      for (final a in attachments) {
+        final url = a.displayImageUrl;
+        final identity = a.filename?.isNotEmpty == true ? 'file:${a.filename}' : 'url:$url';
+        if (url != null && url.isNotEmpty && seen.add(identity)) unique.add(a);
+      }
+      if (unique.isNotEmpty) return unique;
+    }
+    for (final source in [
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ]) {
+      final urls = source['image_urls'];
+      if (urls is! List) continue;
+      final seen = <String>{};
+      final result = <FeedAttachment>[];
+      for (final raw in urls) {
+        final url = raw is String
+            ? raw.trim()
+            : raw is Map
+                ? (raw['thumbnail_url'] ?? raw['direct_url'] ?? raw['url'])?.toString().trim() ?? ''
+                : '';
+        if (url.isNotEmpty && seen.add(url)) result.add(FeedAttachment(directUrl: url));
+      }
+      if (result.isNotEmpty) return result;
+    }
+    return const [];
+  }
+
   factory GroupPost.fromJson(Map<String, dynamic> json) {
     return GroupPost(
       groupPostId: json['group_post_id'] as int? ?? 0,
@@ -66,13 +107,7 @@ class GroupPost {
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
       visitorReactionId: json['visitor_reaction_id'] as int?,
-      attachments: [
-        ...FeedAttachment.parseList(json['Attachments'] ?? json['attachments']),
-        if (json['image_urls'] is List)
-          for (final url in json['image_urls'] as List)
-            if (url is String && url.trim().isNotEmpty)
-              FeedAttachment(directUrl: url.trim()),
-      ],
+      attachments: _groupPostAttachments(json),
       reactionIds: _parseReactionIds(json),
       author: json['User'] is Map<String, dynamic>
           ? SocialGroupMember.fromJson(json['User'] as Map<String, dynamic>)
