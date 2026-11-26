@@ -29,11 +29,18 @@ import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class GroupDetailPage extends StatefulWidget {
-  const GroupDetailPage({super.key, required this.groupId, this.focusPostId, this.singlePost = false});
+  const GroupDetailPage({
+    super.key,
+    required this.groupId,
+    this.focusPostId,
+    this.singlePost = false,
+    this.initialPost,
+  });
 
   final int groupId;
   final int? focusPostId;
   final bool singlePost;
+  final GroupPost? initialPost;
 
   @override
   State<GroupDetailPage> createState() => _GroupDetailPageState();
@@ -83,9 +90,14 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     });
     try {
       final group = await _service.fetchGroup(widget.groupId);
-      final posts = widget.singlePost && widget.focusPostId != null
-          ? [await _service.fetchPost(widget.groupId, widget.focusPostId!)]
-          : (await _service.fetchPosts(widget.groupId)).posts;
+      // A post already shown in the feed must open without depending on an
+      // unverified /group-posts/{id}/ route. Refreshes can still re-fetch.
+      final posts = widget.singlePost && widget.initialPost != null &&
+              widget.initialPost!.groupPostId == widget.focusPostId
+          ? [widget.initialPost!]
+          : widget.singlePost && widget.focusPostId != null
+              ? [await _service.fetchPost(widget.groupId, widget.focusPostId!)]
+              : (await _service.fetchPosts(widget.groupId)).posts;
       final comments = await _loadComments(posts);
       final widgets = widget.singlePost
           ? AppWidgetPayload.empty()
@@ -461,6 +473,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                     groupId: widget.groupId,
                     focusPostId: post.groupPostId,
                     singlePost: true,
+                    initialPost: post,
                   ));
                 },
               ),
