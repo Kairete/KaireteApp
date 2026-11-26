@@ -5,6 +5,7 @@ import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
@@ -65,7 +66,8 @@ class OmnifeedCard extends StatelessWidget {
     final isSocialNews = item.contentType == 'social_news_article';
     final isMedia = item.contentType == 'xfmg_media';
     final isBlog = item.contentType == 'ubs_blog_entry';
-    final isGroupPost = item.contentType == 'tl_group_post';
+    final isGroupPost = item.resolvedContentType == 'tl_group_post' ||
+        item.resolvedContentType == 'ksg_group_post';
     final isThread = item.contentType == 'thread';
     final date = formatOmnifeedCardDate(item.itemDate);
     final nickname = isMedia && author?.username.trim().isNotEmpty == true
@@ -131,15 +133,22 @@ class OmnifeedCard extends StatelessWidget {
                 tags: item.tags,
                 onTagTap: onTagTap,
                 onContinue: onOpen,
-                showContinue:
-                    !expandBody && item.listPreviewNeedsDetailLink,
-                continueLabel: item.continueLabel ?? 'Continua',
+                showContinue: !expandBody &&
+                    (isGroupPost || item.listPreviewNeedsDetailLink),
+                continueLabel: isGroupPost ? 'Leggi tutto' : (item.continueLabel ?? 'Continua'),
                 embeddedInBody: true,
               ),
             ],
           ),
         ),
       ),
+      afterBody: isGroupPost && item.reactionScore > 0
+          ? GroupReactionBar(
+              total: item.reactionScore,
+              reactionIds: item.reactionIds,
+              visitorReactionId: item.visitorReactionId,
+            )
+          : null,
       beforeFooter: FeedAuthorSignature.maybe(
         html: author?.signatureHtml,
         plain: author?.signaturePlain,
@@ -164,7 +173,8 @@ class OmnifeedCard extends StatelessWidget {
   VoidCallback? _moduleTap() {
     if (item.contentType == 'ubs_blog_entry') return onBlogTap;
     if (item.contentType == 'thread') return onForumTap;
-    if (item.contentType == 'tl_group_post') return onGroupTap;
+    if (item.resolvedContentType == 'tl_group_post' ||
+        item.resolvedContentType == 'ksg_group_post') return onGroupTap;
     if (item.contentType == 'xfmg_media') return onMediaTap;
     return null;
   }
