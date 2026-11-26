@@ -469,12 +469,16 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                 expanded: widget.singlePost,
                 onContinue: () {
                   if (widget.singlePost) return;
-                  Get.to(() => GroupDetailPage(
-                    groupId: widget.groupId,
-                    focusPostId: post.groupPostId,
-                    singlePost: true,
-                    initialPost: post,
-                  ));
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => GroupDetailPage(
+                        groupId: widget.groupId,
+                        focusPostId: post.groupPostId,
+                        singlePost: true,
+                        initialPost: post,
+                      ),
+                    ),
+                  );
                 },
               ),
             if (post.attachments.isNotEmpty) ...[
