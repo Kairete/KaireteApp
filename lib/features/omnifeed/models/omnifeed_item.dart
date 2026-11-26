@@ -193,7 +193,7 @@ class OmnifeedItem {
   }
 
   List<String> get imageAttachmentUrls =>
-      attachments.map((a) => a.displayImageUrl).whereType<String>().toList();
+      attachments.map((a) => a.displayImageUrl).whereType<String>().toSet().toList();
 
   /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
   bool get isPlainFeedPost => resolvedContentType == 'profile_post';
@@ -561,40 +561,57 @@ class OmnifeedItem {
     );
   }
 
+  /// Prefer the authoritative attachment list. image_urls often contains the
+  /// same files under different thumbnail/direct URLs, so do not concatenate.
   static List<FeedAttachment> _groupAttachments(Map<String, dynamic> json) {
     final nested = json['GroupPost'];
-    final groupPost = nested is Map ? Map<String, dynamic>.from(nested) : null;
-    final result = <FeedAttachment>[];
-    final seen = <String>{};
-    void add(FeedAttachment attachment) {
-      final url = attachment.displayImageUrl;
-      if (url != null && url.isNotEmpty && seen.add(url)) {
-        result.add(attachment);
-      }
-    }
-    for (final source in [json, if (groupPost != null) groupPost]) {
+    final sources = <Map<String, dynamic>>[
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ];
+    for (final source in sources) {
       for (final field in ['Attachments', 'attachments']) {
-        for (final attachment in FeedAttachment.parseList(source[field])) {
-          add(attachment);
-        }
-      }
-      final urls = source['image_urls'];
-      if (urls is List) {
-        for (final entry in urls) {
-          if (entry is String && entry.trim().isNotEmpty) {
-            add(FeedAttachment(directUrl: entry.trim()));
-          } else if (entry is Map) {
-            final item = Map<String, dynamic>.from(entry);
-            add(FeedAttachment(
-              thumbnailUrl: item['thumbnail_url']?.toString(),
-              directUrl: item['direct_url']?.toString() ??
-                  item['url']?.toString(),
-            ));
+        final attachments = FeedAttachment.parseList(source[field]);
+        final result = <FeedAttachment>[];
+        final seen = <String>{};
+        for (final a in attachments) {
+          final url = a.displayImageUrl;
+          final identity = (a.filename?.trim().isNotEmpty == true)
+              ? 'file:${a.filename}'
+              : 'url:$url';
+          if (url != null && url.isNotEmpty && seen.add(identity)) {
+            result.add(a);
           }
         }
+        if (result.isNotEmpty) return result;
       }
     }
-    return result;
+    for (final source in sources) {
+      final raw = source['image_urls'];
+      if (raw is! List) continue;
+      final result = <FeedAttachment>[];
+      final seen = <String>{};
+      for (final value in raw) {
+        FeedAttachment? attachment;
+        if (value is String && value.trim().isNotEmpty) {
+          attachment = FeedAttachment(directUrl: value.trim());
+        } else if (value is Map) {
+          final item = Map<String, dynamic>.from(value);
+          attachment = FeedAttachment(
+            thumbnailUrl: item['thumbnail_url']?.toString(),
+            directUrl: (item['direct_url'] ?? item['url'])?.toString(),
+            filename: item['filename']?.toString(),
+          );
+        }
+        final url = attachment?.displayImageUrl;
+        if (attachment != null && url != null && url.isNotEmpty &&
+            seen.add(url)) {
+          result.add(attachment);
+        }
+      }
+      if (result.isNotEmpty) return result;
+    }
+    return const [];
   }
 
   static List<int> _reactionIdsFromApi(Map<String, dynamic> json) {
