@@ -29,10 +29,11 @@ import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class GroupDetailPage extends StatefulWidget {
-  const GroupDetailPage({super.key, required this.groupId, this.focusPostId});
+  const GroupDetailPage({super.key, required this.groupId, this.focusPostId, this.singlePost = false});
 
   final int groupId;
   final int? focusPostId;
+  final bool singlePost;
 
   @override
   State<GroupDetailPage> createState() => _GroupDetailPageState();
@@ -82,17 +83,21 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     });
     try {
       final group = await _service.fetchGroup(widget.groupId);
-      final postsPage = await _service.fetchPosts(widget.groupId);
-      final comments = await _loadComments(postsPage.posts);
-      final widgets = await AppWidgetsService.instance.fetch(
-        AppWidgetPlacements.groupPosts,
-        contextId: widget.groupId,
-        forceRefresh: true,
-      );
+      final posts = widget.singlePost && widget.focusPostId != null
+          ? [await _service.fetchPost(widget.groupId, widget.focusPostId!)]
+          : (await _service.fetchPosts(widget.groupId)).posts;
+      final comments = await _loadComments(posts);
+      final widgets = widget.singlePost
+          ? AppWidgetPayload.empty()
+          : await AppWidgetsService.instance.fetch(
+              AppWidgetPlacements.groupPosts,
+              contextId: widget.groupId,
+              forceRefresh: true,
+            );
       if (!mounted) return;
       setState(() {
         _group = group;
-        _posts = postsPage.posts;
+        _posts = posts;
         _commentsByPost = comments;
         _postReactionOverrides.clear();
         _commentReactionOverrides.clear();
@@ -100,7 +105,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         _loading = false;
       });
       if (!_didFocusPost && widget.focusPostId != null &&
-          postsPage.posts.any((post) => post.groupPostId == widget.focusPostId)) {
+          posts.any((post) => post.groupPostId == widget.focusPostId)) {
         _didFocusPost = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
@@ -339,7 +344,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
-        title: Text(_group?.title ?? 'Gruppo'),
+        title: Text(widget.singlePost ? 'Post del gruppo' : (_group?.title ?? 'Gruppo')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -368,13 +373,13 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                         child: ListView(
                           padding: const EdgeInsets.only(bottom: 8),
                           children: [
-                            if (_group != null)
+                            if (!widget.singlePost && _group != null)
                               _GroupHeader(
                                 group: _group!,
                                 onJoinTap: _toggleMembership,
                                 isJoinLoading: _joinLoading,
                               ),
-                            if (_group?.canPost == true)
+                            if (!widget.singlePost && _group?.canPost == true)
                               FeedComposeBar(
                                 hintText: 'Scrivi qualcosa nel gruppo…',
                                 onTapCompose: _openCompose,
@@ -449,10 +454,15 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
             if (post.messagePlainText.isNotEmpty)
               GroupPostPreview(
                 text: post.messagePlainText,
-                expanded: _expandedPostIds.contains(post.groupPostId),
-                onContinue: () => setState(
-                  () => _expandedPostIds.add(post.groupPostId),
-                ),
+                expanded: widget.singlePost,
+                onContinue: () {
+                  if (widget.singlePost) return;
+                  Get.to(() => GroupDetailPage(
+                    groupId: widget.groupId,
+                    focusPostId: post.groupPostId,
+                    singlePost: true,
+                  ));
+                },
               ),
             if (post.attachments.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -471,6 +481,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           ? GroupReactionBar(
               total: postReaction?.score ?? post.reactionScore,
               reactionIds: post.reactionIds,
+              reactionUsernames: post.reactionUsernames,
               visitorReactionId: postReaction?.reactionId ??
                   post.visitorReactionId,
             )
