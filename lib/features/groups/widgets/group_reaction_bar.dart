@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/widgets/reaction_face.dart';
 
-/// XenForo-style reaction summary: actual reaction faces on the left and
-/// overall score alongside, in a compact row immediately above the footer.
-/// No invented breakdown when the API only supplies an aggregate score.
+/// Flutter counterpart of XenForo's reactionsBar / reactionSummary.
+/// The actual faces come from XF's installed reaction catalog.
+/// Never invent user names or specific counts absent from the API response.
 class GroupReactionBar extends StatefulWidget {
   const GroupReactionBar({
     super.key,
@@ -32,39 +32,74 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.total <= 0) return const SizedBox.shrink();
-    final ids = <int>{...widget.reactionIds};
-    if ((widget.visitorReactionId ?? 0) > 0) {
-      ids.add(widget.visitorReactionId!);
+    if (widget.total <= 0 && widget.reactionIds.isEmpty) {
+      return const SizedBox.shrink();
     }
-    final displayed = ids.take(5).toList();
+    final ids = <int>{
+      ...widget.reactionIds.where((id) => id > 0),
+      if ((widget.visitorReactionId ?? 0) > 0) widget.visitorReactionId!,
+    };
+    final shown = ids.take(5).toList();
+    final catalog = ReactionCatalog.instance;
+
     return Container(
       width: double.infinity,
-      color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F5F5),
+        border: Border(
+          top: BorderSide(color: Color(0xFFE5E5E5), width: 0.7),
+        ),
+      ),
       child: Row(
-        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          for (final id in displayed) ...[
-            if (id != displayed.first) const SizedBox(width: 3),
-            Builder(builder: (_) {
-              final icon = ReactionCatalog.instance.iconFor(id);
-              return icon == null
-                  ? const Icon(Icons.emoji_emotions_outlined,
-                      size: 19, color: Color(0xFF667085))
-                  : ReactionFace(icon: icon, size: 19);
-            }),
-          ],
-          if (displayed.isEmpty)
-            const Icon(Icons.thumb_up_alt_outlined,
-                size: 17, color: Color(0xFF667085)),
-          const SizedBox(width: 6),
+          if (shown.isNotEmpty)
+            SizedBox(
+              width: 20.0 + (shown.length - 1) * 15.0,
+              height: 22,
+              child: Stack(
+                children: [
+                  for (var i = 0; i < shown.length; i++)
+                    Positioned(
+                      left: i * 15.0,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        padding: const EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFE3E3E3),
+                            width: 0.6,
+                          ),
+                        ),
+                        child: catalog.iconFor(shown[i]) case final icon?
+                            ? ReactionFace(icon: icon, size: 18)
+                            : const Icon(
+                                Icons.thumb_up,
+                                color: Color(0xFF667085),
+                                size: 15,
+                              ),
+                      ),
+                    ),
+                ],
+              ),
+            )
+          else
+            const Icon(
+              Icons.thumb_up,
+              color: Color(0xFF667085),
+              size: 17,
+            ),
+          const SizedBox(width: 7),
           Text(
             '${widget.total}',
             style: const TextStyle(
+              color: Color(0xFF555555),
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF667085),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
