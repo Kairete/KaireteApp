@@ -1,4 +1,5 @@
 import 'package:kairete/features/groups/models/social_group.dart';
+import 'package:kairete/core/models/feed_attachment.dart';
 
 class GroupPost {
   GroupPost({
@@ -12,6 +13,7 @@ class GroupPost {
     this.canComment = false,
     this.visitorReactionId,
     this.author,
+    this.attachments = const [],
   });
 
   final int groupPostId;
@@ -24,6 +26,7 @@ class GroupPost {
   final bool canComment;
   final int? visitorReactionId;
   final SocialGroupMember? author;
+  final List<FeedAttachment> attachments;
 
   factory GroupPost.fromJson(Map<String, dynamic> json) {
     return GroupPost(
@@ -36,6 +39,7 @@ class GroupPost {
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
       visitorReactionId: json['visitor_reaction_id'] as int?,
+      attachments: FeedAttachment.parseList(json['Attachments'] ?? json['attachments']),
       author: json['User'] is Map<String, dynamic>
           ? SocialGroupMember.fromJson(json['User'] as Map<String, dynamic>)
           : null,
