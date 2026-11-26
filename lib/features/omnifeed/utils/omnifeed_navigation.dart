@@ -56,7 +56,10 @@ class OmnifeedNavigation {
       case 'ksg_group_post':
         final groupId = item.groupId ?? _groupIdFromViewUrl(item.viewUrl);
         if (groupId != null && groupId > 0) {
-          Get.to(() => GroupDetailPage(groupId: groupId));
+          Get.to(() => GroupDetailPage(
+            groupId: groupId,
+            focusPostId: item.nativeContentId > 0 ? item.nativeContentId : null,
+          ));
           return;
         }
         break;
