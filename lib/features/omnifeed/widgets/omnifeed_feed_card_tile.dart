@@ -36,6 +36,10 @@ class OmnifeedFeedCardTile extends StatelessWidget {
       onForumTap: item.contentType == 'thread'
           ? () => controller.openForum(item)
           : null,
+      onGroupTap: item.resolvedContentType == 'tl_group_post' ||
+              item.resolvedContentType == 'ksg_group_post'
+          ? () => OmnifeedNavigation.openGroup(item)
+          : null,
       onMediaTap: item.contentType == 'xfmg_media'
           ? () => OmnifeedNavigation.openMediaAlbum(item)
           : null,
