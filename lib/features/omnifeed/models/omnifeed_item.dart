@@ -135,6 +135,7 @@ class OmnifeedItem {
     this.groupId,
     this.tags = const [],
     this.attachments = const [],
+    this.reactionIds = const [],
     this.linkPreviews = const [],
     this.isPaidContent = false,
     this.canViewFull = true,
@@ -178,6 +179,8 @@ class OmnifeedItem {
   final int? groupId;
   final List<String> tags;
   final List<FeedAttachment> attachments;
+  /// Reaction IDs actually reported by the API, not estimated from the score.
+  final List<int> reactionIds;
   final List<FeedLinkPreviewData> linkPreviews;
   final bool isPaidContent;
   final bool canViewFull;
@@ -558,6 +561,66 @@ class OmnifeedItem {
     );
   }
 
+  static List<FeedAttachment> _groupAttachments(Map<String, dynamic> json) {
+    final nested = json['GroupPost'];
+    final groupPost = nested is Map ? Map<String, dynamic>.from(nested) : null;
+    final result = <FeedAttachment>[];
+    final seen = <String>{};
+    void add(FeedAttachment attachment) {
+      final url = attachment.displayImageUrl;
+      if (url != null && url.isNotEmpty && seen.add(url)) {
+        result.add(attachment);
+      }
+    }
+    for (final source in [json, if (groupPost != null) groupPost]) {
+      for (final field in ['Attachments', 'attachments']) {
+        for (final attachment in FeedAttachment.parseList(source[field])) {
+          add(attachment);
+        }
+      }
+      final urls = source['image_urls'];
+      if (urls is List) {
+        for (final entry in urls) {
+          if (entry is String && entry.trim().isNotEmpty) {
+            add(FeedAttachment(directUrl: entry.trim()));
+          } else if (entry is Map) {
+            final item = Map<String, dynamic>.from(entry);
+            add(FeedAttachment(
+              thumbnailUrl: item['thumbnail_url']?.toString(),
+              directUrl: item['direct_url']?.toString() ??
+                  item['url']?.toString(),
+            ));
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  static List<int> _reactionIdsFromApi(Map<String, dynamic> json) {
+    final ids = <int>{};
+    for (final key in ['reaction_summary', 'reaction_counts', 'reactions']) {
+      final raw = json[key];
+      if (raw is Map) {
+        raw.forEach((id, value) {
+          final reactionId = int.tryParse(id.toString()) ?? 0;
+          final count = value is Map
+              ? (int.tryParse((value['count'] ?? value['reaction_count'] ?? 0).toString()) ?? 0)
+              : (int.tryParse(value.toString()) ?? 0);
+          if (reactionId > 0 && count > 0) ids.add(reactionId);
+        });
+      } else if (raw is List) {
+        for (final entry in raw) {
+          if (entry is! Map) continue;
+          final id = int.tryParse((entry['reaction_id'] ?? entry['id'] ?? '').toString()) ?? 0;
+          final count = int.tryParse((entry['count'] ?? entry['reaction_count'] ?? 1).toString()) ?? 0;
+          if (id > 0 && count > 0) ids.add(id);
+        }
+      }
+    }
+    return ids.toList();
+  }
+
   factory OmnifeedItem.fromGroupPostApi(Map<String, dynamic> json) {
     final postId = json['group_post_id'] as int? ?? 0;
     final user = json['User'];
@@ -580,6 +643,9 @@ class OmnifeedItem {
       itemDate: json['post_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
+      reactionIds: _reactionIdsFromApi(json),
+      attachments: _groupAttachments(json),
       author: user is Map<String, dynamic>
           ? OmnifeedAuthor.fromJson(user)
           : OmnifeedAuthor(
@@ -616,7 +682,10 @@ class OmnifeedItem {
           ? OmnifeedAuthor.fromJson(userMap)
           : OmnifeedAuthor(userId: authorId, username: authorName),
       viewUrl: json['view_url']?.toString(),
-      attachments: FeedAttachment.parseList(json['Attachments']),
+      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post'
+          ? _groupAttachments(json)
+          : FeedAttachment.parseList(json['Attachments']),
+      reactionIds: _reactionIdsFromApi(json),
     );
   }
 
@@ -752,6 +821,7 @@ class OmnifeedItem {
       groupId: groupId,
       tags: tags,
       attachments: attachments,
+      reactionIds: reactionIds,
       linkPreviews: linkPreviews,
       isPaidContent: isPaidContent,
       canViewFull: canViewFull,
