@@ -34,6 +34,50 @@ class FeedReactionSummary extends StatelessWidget {
   final List<String> names;
   final VoidCallback? onTap;
 
+  void _showKnownReactions(
+    BuildContext context,
+    List<String> shown,
+    int remaining,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Reazioni ($total)',
+                  style: Theme.of(sheetContext).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              for (final name in shown)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(children: [
+                    const Icon(Icons.person_outline, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(name)),
+                  ]),
+                ),
+              if (remaining > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    shown.isEmpty
+                        ? '$remaining ${remaining == 1 ? 'reazione' : 'reazioni'}'
+                        : 'Altre $remaining ${remaining == 1 ? 'reazione' : 'reazioni'}',
+                    style: Theme.of(sheetContext).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (total <= 0) return const SizedBox.shrink();
@@ -52,7 +96,7 @@ class FeedReactionSummary extends StatelessWidget {
     return Material(
       color: const Color(0xFFF5F5F5),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap ?? () => _showKnownReactions(context, shown, remaining),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           child: Row(
