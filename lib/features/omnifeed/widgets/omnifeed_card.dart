@@ -158,6 +158,7 @@ class OmnifeedCard extends StatelessWidget {
           ? GroupReactionBar(
               total: item.reactionScore,
               reactionIds: item.reactionIds,
+              reactionUsernames: item.reactionUsernames,
               visitorReactionId: item.visitorReactionId,
             )
           : FeedAuthorSignature.maybe(
