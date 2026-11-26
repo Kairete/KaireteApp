@@ -599,22 +599,29 @@ class OmnifeedItem {
 
   static List<int> _reactionIdsFromApi(Map<String, dynamic> json) {
     final ids = <int>{};
-    for (final key in ['reaction_summary', 'reaction_counts', 'reactions']) {
-      final raw = json[key];
-      if (raw is Map) {
-        raw.forEach((id, value) {
-          final reactionId = int.tryParse(id.toString()) ?? 0;
-          final count = value is Map
-              ? (int.tryParse((value['count'] ?? value['reaction_count'] ?? 0).toString()) ?? 0)
-              : (int.tryParse(value.toString()) ?? 0);
-          if (reactionId > 0 && count > 0) ids.add(reactionId);
-        });
-      } else if (raw is List) {
-        for (final entry in raw) {
-          if (entry is! Map) continue;
-          final id = int.tryParse((entry['reaction_id'] ?? entry['id'] ?? '').toString()) ?? 0;
-          final count = int.tryParse((entry['count'] ?? entry['reaction_count'] ?? 1).toString()) ?? 0;
-          if (id > 0 && count > 0) ids.add(id);
+    final nested = json['GroupPost'];
+    final sources = [
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ];
+    for (final source in sources) {
+      for (final key in ['reaction_summary', 'reaction_counts', 'reactions']) {
+        final raw = source[key];
+        if (raw is Map) {
+          raw.forEach((id, value) {
+            final reactionId = int.tryParse(id.toString()) ?? 0;
+            final count = value is Map
+                ? (int.tryParse((value['count'] ?? value['reaction_count'] ?? 0).toString()) ?? 0)
+                : (int.tryParse(value.toString()) ?? 0);
+            if (reactionId > 0 && count > 0) ids.add(reactionId);
+          });
+        } else if (raw is List) {
+          for (final entry in raw) {
+            if (entry is! Map) continue;
+            final id = int.tryParse((entry['reaction_id'] ?? entry['id'] ?? '').toString()) ?? 0;
+            final count = int.tryParse((entry['count'] ?? entry['reaction_count'] ?? 1).toString()) ?? 0;
+            if (id > 0 && count > 0) ids.add(id);
+          }
         }
       }
     }
@@ -1069,7 +1076,7 @@ class OmnifeedItem {
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: JsonParse.parseFeedTags(json['tags']),
-      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post'
+      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post' || group != null
           ? _groupAttachments(json)
           : FeedAttachment.parseList(json['Attachments']),
       reactionIds: _reactionIdsFromApi(json),
