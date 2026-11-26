@@ -14,6 +14,7 @@ class GroupPost {
     this.visitorReactionId,
     this.author,
     this.attachments = const [],
+    this.reactionIds = const [],
   });
 
   final int groupPostId;
@@ -27,6 +28,32 @@ class GroupPost {
   final int? visitorReactionId;
   final SocialGroupMember? author;
   final List<FeedAttachment> attachments;
+  final List<int> reactionIds;
+
+  static List<int> _parseReactionIds(Map<String, dynamic> json) {
+    final ids = <int>{};
+    for (final field in ['reaction_summary', 'reaction_counts', 'reactions']) {
+      final raw = json[field];
+      if (raw is Map) {
+        raw.forEach((key, count) {
+          final id = int.tryParse(key.toString()) ?? 0;
+          final total = count is Map
+              ? int.tryParse((count['count'] ?? count['reaction_count'] ?? 0).toString()) ?? 0
+              : int.tryParse(count.toString()) ?? 0;
+          if (id > 0 && total > 0) ids.add(id);
+        });
+      } else if (raw is List) {
+        for (final item in raw) {
+          if (item is Map) {
+            final id = int.tryParse((item['reaction_id'] ?? item['id'] ?? '').toString()) ?? 0;
+            final count = int.tryParse((item['count'] ?? item['reaction_count'] ?? 1).toString()) ?? 0;
+            if (id > 0 && count > 0) ids.add(id);
+          }
+        }
+      }
+    }
+    return ids.toList();
+  }
 
   factory GroupPost.fromJson(Map<String, dynamic> json) {
     return GroupPost(
@@ -39,7 +66,14 @@ class GroupPost {
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
       visitorReactionId: json['visitor_reaction_id'] as int?,
-      attachments: FeedAttachment.parseList(json['Attachments'] ?? json['attachments']),
+      attachments: [
+        ...FeedAttachment.parseList(json['Attachments'] ?? json['attachments']),
+        if (json['image_urls'] is List)
+          for (final url in json['image_urls'] as List)
+            if (url is String && url.trim().isNotEmpty)
+              FeedAttachment(directUrl: url.trim()),
+      ],
+      reactionIds: _parseReactionIds(json),
       author: json['User'] is Map<String, dynamic>
           ? SocialGroupMember.fromJson(json['User'] as Map<String, dynamic>)
           : null,
