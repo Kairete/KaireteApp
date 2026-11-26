@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/session/device_session_store.dart';
 
 class XenforoApi {
   XenforoApi() {
@@ -13,6 +14,34 @@ class XenforoApi {
     // Never embed a privileged XF API key in a distributable APK.
     // Login, verify and logout use narrowly unauthenticated mobile endpoints.
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
+    // The native mobile session is NOT an XF API key. This header only
+    // transports the token; a server-side validator must authorize it before
+    // protected endpoints can be considered authenticated.
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) async {
+      final uri = options.uri;
+      final route = uri.path.toLowerCase();
+      final isMobileCredentialEndpoint =
+          route == '/api/ms-auth-login' || route == '/api/ms-auth-login/' ||
+          route == '/api/ms-auth-verify' || route == '/api/ms-auth-verify/' ||
+          route == '/api/ms-auth-logout' || route == '/api/ms-auth-logout/';
+      if (!isMobileCredentialEndpoint &&
+          uri.scheme == 'https' &&
+          (uri.host == 'kairete.net' || uri.host == 'www.kairete.net') &&
+          route.startsWith('/api/')) {
+        try {
+          final token = await DeviceSessionStore.instance.getSessionToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['X-Kairete-Mobile-Token'] = token;
+            options.headers['X-Kairete-Mobile-Device'] =
+                await DeviceSessionStore.instance.getOrCreateDeviceKey();
+          }
+        } catch (_) {
+          // Never fall back to an unverified user ID or privileged API key.
+        }
+      }
+      handler.next(options);
+    }));
+
     _applyTenantHeader();
     _applyUserHeader();
   }
