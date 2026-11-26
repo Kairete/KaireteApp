@@ -28,9 +28,10 @@ import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class GroupDetailPage extends StatefulWidget {
-  const GroupDetailPage({super.key, required this.groupId});
+  const GroupDetailPage({super.key, required this.groupId, this.focusPostId});
 
   final int groupId;
+  final int? focusPostId;
 
   @override
   State<GroupDetailPage> createState() => _GroupDetailPageState();
@@ -38,6 +39,8 @@ class GroupDetailPage extends StatefulWidget {
 
 class _GroupDetailPageState extends State<GroupDetailPage> {
   final GroupsService _service = GroupsService();
+  final GlobalKey _targetPostKey = GlobalKey();
+  bool _didFocusPost = false;
   final _commentCtrl = TextEditingController();
   final _commentFocus = FocusNode();
   final _replyDraft = FeedCommentReplyDraft();
@@ -94,6 +97,22 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         _widgetsPayload = widgets;
         _loading = false;
       });
+      if (!_didFocusPost && widget.focusPostId != null &&
+          postsPage.posts.any((post) => post.groupPostId == widget.focusPostId)) {
+        _didFocusPost = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final target = _targetPostKey.currentContext;
+          if (target != null) {
+            Scrollable.ensureVisible(
+              target,
+              duration: const Duration(milliseconds: 300),
+              alignment: 0.08,
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
     } on GroupsException catch (e) {
       setState(() {
         _error = e.message;
@@ -368,7 +387,14 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                               if (slot is AppWidgetStripMarker) {
                                 return AppWidgetStrip(widgets: slot.widgets);
                               }
-                              return _buildPostCard(slot as GroupPost);
+                              final post = slot as GroupPost;
+                               if (post.groupPostId == widget.focusPostId) {
+                                 return KeyedSubtree(
+                                   key: _targetPostKey,
+                                   child: _buildPostCard(post),
+                                 );
+                               }
+                               return _buildPostCard(post);
                             }),
                             if (_posts.isEmpty)
                               const Padding(
