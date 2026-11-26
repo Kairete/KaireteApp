@@ -22,14 +22,25 @@ import 'package:kairete/features/groups/models/social_group.dart';
 import 'package:kairete/features/groups/pages/group_compose_page.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/groups/widgets/group_cover_header.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
+import 'package:kairete/features/groups/widgets/group_post_preview.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class GroupDetailPage extends StatefulWidget {
-  const GroupDetailPage({super.key, required this.groupId});
+  const GroupDetailPage({
+    super.key,
+    required this.groupId,
+    this.focusPostId,
+    this.singlePost = false,
+    this.initialPost,
+  });
 
   final int groupId;
+  final int? focusPostId;
+  final bool singlePost;
+  final GroupPost? initialPost;
 
   @override
   State<GroupDetailPage> createState() => _GroupDetailPageState();
@@ -37,6 +48,8 @@ class GroupDetailPage extends StatefulWidget {
 
 class _GroupDetailPageState extends State<GroupDetailPage> {
   final GroupsService _service = GroupsService();
+  final GlobalKey _targetPostKey = GlobalKey();
+  bool _didFocusPost = false;
   final _commentCtrl = TextEditingController();
   final _commentFocus = FocusNode();
   final _replyDraft = FeedCommentReplyDraft();
@@ -44,6 +57,11 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   List<GroupPost> _posts = const [];
   Map<int, List<GroupPostComment>> _commentsByPost = const {};
   final Map<int, int> _shareCounts = {};
+  final Map<int, ({int score, int reactionId})> _postReactionOverrides = {};
+  final Map<int, ({int score, int reactionId})> _commentReactionOverrides = {};
+  final Set<int> _pendingPostReactions = {};
+  final Set<int> _expandedPostIds = {};
+  final Set<int> _pendingCommentReactions = {};
   AppWidgetPayload _widgetsPayload = AppWidgetPayload.empty();
   int? _composePostId;
   bool _loading = true;
@@ -72,21 +90,48 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     });
     try {
       final group = await _service.fetchGroup(widget.groupId);
-      final postsPage = await _service.fetchPosts(widget.groupId);
-      final comments = await _loadComments(postsPage.posts);
-      final widgets = await AppWidgetsService.instance.fetch(
-        AppWidgetPlacements.groupPosts,
-        contextId: widget.groupId,
-        forceRefresh: true,
-      );
+      // A post already shown in the feed must open without depending on an
+      // unverified /group-posts/{id}/ route. Refreshes can still re-fetch.
+      final posts = widget.singlePost && widget.initialPost != null &&
+              widget.initialPost!.groupPostId == widget.focusPostId
+          ? [widget.initialPost!]
+          : widget.singlePost && widget.focusPostId != null
+              ? [await _service.fetchPost(widget.groupId, widget.focusPostId!)]
+              : (await _service.fetchPosts(widget.groupId)).posts;
+      final comments = await _loadComments(posts);
+      final widgets = widget.singlePost
+          ? AppWidgetPayload.empty()
+          : await AppWidgetsService.instance.fetch(
+              AppWidgetPlacements.groupPosts,
+              contextId: widget.groupId,
+              forceRefresh: true,
+            );
       if (!mounted) return;
       setState(() {
         _group = group;
-        _posts = postsPage.posts;
+        _posts = posts;
         _commentsByPost = comments;
+        _postReactionOverrides.clear();
+        _commentReactionOverrides.clear();
         _widgetsPayload = widgets;
         _loading = false;
       });
+      if (!_didFocusPost && widget.focusPostId != null &&
+          posts.any((post) => post.groupPostId == widget.focusPostId)) {
+        _didFocusPost = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final target = _targetPostKey.currentContext;
+          if (target != null) {
+            Scrollable.ensureVisible(
+              target,
+              duration: const Duration(milliseconds: 300),
+              alignment: 0.08,
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
     } on GroupsException catch (e) {
       setState(() {
         _error = e.message;
@@ -150,15 +195,29 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   }
 
   Future<void> _reactToPost(GroupPost post, {int reactionId = 1}) async {
+    if (!_pendingPostReactions.add(post.groupPostId)) return;
     try {
-      await _service.reactToPost(
+      final action = await _service.reactToPost(
         groupPostId: post.groupPostId,
         authorUserId: post.author?.userId,
         reactionId: reactionId,
       );
-      await _load();
+      if (!mounted) return;
+      final previous = _postReactionOverrides[post.groupPostId];
+      final oldId = previous?.reactionId ?? post.visitorReactionId ?? 0;
+      final score = previous?.score ?? post.reactionScore;
+      final isDelete = action == 'delete';
+      final delta = isDelete ? -1 : (oldId == 0 ? 1 : 0);
+      setState(() {
+        _postReactionOverrides[post.groupPostId] = (
+          score: (score + delta).clamp(0, 1 << 30),
+          reactionId: isDelete ? 0 : reactionId,
+        );
+      });
     } on GroupsException catch (e) {
       AppToast.error(e.message);
+    } finally {
+      _pendingPostReactions.remove(post.groupPostId);
     }
   }
 
@@ -166,15 +225,29 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     GroupPostComment comment, {
     int reactionId = 1,
   }) async {
+    if (!_pendingCommentReactions.add(comment.commentId)) return;
     try {
-      await _service.reactToComment(
+      final action = await _service.reactToComment(
         commentId: comment.commentId,
         authorUserId: comment.author?.userId,
         reactionId: reactionId,
       );
-      await _load();
+      if (!mounted) return;
+      final previous = _commentReactionOverrides[comment.commentId];
+      final oldId = previous?.reactionId ?? comment.visitorReactionId ?? 0;
+      final score = previous?.score ?? comment.reactionScore;
+      final isDelete = action == 'delete';
+      final delta = isDelete ? -1 : (oldId == 0 ? 1 : 0);
+      setState(() {
+        _commentReactionOverrides[comment.commentId] = (
+          score: (score + delta).clamp(0, 1 << 30),
+          reactionId: isDelete ? 0 : reactionId,
+        );
+      });
     } on GroupsException catch (e) {
       AppToast.error(e.message);
+    } finally {
+      _pendingCommentReactions.remove(comment.commentId);
     }
   }
 
@@ -283,7 +356,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
-        title: Text(_group?.title ?? 'Gruppo'),
+        title: Text(widget.singlePost ? 'Post del gruppo' : (_group?.title ?? 'Gruppo')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -312,13 +385,13 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                         child: ListView(
                           padding: const EdgeInsets.only(bottom: 8),
                           children: [
-                            if (_group != null)
+                            if (!widget.singlePost && _group != null)
                               _GroupHeader(
                                 group: _group!,
                                 onJoinTap: _toggleMembership,
                                 isJoinLoading: _joinLoading,
                               ),
-                            if (_group?.canPost == true)
+                            if (!widget.singlePost && _group?.canPost == true)
                               FeedComposeBar(
                                 hintText: 'Scrivi qualcosa nel gruppo…',
                                 onTapCompose: _openCompose,
@@ -333,7 +406,14 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                               if (slot is AppWidgetStripMarker) {
                                 return AppWidgetStrip(widgets: slot.widgets);
                               }
-                              return _buildPostCard(slot as GroupPost);
+                              final post = slot as GroupPost;
+                               if (post.groupPostId == widget.focusPostId) {
+                                 return KeyedSubtree(
+                                   key: _targetPostKey,
+                                   child: _buildPostCard(post),
+                                 );
+                               }
+                               return _buildPostCard(post);
                             }),
                             if (_posts.isEmpty)
                               const Padding(
@@ -364,6 +444,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildPostCard(GroupPost post) {
     final comments = _commentsByPost[post.groupPostId] ?? const [];
+    final postReaction = _postReactionOverrides[post.groupPostId];
     void openAuthor() => OmnifeedNavigation.openUserProfile(
           post.author?.userId,
           username: post.author?.username,
@@ -379,15 +460,53 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Text(
-          post.messagePlainText,
-          style: const TextStyle(fontSize: 15, height: 1.35),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (post.messagePlainText.isNotEmpty)
+              GroupPostPreview(
+                text: post.messagePlainText,
+                expanded: widget.singlePost,
+                onContinue: () {
+                  if (widget.singlePost) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => GroupDetailPage(
+                        groupId: widget.groupId,
+                        focusPostId: post.groupPostId,
+                        singlePost: true,
+                        initialPost: post,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            if (post.attachments.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              FeedCardFullWidthImages(
+                imageUrls: post.attachments
+                    .map((attachment) => attachment.displayImageUrl)
+                    .whereType<String>()
+                    .where((url) => url.isNotEmpty)
+                    .toList(),
+              ),
+            ],
+          ],
         ),
       ),
+      beforeFooter: (postReaction?.score ?? post.reactionScore) > 0
+          ? GroupReactionBar(
+              total: postReaction?.score ?? post.reactionScore,
+              reactionIds: post.reactionIds,
+              reactionUsernames: post.reactionUsernames,
+              visitorReactionId: postReaction?.reactionId ??
+                  post.visitorReactionId,
+            )
+          : null,
       footer: FeedCardActionBar(
         commentCount: post.commentCount,
-        likeCount: post.reactionScore,
-        visitorReactionId: post.visitorReactionId,
+        likeCount: postReaction?.score ?? post.reactionScore,
+        visitorReactionId: postReaction?.reactionId ?? post.visitorReactionId,
         onComment: post.canComment
             ? () => _focusCommentOnPost(post.groupPostId)
             : null,
@@ -449,6 +568,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         .map(
           (comment) {
             final depth = depths[comment.commentId] ?? 0;
+            final reaction = _commentReactionOverrides[comment.commentId];
             return FeedNestedCommentData(
               id: comment.commentId,
               parentId: comment.parentCommentId,
@@ -457,8 +577,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               avatarUrl: comment.author?.avatarUrl,
               dateLabel: formatFeedCommentDate(comment.commentDate),
               message: comment.messagePlainText,
-              likeCount: comment.reactionScore,
-              visitorReactionId: comment.visitorReactionId,
+              likeCount: reaction?.score ?? comment.reactionScore,
+              visitorReactionId: reaction?.reactionId ?? comment.visitorReactionId,
               canReply: nestedCommentCanReply(depth),
               canLike: comment.canReact,
               onAuthorTap: () => OmnifeedNavigation.openUserProfile(

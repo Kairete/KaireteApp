@@ -4,28 +4,40 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/presence/app_presence_service.dart';
 import 'package:kairete/core/push/push_notification_service.dart';
-import 'package:kairete/core/session/device_session_service.dart';
+import 'package:kairete/core/session/device_session_store.dart';
 import 'package:kairete/core/session/session_store.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 
 class AuthService {
   XenforoApi get _api => AppApi.instance.xenforo;
-  final DeviceSessionService _deviceSessions = DeviceSessionService();
 
   Future<UserAccount> login({
     required String login,
     required String password,
   }) async {
-    final json = await _api.post(
-      ApiPaths.auth,
-      body: {'login': login.trim(), 'password': password},
+    final deviceKey = await DeviceSessionStore.instance.getOrCreateDeviceKey();
+    final json = await _api.postMobileAuth(
+      'api/ms-auth-login',
+      body: {
+        'login': login.trim(),
+        'password': password,
+        'device_key': deviceKey,
+        'app_id': AppConfig.mobileAppId,
+      },
     );
     final err = XenforoApi.firstErrorMessage(json);
     if (err != null) throw AuthException(err);
 
+    final token = json['session_token']?.toString() ?? '';
+    if (token.isEmpty) {
+      throw AuthException('Il server non ha restituito una sessione valida.');
+    }
     final account = UserAccount.fromApi(json);
+    if (account.userId <= 0) throw AuthException('Utente non valido.');
+    await DeviceSessionStore.instance.saveSessionToken(token);
     await _persist(account);
-    await _afterAuth(account);
+    // Mobile login is authenticated by the server-issued token.
+    // Do not call the legacy device-sessions endpoint with an untrusted user ID.
     return account;
   }
 
@@ -60,21 +72,32 @@ class AuthService {
   }
 
   Future<UserAccount?> restoreSession() async {
+    final token = await DeviceSessionStore.instance.getSessionToken();
+    if (token == null || token.isEmpty) return null;
     try {
-      final fromDevice = await _deviceSessions.tryRestoreFromDevice();
-      if (fromDevice != null) {
-        await _persist(fromDevice);
-        await _afterAuth(fromDevice);
-        return fromDevice;
+      final json = await _api.postMobileAuth('api/ms-auth-verify', body: {
+        'session_token': token,
+        'device_key': await DeviceSessionStore.instance.getOrCreateDeviceKey(),
+        'app_id': AppConfig.mobileAppId,
+      });
+      if (XenforoApi.firstErrorMessage(json) != null) {
+        await DeviceSessionStore.instance.clearSessionToken();
+        await SessionStore.instance.clear();
+        return null;
       }
-    } catch (_) {}
-
-    final userId = await SessionStore.instance.userId;
-    if (userId == null) return null;
-    await AppApi.instance.applySession(userId: userId);
-    final account = await fetchMe();
-    await _afterAuth(account);
-    return account;
+      final id = int.tryParse(json['user_id']?.toString() ?? '') ?? 0;
+      if (id <= 0) throw AuthException('Sessione non valida.');
+      final account = UserAccount(
+        userId: id,
+        username: json['username']?.toString() ?? '',
+      );
+      await _persist(account);
+      return account;
+    } catch (_) {
+      await DeviceSessionStore.instance.clearSessionToken();
+      await SessionStore.instance.clear();
+      return null;
+    }
   }
 
   Future<UserAccount> fetchMe() async {
@@ -112,17 +135,26 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await AppPresenceService.instance.onUserLoggedOut();
-    await PushNotificationService.instance.unregister();
+    final token = await DeviceSessionStore.instance.getSessionToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _api.postMobileAuth('api/ms-auth-logout', body: {
+          'session_token': token,
+          'device_key': await DeviceSessionStore.instance.getOrCreateDeviceKey(),
+          'app_id': AppConfig.mobileAppId,
+        });
+      } catch (_) {
+        // Revoke best-effort if offline. Always clear local credentials.
+      }
+    }
+    await DeviceSessionStore.instance.clearSessionToken();
+    try { await AppPresenceService.instance.onUserLoggedOut(); } catch (_) {}
+    try { await PushNotificationService.instance.unregister(); } catch (_) {}
     await SessionStore.instance.clear();
     AppApi.instance.clearSession();
   }
 
   Future<void> _afterAuth(UserAccount account) async {
-    try {
-      await _deviceSessions.registerAfterAuth(account.userId);
-    } catch (_) {}
-
     AppPresenceService.instance.onUserAuthenticated();
 
     try {

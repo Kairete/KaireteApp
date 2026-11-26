@@ -111,10 +111,37 @@ class AuthFlowController extends GetxController {
       _goAfterAuth(user);
     } on AuthException catch (e) {
       errorMessage.value = e.message;
+    } on MobileAuthApiException catch (e) {
+      errorMessage.value = e.message;
     } on DioException catch (e) {
-      errorMessage.value = XenforoApi.connectionMessage(e);
-    } catch (_) {
-      errorMessage.value = 'Errore di connessione. Riprova.';
+      final response = e.response;
+      final httpCode = response?.statusCode;
+      final data = response?.data;
+      String? apiCode;
+      String? apiMessage;
+      if (data is Map) {
+        final errors = data['errors'];
+        if (errors is List && errors.isNotEmpty && errors.first is Map) {
+          final first = errors.first as Map;
+          apiCode = first['code']?.toString();
+          apiMessage = first['message']?.toString();
+        }
+      }
+      final prefix = httpCode == null ? '' : 'HTTP $httpCode — ';
+      if (apiCode != null && apiCode.isNotEmpty) {
+        errorMessage.value = '$prefix$apiCode: ${apiMessage ?? 'Richiesta rifiutata'}';
+      } else if (httpCode != null) {
+        errorMessage.value =
+            '${prefix}Risposta API non valida (${e.type.name}).';
+      } else {
+        errorMessage.value =
+            'Connessione: ${e.type.name}. ${XenforoApi.connectionMessage(e)}';
+      }
+    } catch (e) {
+      // Show only the exception type, not exception.toString(): the latter
+      // could expose sensitive request payloads such as login passwords.
+      errorMessage.value =
+          'Errore applicazione: ${e.runtimeType}. Verifica la risposta API.';
     } finally {
       if (Get.currentRoute == AppRoutes.login) {
         isLoading.value = false;
@@ -201,7 +228,10 @@ class AuthFlowController extends GetxController {
   }
 
   void _goAfterAuth(UserAccount user) {
-    if (user.needsProfileFields) {
+    // Keyless mobile login responses do not contain profile custom fields.
+    // Do not redirect a successfully authenticated user to an editor that
+    // depends on unrelated API privileges before showing the app.
+    if (user.customFields.isNotEmpty && user.needsProfileFields) {
       _navigateTo(AppRoutes.profileFields);
     } else {
       _openHomeAfterBootstrap();

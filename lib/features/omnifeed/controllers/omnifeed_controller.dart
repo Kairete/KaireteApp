@@ -396,11 +396,10 @@ class OmnifeedController extends GetxController with AppWidgetsListMixin {
   Future<void> react(OmnifeedItem item, {int reactionId = 1}) async {
     try {
       final action = await _service.reactToItem(item: item, reactionId: reactionId);
-      _bumpScore(item.itemId, action);
+      _bumpScore(item.itemId, action, reactionId);
       AppToast.success(
         action == 'delete' ? 'Reazione rimossa.' : 'Reazione inviata.',
       );
-      await loadFeed();
     } on OmnifeedException catch (e) {
       AppToast.error(AppToast.mapApiError(e.message));
     } on DioException catch (e) {
@@ -408,13 +407,18 @@ class OmnifeedController extends GetxController with AppWidgetsListMixin {
     }
   }
 
-  void _bumpScore(int itemId, String action) {
+  void _bumpScore(int itemId, String action, int reactionId) {
     final index = items.indexWhere((entry) => entry.itemId == itemId);
     if (index < 0) return;
-    final delta = action == 'delete' ? -1 : 1;
     final current = items[index];
+    final previous = current.visitorReactionId;
+    final removed = action == 'delete';
+    final delta = removed ? -1 : (previous == null || previous <= 0 ? 1 : 0);
     final next = current.reactionScore + delta;
-    items[index] = current.copyWith(reactionScore: next < 0 ? 0 : next);
+    items[index] = current.copyWith(
+      reactionScore: next < 0 ? 0 : next,
+      visitorReactionId: removed ? 0 : reactionId,
+    );
     items.refresh();
   }
 

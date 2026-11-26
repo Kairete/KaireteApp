@@ -46,6 +46,40 @@ class GroupsService {
     return GroupPostsPage.fromJson(json);
   }
 
+  /// Load a single group post. Prefer the dedicated API route; if an older
+  /// Social Groups addon lacks it, search only pages of this permitted group.
+  Future<GroupPost> fetchPost(int groupId, int groupPostId) async {
+    await AppApi.instance.applySession();
+    if (groupId <= 0 || groupPostId <= 0) {
+      throw GroupsException('Post del gruppo non valido.');
+    }
+    try {
+      final json = await _api.get('${ApiPaths.groupPosts}$groupPostId/');
+      if (XenforoApi.firstErrorMessage(json) == null) {
+        final raw = json['post'] ?? json['group_post'] ?? json['GroupPost'];
+        if (raw is Map) {
+          final payload = Map<String, dynamic>.from(raw);
+          payload['group_post_id'] ??= groupPostId;
+          payload['group_id'] ??= groupId;
+          final post = GroupPost.fromJson(payload);
+          if (post.groupPostId == groupPostId && post.groupId == groupId) {
+            return post;
+          }
+        }
+      }
+    } catch (_) {
+      // Older addons only expose the group's paginated posts.
+    }
+    for (var page = 1; page <= 30; page++) {
+      final batch = await fetchPosts(groupId, page: page);
+      for (final post in batch.posts) {
+        if (post.groupPostId == groupPostId) return post;
+      }
+      if (batch.posts.length < 20) break;
+    }
+    throw GroupsException('Post non trovato nel gruppo.');
+  }
+
   /// Post di gruppo scritti da [userId] (per feed profilo).
   /// L'API `group-posts/?user_id=` non esiste: si scandiscono i gruppi visibili.
   Future<List<OmnifeedItem>> fetchAuthoredFeedItems(
@@ -159,6 +193,12 @@ class GroupsService {
       'comment_count': post.commentCount,
       'reaction_score': post.reactionScore,
       'visitor_reaction_id': post.visitorReactionId,
+      'reaction_users': post.reactionUsernames.map((name) => {'username': name}).toList(),
+      'Attachments': post.attachments.map((attachment) => {
+        'thumbnail_url': attachment.thumbnailUrl,
+        'direct_url': attachment.directUrl,
+        'filename': attachment.filename,
+      }).toList(),
       if (title != null && title.isNotEmpty)
         'Group': {
           'group_id': post.groupId,

@@ -1,0 +1,57 @@
+name: Kairete original app APK (debug)
+
+on:
+  push:
+    branches:
+      - test/login-apk-20261125
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-login-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.35.7'
+          cache: true
+      - name: Flutter dependencies
+        run: flutter pub get
+      - name: Probe keyless XenForo login POST safely (empty credentials)
+        shell: bash
+        run: |
+          curl --silent --show-error --max-time 25 --output /tmp/kairete-auth-body --dump-header /tmp/kairete-auth-headers \
+            --request POST 'https://www.kairete.net/api/ms-auth-login' \
+            --data-urlencode 'login=' --data-urlencode 'password=' \
+            --data-urlencode 'device_key=ci-probe' --data-urlencode 'app_id=kairete' || true
+          echo '--- HTTP response status ---'
+          head -n 1 /tmp/kairete-auth-headers 2>/dev/null || true
+          echo '--- Content-Type ---'
+          grep -i '^content-type:' /tmp/kairete-auth-headers 2>/dev/null || true
+          echo '--- Redirect location ---'
+          grep -i '^location:' /tmp/kairete-auth-headers 2>/dev/null || true
+          echo '--- Public API error code/message (if JSON) ---'
+          jq -r '.errors[0] | [.code, .message] | @tsv' /tmp/kairete-auth-body 2>/dev/null || echo 'No JSON API error; response may be HTML.'
+      - name: Build debug APK for isolated login test
+        run: flutter build apk --debug --flavor hub -t lib/main.dart
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairete-original-ui-debug
+          path: build/app/outputs/flutter-apk/*debug.apk
+          if-no-files-found: error
+          retention-days: 7

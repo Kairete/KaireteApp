@@ -5,6 +5,8 @@ import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
+import 'package:kairete/features/groups/widgets/group_post_preview.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
@@ -65,7 +67,8 @@ class OmnifeedCard extends StatelessWidget {
     final isSocialNews = item.contentType == 'social_news_article';
     final isMedia = item.contentType == 'xfmg_media';
     final isBlog = item.contentType == 'ubs_blog_entry';
-    final isGroupPost = item.contentType == 'tl_group_post';
+    final isGroupPost = item.resolvedContentType == 'tl_group_post' ||
+        item.resolvedContentType == 'ksg_group_post';
     final isThread = item.contentType == 'thread';
     final date = formatOmnifeedCardDate(item.itemDate);
     final nickname = isMedia && author?.username.trim().isNotEmpty == true
@@ -131,20 +134,38 @@ class OmnifeedCard extends StatelessWidget {
                 tags: item.tags,
                 onTagTap: onTagTap,
                 onContinue: onOpen,
-                showContinue:
-                    !expandBody && item.listPreviewNeedsDetailLink,
-                continueLabel: item.continueLabel ?? 'Continua',
+                // Group preview is truncated at 280 chars; show the link
+                // only when there is actually more text to read.
+                showContinue: !expandBody &&
+                    !isGroupPost && item.listPreviewNeedsDetailLink,
+                continueLabel: isGroupPost ? 'Leggi tutto' : (item.continueLabel ?? 'Continua'),
                 embeddedInBody: true,
               ),
             ],
           ),
         ),
       ),
-      beforeFooter: FeedAuthorSignature.maybe(
-        html: author?.signatureHtml,
-        plain: author?.signaturePlain,
-        show: author?.contentShowSignature ?? true,
-      ),
+      // Preserve the existing signature above the reaction summary.
+      afterBody: isGroupPost
+          ? FeedAuthorSignature.maybe(
+              html: author?.signatureHtml,
+              plain: author?.signaturePlain,
+              show: author?.contentShowSignature ?? true,
+            )
+          : null,
+      // The XF-style reaction summary belongs immediately before the footer.
+      beforeFooter: isGroupPost && item.reactionScore > 0
+          ? GroupReactionBar(
+              total: item.reactionScore,
+              reactionIds: item.reactionIds,
+              reactionUsernames: item.reactionUsernames,
+              visitorReactionId: item.visitorReactionId,
+            )
+          : FeedAuthorSignature.maybe(
+              html: author?.signatureHtml,
+              plain: author?.signaturePlain,
+              show: author?.contentShowSignature ?? true,
+            ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
         likeCount: item.reactionScore,
@@ -164,7 +185,8 @@ class OmnifeedCard extends StatelessWidget {
   VoidCallback? _moduleTap() {
     if (item.contentType == 'ubs_blog_entry') return onBlogTap;
     if (item.contentType == 'thread') return onForumTap;
-    if (item.contentType == 'tl_group_post') return onGroupTap;
+    if (item.resolvedContentType == 'tl_group_post' ||
+        item.resolvedContentType == 'ksg_group_post') return onGroupTap;
     if (item.contentType == 'xfmg_media') return onMediaTap;
     return null;
   }
@@ -327,14 +349,21 @@ class OmnifeedCard extends StatelessWidget {
           if (item.listPreviewBody.isNotEmpty) const SizedBox(height: 6),
         ],
         if (item.listPreviewBody.isNotEmpty)
-          Text(
-            item.listPreviewBody,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black,
-              height: 1.3,
-            ),
-          ),
+          (item.resolvedContentType == 'tl_group_post' ||
+                  item.resolvedContentType == 'ksg_group_post')
+              ? GroupPostPreview(
+                  text: item.displayBody,
+                  expanded: expandBody,
+                  onContinue: onOpen ?? () {},
+                )
+              : Text(
+                  item.listPreviewBody,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
+                ),
         if (item.imageAttachmentUrls.isNotEmpty) ...[
           const SizedBox(height: 10),
           FeedCardFullWidthImages(

@@ -1,3 +1,4 @@
+import 'package:kairete/core/utils/group_reaction_usernames.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/core/models/feed_attachment.dart';
 import 'package:kairete/core/utils/json_parse.dart';
@@ -135,6 +136,8 @@ class OmnifeedItem {
     this.groupId,
     this.tags = const [],
     this.attachments = const [],
+    this.reactionIds = const [],
+    this.reactionUsernames = const [],
     this.linkPreviews = const [],
     this.isPaidContent = false,
     this.canViewFull = true,
@@ -178,6 +181,9 @@ class OmnifeedItem {
   final int? groupId;
   final List<String> tags;
   final List<FeedAttachment> attachments;
+  /// Reaction IDs actually reported by the API, not estimated from the score.
+  final List<int> reactionIds;
+  final List<String> reactionUsernames;
   final List<FeedLinkPreviewData> linkPreviews;
   final bool isPaidContent;
   final bool canViewFull;
@@ -190,7 +196,7 @@ class OmnifeedItem {
   }
 
   List<String> get imageAttachmentUrls =>
-      attachments.map((a) => a.displayImageUrl).whereType<String>().toList();
+      attachments.map((a) => a.displayImageUrl).whereType<String>().toSet().toList();
 
   /// Post sul profilo/newsfeed: solo testo nel body, senza titolo modulo.
   bool get isPlainFeedPost => resolvedContentType == 'profile_post';
@@ -558,6 +564,90 @@ class OmnifeedItem {
     );
   }
 
+  /// Prefer the authoritative attachment list. image_urls often contains the
+  /// same files under different thumbnail/direct URLs, so do not concatenate.
+  static List<FeedAttachment> _groupAttachments(Map<String, dynamic> json) {
+    final nested = json['GroupPost'];
+    final sources = <Map<String, dynamic>>[
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ];
+    for (final source in sources) {
+      for (final field in ['Attachments', 'attachments']) {
+        final attachments = FeedAttachment.parseList(source[field]);
+        final result = <FeedAttachment>[];
+        final seen = <String>{};
+        for (final a in attachments) {
+          final url = a.displayImageUrl;
+          final identity = (a.filename?.trim().isNotEmpty == true)
+              ? 'file:${a.filename}'
+              : 'url:$url';
+          if (url != null && url.isNotEmpty && seen.add(identity)) {
+            result.add(a);
+          }
+        }
+        if (result.isNotEmpty) return result;
+      }
+    }
+    for (final source in sources) {
+      final raw = source['image_urls'];
+      if (raw is! List) continue;
+      final result = <FeedAttachment>[];
+      final seen = <String>{};
+      for (final value in raw) {
+        FeedAttachment? attachment;
+        if (value is String && value.trim().isNotEmpty) {
+          attachment = FeedAttachment(directUrl: value.trim());
+        } else if (value is Map) {
+          final item = Map<String, dynamic>.from(value);
+          attachment = FeedAttachment(
+            thumbnailUrl: item['thumbnail_url']?.toString(),
+            directUrl: (item['direct_url'] ?? item['url'])?.toString(),
+            filename: item['filename']?.toString(),
+          );
+        }
+        final url = attachment?.displayImageUrl;
+        if (attachment != null && url != null && url.isNotEmpty &&
+            seen.add(url)) {
+          result.add(attachment);
+        }
+      }
+      if (result.isNotEmpty) return result;
+    }
+    return const [];
+  }
+
+  static List<int> _reactionIdsFromApi(Map<String, dynamic> json) {
+    final ids = <int>{};
+    final nested = json['GroupPost'];
+    final sources = [
+      json,
+      if (nested is Map) Map<String, dynamic>.from(nested),
+    ];
+    for (final source in sources) {
+      for (final key in ['reaction_summary', 'reaction_counts', 'reactions']) {
+        final raw = source[key];
+        if (raw is Map) {
+          raw.forEach((id, value) {
+            final reactionId = int.tryParse(id.toString()) ?? 0;
+            final count = value is Map
+                ? (int.tryParse((value['count'] ?? value['reaction_count'] ?? 0).toString()) ?? 0)
+                : (int.tryParse(value.toString()) ?? 0);
+            if (reactionId > 0 && count > 0) ids.add(reactionId);
+          });
+        } else if (raw is List) {
+          for (final entry in raw) {
+            if (entry is! Map) continue;
+            final id = int.tryParse((entry['reaction_id'] ?? entry['id'] ?? '').toString()) ?? 0;
+            final count = int.tryParse((entry['count'] ?? entry['reaction_count'] ?? 1).toString()) ?? 0;
+            if (id > 0 && count > 0) ids.add(id);
+          }
+        }
+      }
+    }
+    return ids.toList();
+  }
+
   factory OmnifeedItem.fromGroupPostApi(Map<String, dynamic> json) {
     final postId = json['group_post_id'] as int? ?? 0;
     final user = json['User'];
@@ -580,6 +670,10 @@ class OmnifeedItem {
       itemDate: json['post_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
+      reactionIds: _reactionIdsFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
+      attachments: _groupAttachments(json),
       author: user is Map<String, dynamic>
           ? OmnifeedAuthor.fromJson(user)
           : OmnifeedAuthor(
@@ -617,6 +711,8 @@ class OmnifeedItem {
           : OmnifeedAuthor(userId: authorId, username: authorName),
       viewUrl: json['view_url']?.toString(),
       attachments: FeedAttachment.parseList(json['Attachments']),
+      reactionIds: _reactionIdsFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
     );
   }
 
@@ -752,6 +848,8 @@ class OmnifeedItem {
       groupId: groupId,
       tags: tags,
       attachments: attachments,
+      reactionIds: reactionIds,
+      reactionUsernames: reactionUsernames,
       linkPreviews: linkPreviews,
       isPaidContent: isPaidContent,
       canViewFull: canViewFull,
@@ -1001,7 +1099,11 @@ class OmnifeedItem {
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: JsonParse.parseFeedTags(json['tags']),
-      attachments: FeedAttachment.parseList(json['Attachments']),
+      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post' || group != null
+          ? _groupAttachments(json)
+          : FeedAttachment.parseList(json['Attachments']),
+      reactionIds: _reactionIdsFromApi(json),
+      reactionUsernames: GroupReactionUsernames.fromPost(json),
       linkPreviews: FeedLinkPreviewData.listFromJson(json['link_previews']),
       isPaidContent: isPaidContent,
       canViewFull: canViewFull,
@@ -1088,6 +1190,8 @@ class OmnifeedItem {
       groupId: groupId,
       tags: tags,
       attachments: attachments,
+      reactionIds: reactionIds,
+      reactionUsernames: reactionUsernames,
       linkPreviews: linkPreviews,
     );
   }
@@ -1130,6 +1234,8 @@ class OmnifeedItem {
       groupId: (groupId ?? 0) > 0 ? groupId : other.groupId,
       tags: tags.isNotEmpty ? tags : other.tags,
       attachments: attachments.isNotEmpty ? attachments : other.attachments,
+      reactionIds: reactionIds.isNotEmpty ? reactionIds : other.reactionIds,
+      reactionUsernames: reactionUsernames.isNotEmpty ? reactionUsernames : other.reactionUsernames,
       linkPreviews:
           linkPreviews.isNotEmpty ? linkPreviews : other.linkPreviews,
     );

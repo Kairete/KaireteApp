@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/session/device_session_store.dart';
 
 class XenforoApi {
   XenforoApi() {
@@ -9,8 +11,37 @@ class XenforoApi {
     _dio.options.sendTimeout = const Duration(seconds: 20);
     _dio.options.validateStatus = (status) => status != null && status < 500;
     _dio.options.headers['Accept'] = 'application/json';
-    _dio.options.headers['XF-Api-Key'] = AppConfig.xenforoApiKey;
+    // Never embed a privileged XF API key in a distributable APK.
+    // Login, verify and logout use narrowly unauthenticated mobile endpoints.
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
+    // The native mobile session is NOT an XF API key. This header only
+    // transports the token; a server-side validator must authorize it before
+    // protected endpoints can be considered authenticated.
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) async {
+      final uri = options.uri;
+      final route = uri.path.toLowerCase();
+      final isMobileCredentialEndpoint =
+          route == '/api/ms-auth-login' || route == '/api/ms-auth-login/' ||
+          route == '/api/ms-auth-verify' || route == '/api/ms-auth-verify/' ||
+          route == '/api/ms-auth-logout' || route == '/api/ms-auth-logout/';
+      if (!isMobileCredentialEndpoint &&
+          uri.scheme == 'https' &&
+          (uri.host == 'kairete.net' || uri.host == 'www.kairete.net') &&
+          route.startsWith('/api/')) {
+        try {
+          final token = await DeviceSessionStore.instance.getSessionToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['X-Kairete-Mobile-Token'] = token;
+            options.headers['X-Kairete-Mobile-Device'] =
+                await DeviceSessionStore.instance.getOrCreateDeviceKey();
+          }
+        } catch (_) {
+          // Never fall back to an unverified user ID or privileged API key.
+        }
+      }
+      handler.next(options);
+    }));
+
     _applyTenantHeader();
     _applyUserHeader();
   }
@@ -36,7 +67,9 @@ class XenforoApi {
   }
 
   void _applyUserHeader() {
-    _dio.options.headers['XF-Api-User'] = (_userId ?? 0).toString();
+    // User IDs are not credentials; never send XF-Api-User without a
+    // server-authenticated super-user context (not available to the app).
+    _dio.options.headers.remove('XF-Api-User');
   }
 
   void _applyTenantHeader() {
@@ -52,6 +85,102 @@ class XenforoApi {
   void syncAppIdentity() {
     _dio.options.headers['X-Kairete-App-Id'] = AppConfig.mobileAppId;
     _applyTenantHeader();
+  }
+
+  /// Mobile login endpoints may return HTML (PHP/host errors). Retrieve raw
+  /// bytes as text first to avoid DioExceptionType.unknown during JSON decode.
+  /// Never expose response bodies: they may contain sensitive server details.
+  Future<Map<String, dynamic>> postMobileAuth(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    // Apache/XenForo can issue 301 redirects for API URLs. Automatic
+    // redirects may turn a credential POST into GET. Follow only safe HTTPS
+    // redirects within the Kairete .net API and explicitly POST again.
+    Uri destination = Uri.parse(AppConfig.apiBaseUrl).resolve(path);
+    Response<String>? response;
+    for (var hop = 0; hop < 4; hop++) {
+      try {
+        response = await _dio.post<String>(
+          destination.toString(),
+          data: FormData.fromMap(body),
+          options: Options(
+            responseType: ResponseType.plain,
+            followRedirects: false,
+            validateStatus: (status) => status != null && status < 600,
+            headers: {'Accept': 'application/json'},
+          ),
+        );
+      } on DioException catch (e) {
+        throw MobileAuthApiException(
+          'Rete: ${e.type.name}; causa: ${e.error?.runtimeType ?? 'non disponibile'}.',
+        );
+      }
+      final code = response.statusCode ?? 0;
+      if (code != 301 && code != 302 && code != 303 &&
+          code != 307 && code != 308) {
+        break;
+      }
+      if (hop == 3) {
+        throw const MobileAuthApiException('Troppi redirect HTTP sul login.');
+      }
+      final location = response.headers.value('location');
+      if (location == null || location.isEmpty) {
+        throw MobileAuthApiException('HTTP $code — redirect senza destinazione.');
+      }
+      final next = destination.resolve(location);
+      final host = next.host.toLowerCase();
+      final pathAllowed = next.path == '/api/ms-auth-login' ||
+          next.path == '/api/ms-auth-login/' ||
+          next.path == '/api/ms-auth-verify' ||
+          next.path == '/api/ms-auth-verify/' ||
+          next.path == '/api/ms-auth-logout' ||
+          next.path == '/api/ms-auth-logout/';
+      if (next.scheme != 'https' ||
+          (host != 'www.kairete.net' && host != 'kairete.net') ||
+          next.userInfo.isNotEmpty ||
+          (next.hasPort && next.port != 443) ||
+          !pathAllowed) {
+        throw MobileAuthApiException(
+          'HTTP $code — redirect non sicuro o verso una route inattesa.',
+        );
+      }
+      destination = next;
+    }
+    if (response == null) {
+      throw const MobileAuthApiException('Nessuna risposta del server.');
+    }
+
+    final status = response.statusCode ?? 0;
+    final contentType = response.headers.value('content-type') ?? 'assente';
+    final raw = response.data ?? '';
+    Map<String, dynamic>? json;
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is Map) json = Map<String, dynamic>.from(parsed);
+    } catch (_) {}
+
+    if (json == null) {
+      final type = contentType.split(';').first.trim();
+      throw MobileAuthApiException(
+        'HTTP $status — il server ha restituito una risposta non JSON '
+        '(Content-Type: $type).',
+      );
+    }
+    final errorCode = json['errors'];
+    if (errorCode is List && errorCode.isNotEmpty) {
+      final first = errorCode.first;
+      if (first is Map) {
+        final code = first['code']?.toString() ?? 'api_error';
+        final message = first['message']?.toString() ?? 'Richiesta respinta';
+        throw MobileAuthApiException('HTTP $status — $code: $message');
+      }
+      throw MobileAuthApiException('HTTP $status — richiesta rifiutata.');
+    }
+    if (status >= 400) {
+      throw MobileAuthApiException('HTTP $status — errore del server XenForo.');
+    }
+    return json;
   }
 
   Future<Map<String, dynamic>> post(
@@ -173,4 +302,11 @@ class XenforoApi {
         return 'Errore di connessione. Riprova.';
     }
   }
+}
+
+class MobileAuthApiException implements Exception {
+  const MobileAuthApiException(this.message);
+  final String message;
+  @override
+  String toString() => message;
 }
