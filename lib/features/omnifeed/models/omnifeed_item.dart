@@ -682,9 +682,7 @@ class OmnifeedItem {
           ? OmnifeedAuthor.fromJson(userMap)
           : OmnifeedAuthor(userId: authorId, username: authorName),
       viewUrl: json['view_url']?.toString(),
-      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post'
-          ? _groupAttachments(json)
-          : FeedAttachment.parseList(json['Attachments']),
+      attachments: FeedAttachment.parseList(json['Attachments']),
       reactionIds: _reactionIdsFromApi(json),
     );
   }
@@ -1071,7 +1069,10 @@ class OmnifeedItem {
       viewUrl: json['view_url']?.toString(),
       groupId: groupId,
       tags: JsonParse.parseFeedTags(json['tags']),
-      attachments: FeedAttachment.parseList(json['Attachments']),
+      attachments: contentTypeRaw == 'tl_group_post' || contentTypeRaw == 'ksg_group_post'
+          ? _groupAttachments(json)
+          : FeedAttachment.parseList(json['Attachments']),
+      reactionIds: _reactionIdsFromApi(json),
       linkPreviews: FeedLinkPreviewData.listFromJson(json['link_previews']),
       isPaidContent: isPaidContent,
       canViewFull: canViewFull,
@@ -1158,6 +1159,7 @@ class OmnifeedItem {
       groupId: groupId,
       tags: tags,
       attachments: attachments,
+      reactionIds: reactionIds,
       linkPreviews: linkPreviews,
     );
   }
@@ -1200,6 +1202,7 @@ class OmnifeedItem {
       groupId: (groupId ?? 0) > 0 ? groupId : other.groupId,
       tags: tags.isNotEmpty ? tags : other.tags,
       attachments: attachments.isNotEmpty ? attachments : other.attachments,
+      reactionIds: reactionIds.isNotEmpty ? reactionIds : other.reactionIds,
       linkPreviews:
           linkPreviews.isNotEmpty ? linkPreviews : other.linkPreviews,
     );
