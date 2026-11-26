@@ -59,6 +59,7 @@ class OmnifeedNavigation {
           Get.to(() => GroupDetailPage(
             groupId: groupId,
             focusPostId: item.nativeContentId > 0 ? item.nativeContentId : null,
+            singlePost: true,
           ));
           return;
         }
