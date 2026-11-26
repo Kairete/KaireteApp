@@ -137,7 +137,7 @@ class OmnifeedNavigation {
 
   static int? _groupIdFromViewUrl(String? url) {
     if (url == null || url.isEmpty) return null;
-    final match = RegExp(r'social-groups/[^./]+\.(\d+)').firstMatch(url);
+    final match = RegExp(r'social-groups?/[^/?#]+?\.(\d+)(?:[/?#]|$)').firstMatch(url);
     if (match == null) return null;
     return int.tryParse(match.group(1)!);
   }
