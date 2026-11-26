@@ -44,6 +44,10 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   List<GroupPost> _posts = const [];
   Map<int, List<GroupPostComment>> _commentsByPost = const {};
   final Map<int, int> _shareCounts = {};
+  final Map<int, ({int score, int reactionId})> _postReactionOverrides = {};
+  final Map<int, ({int score, int reactionId})> _commentReactionOverrides = {};
+  final Set<int> _pendingPostReactions = {};
+  final Set<int> _pendingCommentReactions = {};
   AppWidgetPayload _widgetsPayload = AppWidgetPayload.empty();
   int? _composePostId;
   bool _loading = true;
@@ -84,6 +88,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         _group = group;
         _posts = postsPage.posts;
         _commentsByPost = comments;
+        _postReactionOverrides.clear();
+        _commentReactionOverrides.clear();
         _widgetsPayload = widgets;
         _loading = false;
       });
@@ -150,15 +156,29 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   }
 
   Future<void> _reactToPost(GroupPost post, {int reactionId = 1}) async {
+    if (!_pendingPostReactions.add(post.groupPostId)) return;
     try {
-      await _service.reactToPost(
+      final action = await _service.reactToPost(
         groupPostId: post.groupPostId,
         authorUserId: post.author?.userId,
         reactionId: reactionId,
       );
-      await _load();
+      if (!mounted) return;
+      final previous = _postReactionOverrides[post.groupPostId];
+      final oldId = previous?.reactionId ?? post.visitorReactionId ?? 0;
+      final score = previous?.score ?? post.reactionScore;
+      final isDelete = action == 'delete';
+      final delta = isDelete ? -1 : (oldId == 0 ? 1 : 0);
+      setState(() {
+        _postReactionOverrides[post.groupPostId] = (
+          score: (score + delta).clamp(0, 1 << 30),
+          reactionId: isDelete ? 0 : reactionId,
+        );
+      });
     } on GroupsException catch (e) {
       AppToast.error(e.message);
+    } finally {
+      _pendingPostReactions.remove(post.groupPostId);
     }
   }
 
@@ -166,15 +186,29 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     GroupPostComment comment, {
     int reactionId = 1,
   }) async {
+    if (!_pendingCommentReactions.add(comment.commentId)) return;
     try {
-      await _service.reactToComment(
+      final action = await _service.reactToComment(
         commentId: comment.commentId,
         authorUserId: comment.author?.userId,
         reactionId: reactionId,
       );
-      await _load();
+      if (!mounted) return;
+      final previous = _commentReactionOverrides[comment.commentId];
+      final oldId = previous?.reactionId ?? comment.visitorReactionId ?? 0;
+      final score = previous?.score ?? comment.reactionScore;
+      final isDelete = action == 'delete';
+      final delta = isDelete ? -1 : (oldId == 0 ? 1 : 0);
+      setState(() {
+        _commentReactionOverrides[comment.commentId] = (
+          score: (score + delta).clamp(0, 1 << 30),
+          reactionId: isDelete ? 0 : reactionId,
+        );
+      });
     } on GroupsException catch (e) {
       AppToast.error(e.message);
+    } finally {
+      _pendingCommentReactions.remove(comment.commentId);
     }
   }
 
@@ -364,6 +398,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildPostCard(GroupPost post) {
     final comments = _commentsByPost[post.groupPostId] ?? const [];
+    final postReaction = _postReactionOverrides[post.groupPostId];
     void openAuthor() => OmnifeedNavigation.openUserProfile(
           post.author?.userId,
           username: post.author?.username,
@@ -379,15 +414,31 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Text(
-          post.messagePlainText,
-          style: const TextStyle(fontSize: 15, height: 1.35),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (post.messagePlainText.isNotEmpty)
+              Text(
+                post.messagePlainText,
+                style: const TextStyle(fontSize: 15, height: 1.35),
+              ),
+            if (post.attachments.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              FeedCardFullWidthImages(
+                imageUrls: post.attachments
+                    .map((attachment) => attachment.displayImageUrl)
+                    .whereType<String>()
+                    .where((url) => url.isNotEmpty)
+                    .toList(),
+              ),
+            ],
+          ],
         ),
       ),
       footer: FeedCardActionBar(
         commentCount: post.commentCount,
-        likeCount: post.reactionScore,
-        visitorReactionId: post.visitorReactionId,
+        likeCount: postReaction?.score ?? post.reactionScore,
+        visitorReactionId: postReaction?.reactionId ?? post.visitorReactionId,
         onComment: post.canComment
             ? () => _focusCommentOnPost(post.groupPostId)
             : null,
@@ -449,6 +500,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         .map(
           (comment) {
             final depth = depths[comment.commentId] ?? 0;
+            final reaction = _commentReactionOverrides[comment.commentId];
             return FeedNestedCommentData(
               id: comment.commentId,
               parentId: comment.parentCommentId,
@@ -457,8 +509,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               avatarUrl: comment.author?.avatarUrl,
               dateLabel: formatFeedCommentDate(comment.commentDate),
               message: comment.messagePlainText,
-              likeCount: comment.reactionScore,
-              visitorReactionId: comment.visitorReactionId,
+              likeCount: reaction?.score ?? comment.reactionScore,
+              visitorReactionId: reaction?.reactionId ?? comment.visitorReactionId,
               canReply: nestedCommentCanReply(depth),
               canLike: comment.canReact,
               onAuthorTap: () => OmnifeedNavigation.openUserProfile(
