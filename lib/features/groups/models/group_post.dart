@@ -15,6 +15,7 @@ class GroupPost {
     this.author,
     this.attachments = const [],
     this.reactionIds = const [],
+    this.reactionUsernames = const [],
   });
 
   final int groupPostId;
@@ -29,6 +30,7 @@ class GroupPost {
   final SocialGroupMember? author;
   final List<FeedAttachment> attachments;
   final List<int> reactionIds;
+  final List<String> reactionUsernames;
 
   static List<int> _parseReactionIds(Map<String, dynamic> json) {
     final ids = <int>{};
@@ -96,6 +98,25 @@ class GroupPost {
     return const [];
   }
 
+  static List<String> _parseReactionNames(Map<String, dynamic> json) {
+    final result = <String>[];
+    final seen = <String>{};
+    for (final key in ['reaction_users', 'ReactionUsers', 'reaction_user_list', 'reacted_users']) {
+      final raw = json[key];
+      if (raw is! List) continue;
+      for (final user in raw) {
+        final name = user is Map
+            ? (user['username'] ?? user['display_name'] ?? (user['User'] is Map ? user['User']['username'] : null))?.toString().trim()
+            : user is String ? user.trim() : null;
+        if (name != null && name.isNotEmpty && seen.add(name.toLowerCase())) {
+          result.add(name);
+        }
+      }
+      if (result.isNotEmpty) break;
+    }
+    return result;
+  }
+
   factory GroupPost.fromJson(Map<String, dynamic> json) {
     return GroupPost(
       groupPostId: json['group_post_id'] as int? ?? 0,
@@ -109,6 +130,7 @@ class GroupPost {
       visitorReactionId: json['visitor_reaction_id'] as int?,
       attachments: _groupPostAttachments(json),
       reactionIds: _parseReactionIds(json),
+      reactionUsernames: _parseReactionNames(json),
       author: json['User'] is Map<String, dynamic>
           ? SocialGroupMember.fromJson(json['User'] as Map<String, dynamic>)
           : null,
