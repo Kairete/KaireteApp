@@ -193,6 +193,7 @@ class GroupsService {
       'comment_count': post.commentCount,
       'reaction_score': post.reactionScore,
       'visitor_reaction_id': post.visitorReactionId,
+      'reaction_users': post.reactionUsernames.map((name) => {'username': name}).toList(),
       'Attachments': post.attachments.map((attachment) => {
         'thumbnail_url': attachment.thumbnailUrl,
         'direct_url': attachment.directUrl,
