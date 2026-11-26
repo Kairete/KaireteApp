@@ -22,6 +22,7 @@ import 'package:kairete/features/groups/models/social_group.dart';
 import 'package:kairete/features/groups/pages/group_compose_page.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/groups/widgets/group_cover_header.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
@@ -435,6 +436,14 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           ],
         ),
       ),
+      afterBody: (postReaction?.score ?? post.reactionScore) > 0
+          ? GroupReactionBar(
+              total: postReaction?.score ?? post.reactionScore,
+              reactionIds: post.reactionIds,
+              visitorReactionId: postReaction?.reactionId ??
+                  post.visitorReactionId,
+            )
+          : null,
       footer: FeedCardActionBar(
         commentCount: post.commentCount,
         likeCount: postReaction?.score ?? post.reactionScore,
