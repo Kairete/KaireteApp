@@ -51,25 +51,18 @@ class DeviceSession
 		$db = $this->app->db();
 		$row = null;
 
-		if ($sessionToken !== '')
+		// Both credentials are mandatory. Never fall back to device-key-only
+		// authentication when the token is missing, invalid or expired.
+		if ($sessionToken === '')
 		{
-			$row = $db->fetchRow('
-				SELECT user_id, session_token
-				FROM xf_ms_mobile_device_session
-				WHERE device_key = ? AND session_token = ? AND expires_date > ?
-			', [$deviceKey, $sessionToken, \XF::$time]);
+			return null;
 		}
 
-		if (!$row)
-		{
-			$row = $db->fetchRow('
-				SELECT user_id, session_token
-				FROM xf_ms_mobile_device_session
-				WHERE device_key = ? AND expires_date > ?
-				ORDER BY last_used_date DESC
-				LIMIT 1
-			', [$deviceKey, \XF::$time]);
-		}
+		$row = $db->fetchRow('
+			SELECT user_id, session_token
+			FROM xf_ms_mobile_device_session
+			WHERE device_key = ? AND session_token = ? AND expires_date > ?
+		', [$deviceKey, $sessionToken, \XF::$time]);
 
 		if (!$row)
 		{
@@ -90,6 +83,74 @@ class DeviceSession
 			'user_id' => $userId,
 			'session_token' => (string) $row['session_token'],
 		];
+	}
+
+
+	public function updatePresence(int $userId, string $deviceKey, string $appState, string $appId = ''): bool
+	{
+		$deviceKey = $this->normalizeKey($deviceKey);
+		if ($userId <= 0 || $deviceKey === '')
+		{
+			return false;
+		}
+
+		$appState = ($appState === 'foreground') ? 'foreground' : 'background';
+		$now = \XF::$time;
+		$values = [
+			'app_state' => $appState,
+			'presence_date' => $now,
+			'last_used_date' => $now,
+			'app_id' => substr($appId, 0, 100),
+		];
+
+		$affected = $this->app->db()->update(
+			'xf_ms_mobile_device_session',
+			$values,
+			'user_id = ? AND device_key = ?',
+			[$userId, $deviceKey]
+		);
+
+		if ($affected > 0)
+		{
+			return true;
+		}
+
+		// Riga assente (race con device-sessions): crea sessione e riprova una volta.
+		if ($this->issue($userId, $deviceKey, $appId) === '')
+		{
+			return false;
+		}
+
+		return $this->app->db()->update(
+			'xf_ms_mobile_device_session',
+			$values,
+			'user_id = ? AND device_key = ?',
+			[$userId, $deviceKey]
+		) > 0;
+	}
+
+	/**
+	 * True when the user has a device session marked foreground within the grace window.
+	 * Call from the push/FCM addon before sending a notification.
+	 */
+	public function shouldSuppressPush(int $userId, int $graceSeconds = 90): bool
+	{
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		$graceSeconds = max(30, min(300, $graceSeconds));
+		$cutoff = \XF::$time - $graceSeconds;
+
+		return (bool) $this->app->db()->fetchOne('
+			SELECT session_id
+			FROM xf_ms_mobile_device_session
+			WHERE user_id = ?
+				AND app_state = ?
+				AND presence_date >= ?
+			LIMIT 1
+		', [$userId, 'foreground', $cutoff]);
 	}
 
 	protected function normalizeKey(string $key): string
