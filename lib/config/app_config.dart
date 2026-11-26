@@ -23,6 +23,9 @@ class AppConfig {
 
   static const String tenantHeader = 'X-Ms-Tenant-Id';
 
+  /// Public OAuth client identifier. Never embed a client secret.
+  static const String oauthClientId = String.fromEnvironment('KAIRETE_OAUTH_CLIENT_ID');
+
   /// Authentication credentials are provided by a future server-side auth flow.
   /// Never embed an administrative XenForo API key in a mobile app.
   static String get xenforoApiKey => '';

@@ -4,27 +4,17 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/presence/app_presence_service.dart';
 import 'package:kairete/core/push/push_notification_service.dart';
-import 'package:kairete/core/session/device_session_service.dart';
 import 'package:kairete/core/session/session_store.dart';
+import 'package:kairete/core/session/oauth_session.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
 
 class AuthService {
   XenforoApi get _api => AppApi.instance.xenforo;
-  final DeviceSessionService _deviceSessions = DeviceSessionService();
 
-  Future<UserAccount> login({
-    required String login,
-    required String password,
-  }) async {
-    final json = await _api.post(
-      ApiPaths.auth,
-      body: {'login': login.trim(), 'password': password},
-    );
-    final err = XenforoApi.firstErrorMessage(json);
-    if (err != null) throw AuthException(err);
-
-    final account = UserAccount.fromApi(json);
-    await _persist(account);
+  /// Opens XenForo in the system browser and exchanges an OAuth2 PKCE code.
+  Future<UserAccount> loginWithOAuth() async {
+    await OAuthSession.instance.authorize();
+    final account = await fetchMe();
     await _afterAuth(account);
     return account;
   }
@@ -60,18 +50,8 @@ class AuthService {
   }
 
   Future<UserAccount?> restoreSession() async {
-    try {
-      final fromDevice = await _deviceSessions.tryRestoreFromDevice();
-      if (fromDevice != null) {
-        await _persist(fromDevice);
-        await _afterAuth(fromDevice);
-        return fromDevice;
-      }
-    } catch (_) {}
-
-    final userId = await SessionStore.instance.userId;
-    if (userId == null) return null;
-    await AppApi.instance.applySession(userId: userId);
+    final token = await OAuthSession.instance.validToken();
+    if (token == null || token.isEmpty) return null;
     final account = await fetchMe();
     await _afterAuth(account);
     return account;
@@ -114,15 +94,13 @@ class AuthService {
   Future<void> logout() async {
     await AppPresenceService.instance.onUserLoggedOut();
     await PushNotificationService.instance.unregister();
+    await OAuthSession.instance.clear();
     await SessionStore.instance.clear();
     AppApi.instance.clearSession();
   }
 
   Future<void> _afterAuth(UserAccount account) async {
-    try {
-      await _deviceSessions.registerAfterAuth(account.userId);
-    } catch (_) {}
-
+    // Legacy device-session issuance is disabled until its backend is hardened.
     AppPresenceService.instance.onUserAuthenticated();
 
     try {

@@ -7,6 +7,7 @@ import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/routes/app_routes.dart';
 import 'package:kairete/config/app_config.dart';
+import 'package:kairete/core/session/oauth_session.dart';
 import 'package:kairete/core/tenant/tenant_service.dart';
 import 'package:kairete/features/alerts/controllers/alerts_badge_controller.dart';
 import 'package:kairete/features/auth/models/user_account.dart';
@@ -41,7 +42,7 @@ class AuthFlowController extends GetxController {
         return;
       }
     } catch (_) {
-      await _auth.logout();
+      // Network errors must not revoke stored OAuth tokens.
     } finally {
       isRestoringSession.value = false;
     }
@@ -65,12 +66,8 @@ class AuthFlowController extends GetxController {
       _goAfterAuth(user);
       return;
     } on TimeoutException {
-      await _auth.logout();
-      _openLogin(
-        message: 'Connessione lenta. Accedi di nuovo.',
-      );
+      _openLogin(message: 'Connessione temporaneamente non disponibile.');
     } catch (_) {
-      await _auth.logout();
       _openLogin();
     } finally {
       isLoading.value = false;
@@ -78,7 +75,6 @@ class AuthFlowController extends GetxController {
   }
 
   Future<void> skipToLogin() async {
-    await _auth.logout();
     _openLogin();
   }
 
@@ -100,11 +96,16 @@ class AuthFlowController extends GetxController {
     });
   }
 
-  Future<void> login(String login, String password) async {
+  Future<void> loginWithOAuth() async {
+    if (!OAuthSession.instance.isConfigured) {
+      errorMessage.value =
+          'Accesso non ancora configurato sul server. È necessario creare il client OAuth pubblico di Kairete.';
+      return;
+    }
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final user = await _auth.login(login: login, password: password);
+      final user = await _auth.loginWithOAuth();
       currentUser.value = user;
       AppApi.instance.bindSession(user.userId);
       isLoading.value = false;
@@ -113,8 +114,11 @@ class AuthFlowController extends GetxController {
       errorMessage.value = e.message;
     } on DioException catch (e) {
       errorMessage.value = XenforoApi.connectionMessage(e);
-    } catch (_) {
-      errorMessage.value = 'Errore di connessione. Riprova.';
+    } catch (e) {
+      // Surface a meaningful message without logging authorization codes or tokens.
+      errorMessage.value = e is StateError
+          ? e.message.toString()
+          : 'Accesso non completato. Verifica la configurazione OAuth di XenForo.';
     } finally {
       if (Get.currentRoute == AppRoutes.login) {
         isLoading.value = false;
