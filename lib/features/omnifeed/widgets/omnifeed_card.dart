@@ -133,8 +133,12 @@ class OmnifeedCard extends StatelessWidget {
                 tags: item.tags,
                 onTagTap: onTagTap,
                 onContinue: onOpen,
+                // Group preview is truncated at 280 chars; show the link
+                // only when there is actually more text to read.
                 showContinue: !expandBody &&
-                    (isGroupPost || item.listPreviewNeedsDetailLink),
+                    (isGroupPost
+                        ? item.displayBody.length > 280
+                        : item.listPreviewNeedsDetailLink),
                 continueLabel: isGroupPost ? 'Leggi tutto' : (item.continueLabel ?? 'Continua'),
                 embeddedInBody: true,
               ),
@@ -142,18 +146,18 @@ class OmnifeedCard extends StatelessWidget {
           ),
         ),
       ),
-      afterBody: isGroupPost && item.reactionScore > 0
+      // The XF-style reaction summary belongs immediately before the footer.
+      beforeFooter: isGroupPost && item.reactionScore > 0
           ? GroupReactionBar(
               total: item.reactionScore,
               reactionIds: item.reactionIds,
               visitorReactionId: item.visitorReactionId,
             )
-          : null,
-      beforeFooter: FeedAuthorSignature.maybe(
-        html: author?.signatureHtml,
-        plain: author?.signaturePlain,
-        show: author?.contentShowSignature ?? true,
-      ),
+          : FeedAuthorSignature.maybe(
+              html: author?.signatureHtml,
+              plain: author?.signaturePlain,
+              show: author?.contentShowSignature ?? true,
+            ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
         likeCount: item.reactionScore,
