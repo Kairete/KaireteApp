@@ -6,6 +6,7 @@ import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
+import 'package:kairete/features/groups/widgets/group_post_preview.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
@@ -136,9 +137,7 @@ class OmnifeedCard extends StatelessWidget {
                 // Group preview is truncated at 280 chars; show the link
                 // only when there is actually more text to read.
                 showContinue: !expandBody &&
-                    (isGroupPost
-                        ? item.displayBody.length > 280
-                        : item.listPreviewNeedsDetailLink),
+                    !isGroupPost && item.listPreviewNeedsDetailLink,
                 continueLabel: isGroupPost ? 'Leggi tutto' : (item.continueLabel ?? 'Continua'),
                 embeddedInBody: true,
               ),
@@ -349,14 +348,21 @@ class OmnifeedCard extends StatelessWidget {
           if (item.listPreviewBody.isNotEmpty) const SizedBox(height: 6),
         ],
         if (item.listPreviewBody.isNotEmpty)
-          Text(
-            item.listPreviewBody,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black,
-              height: 1.3,
-            ),
-          ),
+          (item.resolvedContentType == 'tl_group_post' ||
+                  item.resolvedContentType == 'ksg_group_post')
+              ? GroupPostPreview(
+                  text: item.displayBody,
+                  expanded: expandBody,
+                  onContinue: onOpen ?? () {},
+                )
+              : Text(
+                  item.listPreviewBody,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
+                ),
         if (item.imageAttachmentUrls.isNotEmpty) ...[
           const SizedBox(height: 10),
           FeedCardFullWidthImages(
