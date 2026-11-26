@@ -23,6 +23,7 @@ import 'package:kairete/features/groups/pages/group_compose_page.dart';
 import 'package:kairete/features/groups/services/groups_service.dart';
 import 'package:kairete/features/groups/widgets/group_cover_header.dart';
 import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
+import 'package:kairete/features/groups/widgets/group_post_preview.dart';
 import 'package:kairete/features/omnifeed/models/omnifeed_item.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_navigation.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
@@ -51,6 +52,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   final Map<int, ({int score, int reactionId})> _postReactionOverrides = {};
   final Map<int, ({int score, int reactionId})> _commentReactionOverrides = {};
   final Set<int> _pendingPostReactions = {};
+  final Set<int> _expandedPostIds = {};
   final Set<int> _pendingCommentReactions = {};
   AppWidgetPayload _widgetsPayload = AppWidgetPayload.empty();
   int? _composePostId;
@@ -445,9 +447,12 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (post.messagePlainText.isNotEmpty)
-              Text(
-                post.messagePlainText,
-                style: const TextStyle(fontSize: 15, height: 1.35),
+              GroupPostPreview(
+                text: post.messagePlainText,
+                expanded: _expandedPostIds.contains(post.groupPostId),
+                onContinue: () => setState(
+                  () => _expandedPostIds.add(post.groupPostId),
+                ),
               ),
             if (post.attachments.isNotEmpty) ...[
               const SizedBox(height: 10),
