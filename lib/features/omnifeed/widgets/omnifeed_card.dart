@@ -144,11 +144,12 @@ class OmnifeedCard extends StatelessWidget {
       beforeFooter: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FeedAuthorSignature.maybe(
-            html: author?.signatureHtml,
-            plain: author?.signaturePlain,
-            show: author?.contentShowSignature ?? true,
-          ),
+          if (FeedAuthorSignature.maybe(
+                html: author?.signatureHtml,
+                plain: author?.signaturePlain,
+                show: author?.contentShowSignature ?? true,
+              ) case final signature?)
+            signature,
           FeedReactionSummary(
             total: item.reactionScore,
             names: item.reactionNames,
