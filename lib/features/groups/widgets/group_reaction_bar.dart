@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
 import 'package:kairete/core/widgets/reaction_face.dart';
 
-/// Flutter counterpart of XenForo's reactionsBar / reactionSummary.
-/// The actual faces come from XF's installed reaction catalog.
-/// Never invent user names or specific counts absent from the API response.
+/// XenForo reaction summary: small faces followed by linked-looking user
+/// names and the remaining count. Names are only shown when supplied by API.
 class GroupReactionBar extends StatefulWidget {
   const GroupReactionBar({
     super.key,
     required this.total,
     this.reactionIds = const [],
+    this.reactionUsernames = const [],
     this.visitorReactionId,
   });
-
   final int total;
   final List<int> reactionIds;
+  final List<String> reactionUsernames;
   final int? visitorReactionId;
 
   @override
@@ -38,68 +38,45 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
     final ids = <int>{
       ...widget.reactionIds.where((id) => id > 0),
       if ((widget.visitorReactionId ?? 0) > 0) widget.visitorReactionId!,
-    };
-    final shown = ids.take(5).toList();
-    final catalog = ReactionCatalog.instance;
+    }.take(4).toList();
+
+    final names = widget.reactionUsernames.take(3).toList();
+    final remaining = widget.total - names.length;
+    final label = names.isEmpty
+        ? '${widget.total} ${widget.total == 1 ? 'reazione' : 'reazioni'}'
+        : '${names.join(', ')}${remaining > 0 ? ' e $remaining ${remaining == 1 ? 'altra persona' : 'altre persone'}' : ''}';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F5F5),
-        border: Border(
-          top: BorderSide(color: Color(0xFFE5E5E5), width: 0.7),
-        ),
-      ),
+      color: const Color(0xFFF5F5F5),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (shown.isNotEmpty)
-            SizedBox(
-              width: 20.0 + (shown.length - 1) * 15.0,
-              height: 22,
-              child: Stack(
-                children: [
-                  for (var i = 0; i < shown.length; i++)
-                    Positioned(
-                      left: i * 15.0,
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        padding: const EdgeInsets.all(1),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFE3E3E3),
-                            width: 0.6,
-                          ),
-                        ),
-                        child: catalog.iconFor(shown[i]) != null
-                            ? ReactionFace(icon: catalog.iconFor(shown[i])!, size: 18)
-                            : const Icon(
-                                Icons.thumb_up,
-                                color: Color(0xFF667085),
-                                size: 15,
-                              ),
-                      ),
-                    ),
-                ],
-              ),
-            )
+          if (ids.isEmpty)
+            const Icon(Icons.thumb_up, size: 17, color: Color(0xFFBE8F22))
           else
-            const Icon(
-              Icons.thumb_up,
-              color: Color(0xFF667085),
-              size: 17,
-            ),
-          const SizedBox(width: 7),
-          Text(
-            '${widget.total}',
-            style: const TextStyle(
-              color: Color(0xFF555555),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+            ...ids.map((id) {
+              final reaction = ReactionCatalog.instance.iconFor(id);
+              return Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: reaction == null
+                    ? const Icon(Icons.thumb_up, size: 17,
+                        color: Color(0xFFBE8F22))
+                    : ReactionFace(icon: reaction, size: 19),
+              );
+            }),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.2,
+                color: Color(0xFF176493),
+              ),
             ),
           ),
         ],
