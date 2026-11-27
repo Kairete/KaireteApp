@@ -108,7 +108,9 @@ class OmnifeedService {
           final ownMedia =
               await MediaService().fetchMedia(userId: userId, limit: 30);
           items = mergeOmnifeedItemLists(
-            [items, ownMedia.map(OmnifeedItem.fromMediaItem).toList()],
+            [items, ownMedia
+                .where((media) => (media.canonicalGroupPostId ?? 0) <= 0)
+                .map(OmnifeedItem.fromMediaItem).toList()],
             sortByItemDate: sort == 'post_date' || sort.isEmpty,
           );
         } catch (_) {}
@@ -1130,7 +1132,11 @@ class OmnifeedService {
     String? omnifeedVersion,
   }) {
     return OmnifeedFeed(
-      items: items.map((item) => item.withResolvedItemId()).toList(),
+      items: items
+          .where((item) => item.contentType != 'xfmg_media' ||
+              (item.canonicalGroupPostId ?? 0) <= 0)
+          .map((item) => item.withResolvedItemId())
+          .toList(),
       currentPage: currentPage,
       lastPage: lastPage,
       total: total,
