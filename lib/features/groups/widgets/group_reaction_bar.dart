@@ -30,12 +30,61 @@ class GroupReactionBar extends StatefulWidget {
 }
 
 class _GroupReactionBarState extends State<GroupReactionBar> {
+  int? _realTotal;
+  List<String> _realNames = const [];
+  List<int> _realReactionIds = const [];
+
   @override
   void initState() {
     super.initState();
     ReactionCatalog.instance.ensureLoaded().then((_) {
       if (mounted) setState(() {});
     });
+    _loadRealSummary();
+  }
+
+  @override
+  void didUpdateWidget(covariant GroupReactionBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.contentId != widget.contentId ||
+        oldWidget.contentType != widget.contentType) {
+      _realTotal = null;
+      _realNames = const [];
+      _realReactionIds = const [];
+      _loadRealSummary();
+    }
+  }
+
+  Future<void> _loadRealSummary() async {
+    final type = widget.contentType;
+    final id = widget.contentId;
+    if (type == null || type.isEmpty || id == null || id <= 0) return;
+    try {
+      await AppApi.instance.applySession();
+      final json = await AppApi.instance.xenforo.get(
+        ApiPaths.reactions,
+        query: {'content_type': type, 'content_id': id, 'page': 1},
+      );
+      if (!mounted || widget.contentType != type || widget.contentId != id) return;
+      final raw = json['reaction_users'];
+      if (raw is! List) return;
+      final names = <String>[];
+      final ids = <int>[];
+      for (final user in raw) {
+        if (user is! Map) continue;
+        final name = user['username']?.toString().trim() ?? '';
+        if (name.isNotEmpty && !names.contains(name) && names.length < 2) names.add(name);
+        final reactionId = int.tryParse(user['reaction_id']?.toString() ?? '') ?? 0;
+        if (reactionId > 0 && !ids.contains(reactionId)) ids.add(reactionId);
+      }
+      setState(() {
+        _realTotal = int.tryParse(json['reaction_count']?.toString() ?? '');
+        _realNames = names;
+        _realReactionIds = ids;
+      });
+    } catch (_) {
+      // The originating card remains usable if this optional endpoint fails.
+    }
   }
 
   void _showReactions() {
@@ -61,18 +110,20 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.total <= 0 && widget.reactionIds.isEmpty) {
+    final total = _realTotal ?? widget.total;
+    if (total <= 0 && widget.reactionIds.isEmpty && _realReactionIds.isEmpty) {
       return const SizedBox.shrink();
     }
     final ids = <int>{
+      ..._realReactionIds.where((id) => id > 0),
       ...widget.reactionIds.where((id) => id > 0),
       if ((widget.visitorReactionId ?? 0) > 0) widget.visitorReactionId!,
     }.take(4).toList();
 
-    final names = widget.reactionUsernames
+    final names = (_realNames.isNotEmpty ? _realNames : widget.reactionUsernames)
         .where((name) => name.trim().isNotEmpty)
         .take(2).toList();
-    final remaining = (widget.total - names.length).clamp(0, 1 << 30);
+    final remaining = (total - names.length).clamp(0, 1 << 30);
     String label;
     if (names.length == 2) {
       label = remaining > 0
@@ -83,7 +134,7 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
           ? '${names[0]} e $remaining ${remaining == 1 ? 'persona' : 'persone'} hanno reagito'
           : '${names[0]} ha reagito';
     } else {
-      label = '${widget.total} ${widget.total == 1 ? 'persona ha' : 'persone hanno'} reagito';
+      label = '$total ${total == 1 ? 'persona ha' : 'persone hanno'} reagito';
     }
 
     return Material(
