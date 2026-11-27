@@ -99,10 +99,10 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
       );
       return;
     }
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+      barrierDismissible: true,
+      barrierColor: const Color(0xB3000000),
       builder: (_) => _ReactionUsersSheet(
         contentType: contentType,
         contentId: contentId,
@@ -191,6 +191,10 @@ class _ReactionUsersSheet extends StatefulWidget {
 }
 
 class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
+  int? _selectedReactionId;
+  static const _xfBlue = Color(0xFF1479B9);
+  static const _xfDivider = Color(0xFFE1E1E1);
+
   final List<Map<String, dynamic>> _users = [];
   bool _loading = false;
   bool _hasMore = true;
@@ -231,6 +235,9 @@ class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
         _hasMore = json['has_more'] == true;
         _loading = false;
       });
+      if (_hasMore && mounted) {
+        await _loadMore();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -240,63 +247,149 @@ class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
     }
   }
 
+  int _reactionId(Map<String, dynamic> user) =>
+      int.tryParse(user['reaction_id']?.toString() ?? '') ?? 0;
+
+  String _reactionDate(Map<String, dynamic> user) {
+    final seconds = int.tryParse(user['reaction_date']?.toString() ?? '') ?? 0;
+    if (seconds <= 0) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true).toLocal();
+    const months = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+    return date.day.toString() + ' ' + months[date.month - 1] + ' ' + date.year.toString();
+  }
+
+  Widget _reactionIcon(int id, double size) {
+    final reaction = ReactionCatalog.instance.iconFor(id);
+    return reaction == null
+        ? Icon(Icons.thumb_up, color: const Color(0xFFD89A18), size: size)
+        : ReactionFace(icon: reaction, size: size);
+  }
+
+  Widget _avatar(Map<String, dynamic> user) {
+    final name = user['username']?.toString().trim() ?? '';
+    final url = user['avatar_url']?.toString() ??
+        (user['avatar_urls'] is Map ? (user['avatar_urls'] as Map)['s']?.toString() ?? '' : '');
+    final hasImage = url.startsWith('https://') || url.startsWith('http://');
+    return CircleAvatar(
+      radius: 23,
+      backgroundColor: const Color(0xFF32A5BC),
+      foregroundColor: Colors.white,
+      backgroundImage: hasImage ? NetworkImage(url) : null,
+      child: hasImage ? null : Text(
+        name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
+        style: const TextStyle(fontSize: 21),
+      ),
+    );
+  }
+
+  Widget _tab(int? id, int total, String label) {
+    final active = _selectedReactionId == id;
+    return InkWell(
+      onTap: () => setState(() => _selectedReactionId = id),
+      child: Container(
+        decoration: BoxDecoration(border: Border(
+          bottom: BorderSide(width: 2, color: active ? _xfBlue : Colors.transparent))),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (id != null) ...[_reactionIcon(id, 17), const SizedBox(width: 5)],
+          Text(label + ' (' + total.toString() + ')',
+            style: TextStyle(
+              fontSize: 13, color: active ? _xfBlue : const Color(0xFF555555),
+              fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _userRow(Map<String, dynamic> user) {
+    final name = user['username']?.toString().trim() ?? '';
+    final title = user['user_title']?.toString().trim() ?? '';
+    final stats = user['user_stats']?.toString().trim() ?? '';
+    final date = _reactionDate(user);
+    return Container(
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _xfDivider))),
+      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+      child: Row(children: [
+        _avatar(user),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(name.isEmpty ? 'Utente non disponibile' : name,
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: _xfBlue, fontSize: 15, fontWeight: FontWeight.w700)),
+          if (title.isNotEmpty) Text(title, style: const TextStyle(fontSize: 12)),
+          if (stats.isNotEmpty) Text(stats, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        ])),
+        const SizedBox(width: 10),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          _reactionIcon(_reactionId(user), 27),
+          if (date.isNotEmpty) Text(date, style: const TextStyle(fontSize: 10, color: Color(0xFF555555))),
+        ]),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .72,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Reazioni ($_total)', style: theme.textTheme.titleLarge),
-              ),
+    final sizes = <int, int>{};
+    for (final user in _users) {
+      final id = _reactionId(user);
+      if (id > 0) sizes[id] = (sizes[id] ?? 0) + 1;
+    }
+    final ids = sizes.keys.toList()..sort();
+    final visible = _selectedReactionId == null
+        ? _users
+        : _users.where((user) => _reactionId(user) == _selectedReactionId).toList();
+    final mediaSize = MediaQuery.sizeOf(context);
+    return Dialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 800, maxHeight: mediaSize.height * .88),
+        child: SizedBox(
+          height: mediaSize.height * .80,
+          child: Column(children: [
+            Container(
+              color: const Color(0xFFE9F3FA),
+              padding: const EdgeInsets.fromLTRB(12, 8, 5, 8),
+              child: Row(children: [
+                const Expanded(child: Text('Utenti che hanno reagito',
+                  style: TextStyle(fontSize: 18, color: _xfBlue))),
+                IconButton(
+                  tooltip: 'Chiudi',
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.close, color: Color(0xFF8AB6D7)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ]),
             ),
-            Expanded(
-              child: ListView(
-                children: [
-                  for (final user in _users)
-                    ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-                      title: Text(
-                        (user['username']?.toString().isNotEmpty == true)
-                            ? user['username'].toString() : 'Utente non disponibile',
-                      ),
-                      trailing: () {
-                        final id = int.tryParse(user['reaction_id']?.toString() ?? '') ?? 0;
-                        final reaction = ReactionCatalog.instance.iconFor(id);
-                        return reaction != null
-                            ? ReactionFace(icon: reaction, size: 25)
-                            : const Icon(Icons.thumb_up, size: 22);
-                      }(),
-                    ),
-                  if (_loading) const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  if (_error != null) Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(_error!, textAlign: TextAlign.center),
-                  ),
-                  if (_hasMore && !_loading)
-                    Center(
-                      child: TextButton(
-                        onPressed: _loadMore,
-                        child: Text(_error == null ? 'Carica altre reazioni' : 'Riprova'),
-                      ),
-                    ),
-                  if (!_hasMore && _users.isEmpty && _error == null)
-                    const Center(child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Nessuna reazione'),
-                    )),
-                ],
-              ),
-            ),
-          ],
+            SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, children: [
+              _tab(null, _total, 'Tutti'),
+              for (final id in ids)
+                _tab(id, sizes[id]!, ReactionCatalog.instance.iconFor(id)?.title ?? 'Reazione'),
+            ])),
+            const Divider(height: 1, thickness: 1, color: _xfDivider),
+            Expanded(child: ListView(children: [
+              for (final user in visible) _userRow(user),
+              if (_loading) const Padding(
+                padding: EdgeInsets.all(18),
+                child: Center(child: CircularProgressIndicator())),
+              if (_error != null) Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(children: [
+                  Text(_error!, textAlign: TextAlign.center),
+                  TextButton(onPressed: () { _hasMore = true; _loadMore(); },
+                    child: const Text('Riprova')),
+                ])),
+              if (!_loading && _users.isEmpty && _error == null)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: Text('Nessuna reazione'))),
+            ])),
+          ]),
         ),
       ),
     );
