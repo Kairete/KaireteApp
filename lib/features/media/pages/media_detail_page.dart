@@ -45,6 +45,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
   MediaItem? _item;
   List<MediaComment> _comments = const [];
   int _shareCount = 0;
+  int _canonicalGroupPostId = 0;
+  int? _canonicalCommentCount;
+  int? _canonicalReactionScore;
+  int? _canonicalVisitorReactionId;
   bool _loading = true;
   bool _sending = false;
   int? _highlightCommentId;
@@ -77,6 +81,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
       setState(() {
         _item = item;
         _comments = commentsPage.comments;
+        _canonicalGroupPostId = commentsPage.canonicalGroupPostId;
+        _canonicalCommentCount = commentsPage.canonicalCommentCount;
+        _canonicalReactionScore = commentsPage.canonicalReactionScore;
+        _canonicalVisitorReactionId = commentsPage.canonicalVisitorReactionId;
         _loading = false;
       });
     } on TimeoutException {
@@ -102,11 +110,16 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
     final item = _item;
     if (item == null) return;
     try {
-      await _service.react(
-        mediaId: item.mediaId,
-        authorUserId: item.author?.userId,
-        reactionId: reactionId,
-      );
+      if (_canonicalGroupPostId > 0) {
+        await ReactionService().reactGroupPost(
+          _canonicalGroupPostId, reactionId: reactionId);
+      } else {
+        await _service.react(
+          mediaId: item.mediaId,
+          authorUserId: item.author?.userId,
+          reactionId: reactionId,
+        );
+      }
       await _load();
       AppToast.success('Reazione inviata.');
     } on MediaException catch (e) {
@@ -131,10 +144,13 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
     int reactionId = 1,
   }) async {
     try {
-      await ReactionService().reactMediaComment(
-        commentId,
-        reactionId: reactionId,
-      );
+      if (_canonicalGroupPostId > 0) {
+        await ReactionService().reactGroupComment(
+          commentId, reactionId: reactionId);
+      } else {
+        await ReactionService().reactMediaComment(
+          commentId, reactionId: reactionId);
+      }
       await _load();
     } on ReactionException catch (e) {
       AppToast.error(AppToast.mapApiError(e.message));
@@ -330,9 +346,11 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                     )
                                   : null,
                               footer: FeedCardActionBar(
-                                commentCount: _item!.commentCount,
-                                likeCount: _item!.reactionScore,
-                                visitorReactionId: _item!.visitorReactionId,
+                                commentCount: _canonicalCommentCount ?? _item!.commentCount,
+                                likeCount: _canonicalReactionScore ?? _item!.reactionScore,
+                                visitorReactionId: _canonicalGroupPostId > 0
+                                    ? _canonicalVisitorReactionId
+                                    : _item!.visitorReactionId,
                                 onComment: () {},
                                 onReact: _item!.canReact
                                     ? (reactionId) =>
