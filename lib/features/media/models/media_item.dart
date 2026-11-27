@@ -185,6 +185,30 @@ class MediaItem {
     );
   }
 
+  MediaItem withCanonicalGroupPostId(int? groupPostId) {
+    return MediaItem(
+      mediaId: mediaId,
+      title: title,
+      description: description,
+      mediaDate: mediaDate,
+      mediaType: mediaType,
+      mediaUrl: mediaUrl,
+      thumbnailUrl: thumbnailUrl,
+      mediaEmbedUrl: mediaEmbedUrl,
+      commentCount: commentCount,
+      canonicalGroupPostId: groupPostId,
+      reactionScore: reactionScore,
+      canReact: canReact,
+      visitorReactionId: visitorReactionId,
+      author: author,
+      album: album,
+      category: category,
+      tags: tags,
+      viewUrl: viewUrl,
+      durationSeconds: durationSeconds,
+    );
+  }
+
   String get previewBody {
     final plain = description?.trim();
     if (plain != null && plain.isNotEmpty) return plain;
