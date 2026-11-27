@@ -131,6 +131,7 @@ class MediaListController extends GetxController with AppWidgetsListMixin {
         mediaId: item.mediaId,
         authorUserId: item.author?.userId,
         reactionId: reactionId,
+        canonicalGroupPostId: item.canonicalGroupPostId ?? 0,
       );
       await loadMedia();
     } on MediaException catch (e) {
