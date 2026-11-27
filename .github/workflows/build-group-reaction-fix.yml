@@ -33,9 +33,9 @@ jobs:
           mkdir -p delivery
           APK=$(find build/app/outputs/flutter-apk -maxdepth 1 -name '*debug*.apk' | head -n 1)
           test -n "$APK"
-          cp "$APK" delivery/Kairete-XenForo-Reaction-UserDetails-arm64-debug.apk
+          cp "$APK" delivery/Kairete-Reaction-Avatar-Fix-arm64-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Kairete-XenForo-Reaction-UserDetails-arm64-debug
-          path: delivery/Kairete-XenForo-Reaction-UserDetails-arm64-debug.apk
+          name: Kairete-Reaction-Avatar-Fix-arm64-debug
+          path: delivery/Kairete-Reaction-Avatar-Fix-arm64-debug.apk
           retention-days: 7
