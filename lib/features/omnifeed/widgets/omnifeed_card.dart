@@ -157,12 +157,12 @@ class OmnifeedCard extends StatelessWidget {
       beforeFooter: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!isGroupPost &&
-              FeedAuthorSignature.maybe(
-                html: author?.signatureHtml,
-                plain: author?.signaturePlain,
-                show: author?.contentShowSignature ?? true,
-              ) case final signature?) signature,
+          if (!isGroupPost)
+            if (FeedAuthorSignature.maybe(
+              html: author?.signatureHtml,
+              plain: author?.signaturePlain,
+              show: author?.contentShowSignature ?? true,
+            ) case final signature?) signature,
           if (item.contentType != 'social_news_article')
             GroupReactionBar(
               total: (item.reactionCount != null && item.reactionCount! > 0)
