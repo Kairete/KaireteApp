@@ -760,6 +760,7 @@ class MediaService {
     required int mediaId,
     required String message,
     int parentCommentId = 0,
+    int canonicalGroupPostId = 0,
     String? quotedAuthorName,
     int quotedAuthorUserId = 0,
   }) async {
@@ -777,7 +778,12 @@ class MediaService {
       );
       _throwIfError(json);
       return;
-    } catch (_) {}
+    } catch (error) {
+      if (canonicalGroupPostId > 0) {
+        // Never save a mirrored media comment in an unrelated XFMG thread.
+        throw MediaException('Impossibile salvare il commento condiviso: $error');
+      }
+    }
 
     var text = message.trim();
     if (parentCommentId > 0) {
