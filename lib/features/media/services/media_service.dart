@@ -572,7 +572,10 @@ class MediaService {
     }
 
     MediaCommentsPage page;
-    if (kairetePage != null && kairetePage.comments.isNotEmpty) {
+    if (kairetePage != null &&
+        (kairetePage.canonicalGroupPostId > 0 || kairetePage.comments.isNotEmpty)) {
+      // An empty *canonical* group discussion is still authoritative.
+      // Never fall back to the unrelated XFMG comment collection.
       page = kairetePage;
     } else {
       try {
@@ -593,6 +596,16 @@ class MediaService {
     }
 
     var comments = page.comments;
+    if (page.canonicalGroupPostId > 0) {
+      // Parent IDs belong to SocialGroups; the XFMG parent map is unrelated.
+      return MediaCommentsPage(
+        comments: comments,
+        canonicalGroupPostId: page.canonicalGroupPostId,
+        canonicalCommentCount: page.canonicalCommentCount,
+        canonicalReactionScore: page.canonicalReactionScore,
+        canonicalVisitorReactionId: page.canonicalVisitorReactionId,
+      );
+    }
     if (!_hasNestedComments(comments)) {
       comments = await _applyParentMap(comments, mediaId);
     }
