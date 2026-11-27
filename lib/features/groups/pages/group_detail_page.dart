@@ -526,6 +526,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                       : post.reactionScore),
               reactionIds: post.reactionIds,
               reactionUsernames: post.reactionUsernames,
+              contentType: 'ksg_group_post',
+              contentId: post.groupPostId,
               visitorReactionId: postReaction?.reactionId ??
                   post.visitorReactionId,
             )
