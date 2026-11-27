@@ -4,6 +4,7 @@ import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/forum/models/forum_thread.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
 
 class ThreadFeedCard extends StatelessWidget {
@@ -114,10 +115,21 @@ class ThreadFeedCard extends StatelessWidget {
           ),
         ),
       ),
-      beforeFooter: FeedAuthorSignature.maybe(
-        html: author?.signatureHtml,
-        plain: author?.signaturePlain,
-        show: author?.contentShowSignature ?? true,
+      beforeFooter: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (FeedAuthorSignature.maybe(
+            html: author?.signatureHtml,
+            plain: author?.signaturePlain,
+            show: author?.contentShowSignature ?? true,
+          ) case final signature?) signature,
+          GroupReactionBar(
+            total: thread.reactionCount ?? thread.firstPostReactionScore,
+            reactionUsernames: thread.reactionUsernames,
+            contentType: 'thread',
+            contentId: thread.threadId,
+          ),
+        ],
       ),
       footer: FeedCardActionBar(
         commentCount: thread.commentCount,
