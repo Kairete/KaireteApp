@@ -9,6 +9,7 @@ import 'package:kairete/core/utils/content_edit_helper.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/blog/models/blog_comment.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/blog/pages/blog_compose_page.dart';
 import 'package:kairete/features/blog/pages/blog_list_page.dart';
 import 'package:kairete/features/blog/services/blog_service.dart';
@@ -440,7 +441,13 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                                       ),
                                     ],
                                   ),
-                                  beforeFooter: null,
+                                  beforeFooter: GroupReactionBar(
+                                    total: _entry!.reactionCount ?? _entry!.reactionScore,
+                                    reactionUsernames: _entry!.reactionUsernames,
+                                    contentType: 'ubs_blog_entry',
+                                    contentId: _entry!.blogEntryId,
+                                    visitorReactionId: _entry!.visitorReactionId,
+                                  ),
                                   footer: FeedCardActionBar(
                                     commentCount: _entry!.commentCount,
                                     likeCount: _entry!.reactionScore,
