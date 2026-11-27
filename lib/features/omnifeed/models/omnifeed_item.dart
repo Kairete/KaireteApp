@@ -104,6 +104,7 @@ class OmnifeedItem {
     this.contentType,
     this.contentId,
     this.firstPostId,
+    this.canonicalGroupPostId,
     this.contentTitle,
     this.messagePlainText,
     this.messageParsed,
@@ -151,6 +152,8 @@ class OmnifeedItem {
   final int? contentId;
   /// XenForo forum reactions belong to the first post, not to the thread.
   final int? firstPostId;
+  /// Mirrored media uses the original SocialGroups post for reactions/comments.
+  final int? canonicalGroupPostId;
   final String? contentTitle;
   final String? messagePlainText;
   final String? messageParsed;
@@ -496,6 +499,7 @@ class OmnifeedItem {
       ),
       contentType: 'xfmg_media',
       contentId: entry.mediaId,
+      canonicalGroupPostId: entry.canonicalGroupPostId,
       contentTitle: entry.title,
       messagePlainText: entry.description,
       messageParsed: entry.description,
@@ -827,6 +831,7 @@ class OmnifeedItem {
       contentType: contentType,
       contentId: contentId ?? OmnifeedItemId.decodeNativeId(resolved),
       firstPostId: firstPostId,
+      canonicalGroupPostId: canonicalGroupPostId,
       contentTitle: contentTitle,
       messagePlainText: messagePlainText,
       messageParsed: messageParsed,
@@ -1067,6 +1072,7 @@ class OmnifeedItem {
       itemId: resolvedItemId,
       contentType: contentTypeRaw ?? (profile != null ? 'profile_post' : null),
       firstPostId: JsonParse.intOrNull(json['first_post_id']),
+      canonicalGroupPostId: JsonParse.intOrNull(json['canonical_group_post_id']),
       contentId: JsonParse.intOrNull(json['content_id']) ??
           (resolvedItemId > 0
               ? OmnifeedItemId.decodeNativeId(resolvedItemId)
@@ -1173,6 +1179,7 @@ class OmnifeedItem {
       contentType: contentType,
       contentId: contentId,
       firstPostId: firstPostId,
+      canonicalGroupPostId: canonicalGroupPostId,
       contentTitle: contentTitle,
       messagePlainText: messagePlainText,
       messageParsed: messageParsed,
@@ -1218,6 +1225,7 @@ class OmnifeedItem {
       contentType: contentType ?? other.contentType,
       contentId: contentId ?? other.contentId,
       firstPostId: firstPostId ?? other.firstPostId,
+      canonicalGroupPostId: canonicalGroupPostId ?? other.canonicalGroupPostId,
       contentTitle: _pickText(contentTitle, other.contentTitle),
       messagePlainText: _pickText(messagePlainText, other.messagePlainText),
       messageParsed: _pickText(messageParsed, other.messageParsed),
