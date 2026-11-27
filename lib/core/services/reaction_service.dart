@@ -20,6 +20,12 @@ class ReactionService {
   }) async {
     await _ensureLoggedIn(authorUserId: item.author?.userId);
 
+    if (item.contentType == 'xfmg_media' &&
+        (item.canonicalGroupPostId ?? 0) > 0) {
+      return reactGroupPost(item.canonicalGroupPostId!,
+          reactionId: reactionId);
+    }
+
     if (item.contentType == 'ubs_blog_entry') {
       final blogEntryId = item.contentId;
       if (blogEntryId == null || blogEntryId <= 0) {
