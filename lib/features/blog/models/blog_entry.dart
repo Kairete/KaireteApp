@@ -117,6 +117,8 @@ class BlogEntry {
     this.postDate,
     this.commentCount = 0,
     this.reactionScore = 0,
+    this.reactionCount,
+    this.reactionUsernames = const [],
     this.canReact = true,
     this.canComment = false,
     this.canEdit = false,
@@ -145,6 +147,8 @@ class BlogEntry {
   final int? postDate;
   final int commentCount;
   final int reactionScore;
+  final int? reactionCount;
+  final List<String> reactionUsernames;
   final bool canReact;
   final bool canComment;
   final bool canEdit;
@@ -245,6 +249,8 @@ class BlogEntry {
           (attachments.isNotEmpty ? attachments.first.attachDate : null),
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      reactionCount: int.tryParse(json['reaction_count']?.toString() ?? ''),
+      reactionUsernames: _reactionNames(json['reaction_users']),
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
       canEdit: JsonParse.boolValue(json['can_edit']),
@@ -301,6 +307,13 @@ class BlogEntry {
   }
 
 
+  static List<String> _reactionNames(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw.map((entry) => entry is Map
+        ? entry['username']?.toString() ?? '' : entry?.toString() ?? '')
+      .where((name) => name.trim().isNotEmpty).take(2).toList();
+  }
+
   BlogEntry copyWith({
     int? reactionScore,
     bool? canEdit,
@@ -317,6 +330,8 @@ class BlogEntry {
       postDate: postDate,
       commentCount: commentCount,
       reactionScore: reactionScore ?? this.reactionScore,
+      reactionCount: reactionCount,
+      reactionUsernames: reactionUsernames,
       canReact: canReact,
       canComment: canComment,
       canEdit: canEdit ?? this.canEdit,
