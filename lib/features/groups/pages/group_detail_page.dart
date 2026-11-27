@@ -386,7 +386,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         ),
       ),
       beforeFooter: FeedReactionSummary(
-        total: post.reactionScore,
+        total: post.reactionCount ?? post.reactionScore,
         names: post.reactionNames,
       ),
       footer: FeedCardActionBar(
