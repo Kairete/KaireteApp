@@ -851,8 +851,13 @@ class MediaService {
     required int mediaId,
     int? authorUserId,
     int reactionId = 1,
+    int canonicalGroupPostId = 0,
   }) async {
     try {
+      if (canonicalGroupPostId > 0) {
+        return await _reactions.reactGroupPost(
+          canonicalGroupPostId, reactionId: reactionId);
+      }
       return await _reactions.reactMedia(
         mediaId,
         authorUserId: authorUserId,
