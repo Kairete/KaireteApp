@@ -124,13 +124,32 @@ class MediaComment {
 }
 
 class MediaCommentsPage {
-  MediaCommentsPage({required this.comments});
+  MediaCommentsPage({
+    required this.comments,
+    this.canonicalGroupPostId = 0,
+    this.canonicalCommentCount,
+    this.canonicalReactionScore,
+    this.canonicalVisitorReactionId,
+  });
 
   final List<MediaComment> comments;
+  /// A mirrored XFMG media shares interactions with this SocialGroups post.
+  final int canonicalGroupPostId;
+  final int? canonicalCommentCount;
+  final int? canonicalReactionScore;
+  final int? canonicalVisitorReactionId;
 
   factory MediaCommentsPage.fromJson(Map<String, dynamic> json) {
     final raw = json['comments'];
-    if (raw is! List) return MediaCommentsPage(comments: const []);
+    final canonicalId = JsonParse.intValue(json['canonical_group_post_id']);
+    final count = JsonParse.intOrNull(json['canonical_comment_count']);
+    final score = JsonParse.intOrNull(json['canonical_reaction_score']);
+    final visitor = JsonParse.intOrNull(json['canonical_visitor_reaction_id']);
+    if (raw is! List) return MediaCommentsPage(
+      comments: const [], canonicalGroupPostId: canonicalId,
+      canonicalCommentCount: count, canonicalReactionScore: score,
+      canonicalVisitorReactionId: visitor,
+    );
     final comments = <MediaComment>[];
     for (final entry in raw) {
       if (entry is! Map) continue;
@@ -140,6 +159,10 @@ class MediaCommentsPage {
         );
       } catch (_) {}
     }
-    return MediaCommentsPage(comments: comments);
+    return MediaCommentsPage(
+      comments: comments, canonicalGroupPostId: canonicalId,
+      canonicalCommentCount: count, canonicalReactionScore: score,
+      canonicalVisitorReactionId: visitor,
+    );
   }
 }
