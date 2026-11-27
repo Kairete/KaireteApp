@@ -154,9 +154,13 @@ class OmnifeedCard extends StatelessWidget {
             )
           : null,
       // The XF-style reaction summary belongs immediately before the footer.
-      beforeFooter: (item.reactionCount ?? item.reactionScore) > 0
+      beforeFooter: ((item.reactionCount != null && item.reactionCount! > 0)
+              ? item.reactionCount!
+              : item.reactionScore) > 0
           ? GroupReactionBar(
-              total: item.reactionCount ?? item.reactionScore,
+              total: (item.reactionCount != null && item.reactionCount! > 0)
+                  ? item.reactionCount!
+                  : item.reactionScore,
               reactionIds: item.reactionIds,
               reactionUsernames: item.reactionUsernames,
               visitorReactionId: item.visitorReactionId,
