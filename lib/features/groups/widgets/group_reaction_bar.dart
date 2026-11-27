@@ -47,7 +47,9 @@ class _GroupReactionBarState extends State<GroupReactionBar> {
   void didUpdateWidget(covariant GroupReactionBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.contentId != widget.contentId ||
-        oldWidget.contentType != widget.contentType) {
+        oldWidget.contentType != widget.contentType ||
+        oldWidget.total != widget.total ||
+        oldWidget.visitorReactionId != widget.visitorReactionId) {
       _realTotal = null;
       _realNames = const [];
       _realReactionIds = const [];
