@@ -304,7 +304,14 @@ class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
   Widget _userRow(Map<String, dynamic> user) {
     final name = user['username']?.toString().trim() ?? '';
     final title = user['user_title']?.toString().trim() ?? '';
-    final stats = user['user_stats']?.toString().trim() ?? '';
+    final messageCount = int.tryParse(user['message_count']?.toString() ?? '');
+    final reactionScore = int.tryParse(user['reaction_score']?.toString() ?? '');
+    final trophyPoints = int.tryParse(user['trophy_points']?.toString() ?? '');
+    final stats = <String>[
+      if (messageCount != null) 'Messaggi: $messageCount',
+      if (reactionScore != null) 'Punteggio reazioni: $reactionScore',
+      if (trophyPoints != null) 'Punti: $trophyPoints',
+    ].join(' · ');
     final date = _reactionDate(user);
     return Container(
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _xfDivider))),
@@ -316,7 +323,9 @@ class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
           Text(name.isEmpty ? 'Utente non disponibile' : name,
             maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: _xfBlue, fontSize: 15, fontWeight: FontWeight.w700)),
-          if (title.isNotEmpty) Text(title, style: const TextStyle(fontSize: 12)),
+          if (title.isNotEmpty)
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF333333))),
           if (stats.isNotEmpty) Text(stats, maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 11, color: Colors.grey)),
         ])),
