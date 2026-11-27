@@ -111,6 +111,7 @@ class OmnifeedItem {
     this.commentCount = 0,
     this.reactionScore = 0,
     this.reactionNames = const [],
+    this.reactionCount,
     this.visitorReactionId,
     this.isBookmarked = false,
     this.isHighlighted = false,
@@ -155,6 +156,7 @@ class OmnifeedItem {
   final int commentCount;
   final int reactionScore;
   final List<String> reactionNames;
+  final int? reactionCount;
   final int? visitorReactionId;
   final bool isBookmarked;
   final bool isHighlighted;
@@ -584,6 +586,7 @@ class OmnifeedItem {
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
       reactionNames: parseReactionNames(json),
+      reactionCount: JsonParse.intOrNull(json['reaction_count']),
       author: user is Map<String, dynamic>
           ? OmnifeedAuthor.fromJson(user)
           : OmnifeedAuthor(
@@ -617,6 +620,7 @@ class OmnifeedItem {
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
       reactionNames: parseReactionNames(json),
+      reactionCount: JsonParse.intOrNull(json['reaction_count']),
       author: userMap != null
           ? OmnifeedAuthor.fromJson(userMap)
           : OmnifeedAuthor(userId: authorId, username: authorName),
@@ -975,6 +979,7 @@ class OmnifeedItem {
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
       reactionNames: parseReactionNames(json),
+      reactionCount: JsonParse.intOrNull(json['reaction_count']),
       visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
       isBookmarked: JsonParse.boolValue(json['is_bookmarked']),
       isHighlighted: JsonParse.boolValue(json['is_highlighted']) ||
@@ -1071,6 +1076,7 @@ class OmnifeedItem {
       commentCount: commentCount,
       reactionScore: reactionScore ?? this.reactionScore,
       reactionNames: reactionNames,
+      reactionCount: reactionCount,
       visitorReactionId: visitorReactionId ?? this.visitorReactionId,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isHighlighted: isHighlighted ?? this.isHighlighted,
@@ -1112,6 +1118,7 @@ class OmnifeedItem {
       commentCount: commentCount > 0 ? commentCount : other.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : other.reactionScore,
       reactionNames: reactionNames.isNotEmpty ? reactionNames : other.reactionNames,
+      reactionCount: reactionCount ?? other.reactionCount,
       visitorReactionId: visitorReactionId ?? other.visitorReactionId,
       isBookmarked: isBookmarked || other.isBookmarked,
       isHighlighted: isHighlighted || other.isHighlighted,
@@ -1160,6 +1167,7 @@ class OmnifeedItem {
       commentCount: commentCount > 0 ? commentCount : media.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : media.reactionScore,
       reactionNames: reactionNames,
+      reactionCount: reactionCount,
       visitorReactionId: visitorReactionId ?? media.visitorReactionId,
       isBookmarked: isBookmarked,
       isHighlighted: isHighlighted,
