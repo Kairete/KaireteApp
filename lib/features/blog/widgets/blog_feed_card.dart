@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kairete/features/blog/models/blog_entry.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/omnifeed/utils/omnifeed_time.dart';
@@ -136,10 +137,22 @@ class BlogFeedCard extends StatelessWidget {
           ),
         ),
       ),
-      beforeFooter: FeedAuthorSignature.maybe(
-        html: author?.signatureHtml,
-        plain: author?.signaturePlain,
-        show: author?.contentShowSignature ?? true,
+      beforeFooter: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (FeedAuthorSignature.maybe(
+            html: author?.signatureHtml,
+            plain: author?.signaturePlain,
+            show: author?.contentShowSignature ?? true,
+          ) case final signature?) signature,
+          GroupReactionBar(
+            total: entry.reactionCount ?? entry.reactionScore,
+            reactionUsernames: entry.reactionUsernames,
+            contentType: 'ubs_blog_entry',
+            contentId: entry.blogEntryId,
+            visitorReactionId: entry.visitorReactionId,
+          ),
+        ],
       ),
       footer: FeedCardActionBar(
         commentCount: entry.commentCount,
