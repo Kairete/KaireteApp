@@ -1,0 +1,42 @@
+name: Reaction bar Android APK test
+on:
+  push:
+    branches:
+      - feature/reaction-names-xenforo
+    paths:
+      - .github/workflows/build-reaction-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.0'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze changed app sources
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib/features/feed/widgets/feed_reaction_summary.dart lib/features/omnifeed/models/omnifeed_item.dart lib/features/omnifeed/widgets/omnifeed_card.dart lib/features/groups/models/group_post.dart lib/features/groups/pages/group_detail_page.dart
+      - name: Test reaction summary
+        run: flutter test test/feed_reaction_summary_test.dart
+      - name: Build APK hub ARM64 debug
+        run: flutter build apk --debug --flavor hub --target-platform android-arm64 --dart-define=APP_VARIANT=hub
+      - name: Copy APK
+        run: |
+          mkdir -p delivery
+          cp build/app/outputs/flutter-apk/*hub*debug*.apk delivery/Kairete-ReactionNames-debug-arm64.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kairete-ReactionNames-debug-arm64
+          path: delivery/Kairete-ReactionNames-debug-arm64.apk
+          retention-days: 7
