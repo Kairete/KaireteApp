@@ -67,6 +67,8 @@ class ForumThread {
     this.viewCount = 0,
     this.firstPostId,
     this.firstPostReactionScore = 0,
+    this.reactionCount,
+    this.reactionUsernames = const [],
     this.messagePlainText,
     this.messageParsed,
     this.author,
@@ -88,6 +90,8 @@ class ForumThread {
   final int viewCount;
   final int? firstPostId;
   final int firstPostReactionScore;
+  final int? reactionCount;
+  final List<String> reactionUsernames;
   final String? messagePlainText;
   final String? messageParsed;
   final ForumAuthor? author;
@@ -177,6 +181,13 @@ class ForumThread {
         .toList();
   }
 
+  static List<String> _reactionNames(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw.map((entry) => entry is Map
+        ? entry['username']?.toString() ?? '' : entry?.toString() ?? '')
+      .where((name) => name.trim().isNotEmpty).take(2).toList();
+  }
+
   static List<String> parseTags(Map<String, dynamic> json) {
     final fromTags = JsonParse.parseFeedTags(json['tags']);
     if (fromTags.isNotEmpty) return fromTags;
@@ -201,6 +212,10 @@ class ForumThread {
           _firstPostIdFromJson(json['FirstPost']),
       firstPostReactionScore: json['first_post_reaction_score'] as int? ??
           _firstPostReactionScoreFromJson(json['FirstPost']),
+      reactionCount: int.tryParse((json['reaction_count'] ??
+          (json['FirstPost'] is Map ? (json['FirstPost'] as Map)['reaction_count'] : null))?.toString() ?? ''),
+      reactionUsernames: _reactionNames(json['reaction_users'] ??
+          (json['FirstPost'] is Map ? (json['FirstPost'] as Map)['reaction_users'] : null)),
       messagePlainText: json['message']?.toString() ??
           _firstPostMessageFromJson(json['FirstPost']),
       messageParsed: json['message_parsed']?.toString() ??
@@ -247,6 +262,8 @@ class ForumThread {
       firstPostId: firstPostId,
       firstPostReactionScore:
           firstPostReactionScore ?? this.firstPostReactionScore,
+      reactionCount: reactionCount,
+      reactionUsernames: reactionUsernames,
       messagePlainText: messagePlainText ?? this.messagePlainText,
       messageParsed: messageParsed ?? this.messageParsed,
       author: author,
