@@ -100,6 +100,7 @@ class MediaItem {
     this.thumbnailUrl,
     this.mediaEmbedUrl,
     this.commentCount = 0,
+    this.canonicalGroupPostId,
     this.reactionScore = 0,
     this.canReact = true,
     this.visitorReactionId,
@@ -120,6 +121,8 @@ class MediaItem {
   final String? thumbnailUrl;
   final String? mediaEmbedUrl;
   final int commentCount;
+  /// Nonzero only for an image mirrored from a SocialGroups post.
+  final int? canonicalGroupPostId;
   final int reactionScore;
   final bool canReact;
   final int? visitorReactionId;
@@ -169,6 +172,7 @@ class MediaItem {
       thumbnailUrl: thumbnailUrl,
       mediaEmbedUrl: mediaEmbedUrl,
       commentCount: commentCount,
+      canonicalGroupPostId: canonicalGroupPostId,
       reactionScore: reactionScore,
       canReact: canReact,
       visitorReactionId: visitorReactionId,
@@ -295,6 +299,7 @@ class MediaItem {
       thumbnailUrl: json['thumbnail_url']?.toString(),
       mediaEmbedUrl: json['media_embed_url']?.toString(),
       commentCount: json['comment_count'] as int? ?? 0,
+      canonicalGroupPostId: int.tryParse(json['canonical_group_post_id']?.toString() ?? ''),
       reactionScore: json['reaction_score'] as int? ?? 0,
       canReact: json['can_react'] as bool? ?? true,
       visitorReactionId: json['visitor_reaction_id'] as int?,
