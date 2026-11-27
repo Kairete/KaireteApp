@@ -153,11 +153,18 @@ class OmnifeedCard extends StatelessWidget {
               show: author?.contentShowSignature ?? true,
             )
           : null,
-      // The XF-style reaction summary belongs immediately before the footer.
-      beforeFooter: ((item.reactionCount != null && item.reactionCount! > 0)
-              ? item.reactionCount!
-              : item.reactionScore) > 0
-          ? GroupReactionBar(
+      // Same XenForo reaction summary in newsfeed, blogs, threads and groups.
+      beforeFooter: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!isGroupPost &&
+              FeedAuthorSignature.maybe(
+                html: author?.signatureHtml,
+                plain: author?.signaturePlain,
+                show: author?.contentShowSignature ?? true,
+              ) case final signature?) signature,
+          if (item.contentType != 'social_news_article')
+            GroupReactionBar(
               total: (item.reactionCount != null && item.reactionCount! > 0)
                   ? item.reactionCount!
                   : item.reactionScore,
@@ -166,12 +173,9 @@ class OmnifeedCard extends StatelessWidget {
               contentType: item.contentType ?? item.resolvedContentType,
               contentId: item.contentId,
               visitorReactionId: item.visitorReactionId,
-            )
-          : FeedAuthorSignature.maybe(
-              html: author?.signatureHtml,
-              plain: author?.signaturePlain,
-              show: author?.contentShowSignature ?? true,
             ),
+        ],
+      ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
         likeCount: item.reactionScore,
