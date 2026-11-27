@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kairete/config/api_paths.dart';
+import 'package:kairete/config/app_config.dart';
 import 'package:kairete/core/api/app_api.dart';
 import 'package:kairete/core/api/xenforo_api.dart';
 import 'package:kairete/core/services/reaction_catalog.dart';
@@ -265,20 +266,62 @@ class _ReactionUsersSheetState extends State<_ReactionUsersSheet> {
         : ReactionFace(icon: reaction, size: size);
   }
 
+  /// XenForo can send absolute, protocol-relative or website-relative URLs.
+  /// An empty avatar_url must not hide a populated avatar_urls field.
+  String? _avatarUrl(Map<String, dynamic> user) {
+    final variants = user['avatar_urls'];
+    final nested = user['User'];
+    final candidates = <dynamic>[
+      user['avatar_url'],
+      if (variants is Map) ...[
+        variants['m'], variants['s'], variants['l'],
+      ],
+      if (nested is Map) ...[
+        nested['avatar_url'],
+        if (nested['avatar_urls'] is Map) ...[
+          (nested['avatar_urls'] as Map)['m'],
+          (nested['avatar_urls'] as Map)['s'],
+        ],
+      ],
+    ];
+    for (final candidate in candidates) {
+      final raw = candidate?.toString().trim() ?? '';
+      if (raw.isEmpty) continue;
+      final base = Uri.parse(AppConfig.apiBaseUrl);
+      final uri = Uri.tryParse(raw);
+      if (uri == null) continue;
+      final resolved = uri.hasScheme ? uri : base.resolveUri(uri);
+      if ((resolved.scheme == 'https' || resolved.scheme == 'http') &&
+          resolved.host.isNotEmpty) {
+        return resolved.toString();
+      }
+    }
+    return null;
+  }
+
   Widget _avatar(Map<String, dynamic> user) {
     final name = user['username']?.toString().trim() ?? '';
-    final url = user['avatar_url']?.toString() ??
-        (user['avatar_urls'] is Map ? (user['avatar_urls'] as Map)['s']?.toString() ?? '' : '');
-    final hasImage = url.startsWith('https://') || url.startsWith('http://');
+    final url = _avatarUrl(user);
     return CircleAvatar(
       radius: 23,
       backgroundColor: const Color(0xFF32A5BC),
       foregroundColor: Colors.white,
-      backgroundImage: hasImage ? NetworkImage(url) : null,
-      child: hasImage ? null : Text(
-        name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
-        style: const TextStyle(fontSize: 21),
-      ),
+      child: url == null
+          ? Text(name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
+              style: const TextStyle(fontSize: 21))
+          : ClipOval(
+              child: Image.network(
+                url,
+                width: 46,
+                height: 46,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Center(child: Text(
+                      name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(fontSize: 21),
+                    )),
+              ),
+            ),
     );
   }
 
