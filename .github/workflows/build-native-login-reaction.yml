@@ -1,0 +1,43 @@
+name: Reaction Names + Native Login APK
+on:
+  push:
+    branches:
+      - fix/reaction-names-native-login
+    paths:
+      - .github/workflows/build-native-login-reaction.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.35.7'
+          cache: true
+      - run: flutter pub get
+      - name: Check changed sources
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib/features/omnifeed/models/omnifeed_item.dart lib/features/omnifeed/widgets/omnifeed_card.dart lib/features/groups/models/group_post.dart lib/features/groups/pages/group_detail_page.dart lib/features/groups/services/groups_service.dart lib/features/omnifeed/services/omnifeed_service.dart lib/features/auth/services/auth_service.dart
+      - name: Build debug APK (hub native login)
+        run: flutter build apk --debug --flavor hub -t lib/main.dart --target-platform android-arm64 --dart-define=APP_VARIANT=hub
+      - name: Package APK
+        run: |
+          mkdir -p delivery
+          APK=$(find build/app/outputs/flutter-apk -maxdepth 1 -name '*debug*.apk' | head -n 1)
+          test -n "$APK"
+          cp "$APK" delivery/Kairete-NativeLogin-ReactionNames-arm64-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kairete-NativeLogin-ReactionNames-arm64-debug
+          path: delivery/Kairete-NativeLogin-ReactionNames-arm64-debug.apk
+          retention-days: 7
