@@ -126,8 +126,10 @@ class ThreadFeedCard extends StatelessWidget {
           GroupReactionBar(
             total: thread.reactionCount ?? thread.firstPostReactionScore,
             reactionUsernames: thread.reactionUsernames,
-            contentType: 'thread',
-            contentId: thread.threadId,
+            contentType: (thread.firstPostId ?? 0) > 0 ? 'post' : 'thread',
+            contentId: (thread.firstPostId ?? 0) > 0
+                ? thread.firstPostId
+                : thread.threadId,
           ),
         ],
       ),
