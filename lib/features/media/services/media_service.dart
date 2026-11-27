@@ -618,7 +618,9 @@ class MediaService {
       }
     }
 
-    if (page.comments.isEmpty && primaryError is MediaException) {
+    if (page.comments.isEmpty &&
+        page.canonicalGroupPostId <= 0 &&
+        primaryError is MediaException) {
       throw primaryError;
     }
 
