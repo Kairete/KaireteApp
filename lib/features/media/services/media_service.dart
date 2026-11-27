@@ -72,8 +72,19 @@ class MediaService {
       final raw = json['canonical_map'];
       if (raw is! Map) return items;
       return items.map((media) {
-        final id = int.tryParse(raw[media.mediaId.toString()]?.toString() ?? '') ?? 0;
-        return id > 0 ? media.withCanonicalGroupPostId(id) : media;
+        final info = raw[media.mediaId.toString()];
+        if (info is Map) {
+          final groupId = int.tryParse(info['group_post_id']?.toString() ?? '') ?? 0;
+          if (groupId <= 0) return media;
+          return media.withCanonicalGroupPostId(
+            groupId,
+            canonicalCommentCount: int.tryParse(info['comment_count']?.toString() ?? ''),
+            canonicalReactionScore: int.tryParse(info['reaction_score']?.toString() ?? ''),
+            canonicalVisitorReactionId: int.tryParse(info['visitor_reaction_id']?.toString() ?? ''),
+          );
+        }
+        final oldId = int.tryParse(info?.toString() ?? '') ?? 0;
+        return oldId > 0 ? media.withCanonicalGroupPostId(oldId) : media;
       }).toList();
     } catch (_) {
       // Server-side filtering remains authoritative on older installations.
@@ -98,7 +109,9 @@ class MediaService {
     );
     _throwIfError(json);
     final items = await enrichMediaItemAlbumHeaders(_parseMediaList(json));
-    return _pinHighlightedMedia(items, albumId: albumId);
+    // Album listings keep mirrored media but show the source post's counts.
+    final annotated = await _attachCanonicalGroupPosts(items);
+    return _pinHighlightedMedia(annotated, albumId: albumId);
   }
 
   Future<List<MediaItem>> _pinHighlightedMedia(
