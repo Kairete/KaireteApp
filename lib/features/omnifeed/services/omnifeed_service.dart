@@ -450,6 +450,8 @@ class OmnifeedService {
             'post_date': post.postDate,
             'comment_count': post.commentCount,
             'reaction_score': post.reactionScore,
+            'reaction_count': post.reactionCount,
+            'reaction_users': post.reactionUsernames.map((name) => {'username': name}).toList(),
             if (post.author != null)
               'User': {
                 'user_id': post.author!.userId,
