@@ -170,8 +170,12 @@ class OmnifeedCard extends StatelessWidget {
                   : item.reactionScore,
               reactionIds: item.reactionIds,
               reactionUsernames: item.reactionUsernames,
-              contentType: item.contentType ?? item.resolvedContentType,
-              contentId: item.contentId,
+              contentType: isThread && (item.firstPostId ?? 0) > 0
+                  ? 'post'
+                  : (item.contentType ?? item.resolvedContentType),
+              contentId: isThread && (item.firstPostId ?? 0) > 0
+                  ? item.firstPostId
+                  : item.contentId,
               visitorReactionId: item.visitorReactionId,
             ),
         ],
