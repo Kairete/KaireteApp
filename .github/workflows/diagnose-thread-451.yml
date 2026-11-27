@@ -43,3 +43,15 @@ jobs:
           print('POST REACTION IDS',list(dict.fromkeys(re.findall(r'posts/(\\d+)/reactions',source)))[:20])
           print('POST HTML IDS',list(dict.fromkeys(re.findall(r'id="post-(\\d+)"',source)))[:20])
           PY
+
+      - name: Extract first post public reaction href and names
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re,html,urllib.request
+          text=urllib.request.urlopen(urllib.request.Request('https://lagrandeitalia.net/threads/parlare-del-nulla-di-franco-marino.451/',headers={'User-Agent':'Mozilla/5.0'}),timeout=25).read().decode('utf-8','replace')
+          for m in list(re.finditer('reactionsBar-link',text,re.I))[-3:]:
+              snippet=text[max(0,m.start()-450):m.start()+1600]
+              print('RAW SUMMARY',re.sub(r'\\s+',' ',snippet)[:1900])
+          print('POST-ID-LINKS',list(dict.fromkeys(re.findall(r'posts/(\\d+)',text)))[:15])
+          PY
