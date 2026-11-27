@@ -172,7 +172,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
     try {
-      await _service.postComment(mediaId: widget.mediaId, message: text);
+      await _service.postComment(
+        mediaId: widget.mediaId, message: text,
+        canonicalGroupPostId: _canonicalGroupPostId,
+      );
       _commentCtrl.clear();
       await _load();
     } on MediaException catch (e) {
@@ -198,6 +201,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
         mediaId: widget.mediaId,
         message: message.trim(),
         parentCommentId: parentCommentId,
+        canonicalGroupPostId: _canonicalGroupPostId,
         quotedAuthorName: quoted?.author?.label ?? quoted?.author?.username,
         quotedAuthorUserId: quoted?.author?.userId ?? 0,
       );
