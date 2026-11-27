@@ -1,10 +1,13 @@
-name: Kairete unified reaction summary and list APK
+name: Kairete GroupMedia shared interactions APK
 on:
   push:
     branches: [fix/reaction-names-native-login]
     paths:
       - .github/workflows/build-group-reaction-fix.yml
       - lib/features/groups/widgets/group_reaction_bar.dart
+      - lib/features/media/**
+      - lib/features/omnifeed/**
+      - lib/core/services/reaction_service.dart
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,7 +28,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Flutter analyze reaction and login
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib/features/groups lib/features/omnifeed lib/features/auth
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib/features/groups lib/features/omnifeed lib/features/media lib/features/auth lib/core/services/reaction_service.dart
       - name: Build hub ARM64 debug
         run: flutter build apk --debug --flavor hub -t lib/main.dart --target-platform android-arm64 --dart-define=APP_VARIANT=hub
       - name: Publish isolated artifact
