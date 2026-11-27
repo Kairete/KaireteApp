@@ -110,6 +110,7 @@ class OmnifeedItem {
     this.activityDate,
     this.commentCount = 0,
     this.reactionScore = 0,
+    this.reactionCount,
     this.visitorReactionId,
     this.isBookmarked = false,
     this.isHighlighted = false,
@@ -155,6 +156,7 @@ class OmnifeedItem {
   final int? activityDate;
   final int commentCount;
   final int reactionScore;
+  final int? reactionCount;
   final int? visitorReactionId;
   final bool isBookmarked;
   final bool isHighlighted;
@@ -670,6 +672,7 @@ class OmnifeedItem {
       itemDate: json['post_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      reactionCount: int.tryParse(json['reaction_count']?.toString() ?? ''),
       visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
       reactionIds: _reactionIdsFromApi(json),
       reactionUsernames: GroupReactionUsernames.fromPost(json),
@@ -706,6 +709,7 @@ class OmnifeedItem {
       itemDate: JsonParse.intOrNull(json['post_date']),
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
+      reactionCount: JsonParse.intOrNull(json['reaction_count']),
       author: userMap != null
           ? OmnifeedAuthor.fromJson(userMap)
           : OmnifeedAuthor(userId: authorId, username: authorName),
@@ -744,6 +748,8 @@ class OmnifeedItem {
       map['item_date'] ??= post['post_date'];
       map['comment_count'] ??= post['comment_count'];
       map['reaction_score'] ??= post['reaction_score'];
+      map['reaction_count'] ??= post['reaction_count'];
+      map['reaction_users'] ??= post['reaction_users'];
       if (map['User'] == null && post['User'] is Map) {
         map['User'] = post['User'];
       }
@@ -823,6 +829,7 @@ class OmnifeedItem {
       activityDate: activityDate,
       commentCount: commentCount,
       reactionScore: reactionScore,
+      reactionCount: reactionCount,
       visitorReactionId: visitorReactionId,
       isBookmarked: isBookmarked,
       isHighlighted: isHighlighted,
@@ -1066,6 +1073,7 @@ class OmnifeedItem {
           JsonParse.intOrNull(json['sort_date']),
       commentCount: JsonParse.intValue(json['comment_count']),
       reactionScore: JsonParse.intValue(json['reaction_score']),
+      reactionCount: JsonParse.intOrNull(json['reaction_count']),
       visitorReactionId: JsonParse.intOrNull(json['visitor_reaction_id']),
       isBookmarked: JsonParse.boolValue(json['is_bookmarked']),
       isHighlighted: JsonParse.boolValue(json['is_highlighted']) ||
@@ -1165,6 +1173,7 @@ class OmnifeedItem {
       activityDate: activityDate ?? this.activityDate,
       commentCount: commentCount,
       reactionScore: reactionScore ?? this.reactionScore,
+      reactionCount: reactionCount,
       visitorReactionId: visitorReactionId ?? this.visitorReactionId,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isHighlighted: isHighlighted ?? this.isHighlighted,
@@ -1207,6 +1216,7 @@ class OmnifeedItem {
       itemDate: itemDate ?? other.itemDate,
       commentCount: commentCount > 0 ? commentCount : other.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : other.reactionScore,
+      reactionCount: reactionCount ?? other.reactionCount,
       visitorReactionId: visitorReactionId ?? other.visitorReactionId,
       isBookmarked: isBookmarked || other.isBookmarked,
       isHighlighted: isHighlighted || other.isHighlighted,
@@ -1256,6 +1266,7 @@ class OmnifeedItem {
       itemDate: itemDate ?? media.mediaDate,
       commentCount: commentCount > 0 ? commentCount : media.commentCount,
       reactionScore: reactionScore > 0 ? reactionScore : media.reactionScore,
+      reactionCount: reactionCount,
       visitorReactionId: visitorReactionId ?? media.visitorReactionId,
       isBookmarked: isBookmarked,
       isHighlighted: isHighlighted,
