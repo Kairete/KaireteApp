@@ -185,7 +185,12 @@ class MediaItem {
     );
   }
 
-  MediaItem withCanonicalGroupPostId(int? groupPostId) {
+  MediaItem withCanonicalGroupPostId(
+    int? groupPostId, {
+    int? canonicalCommentCount,
+    int? canonicalReactionScore,
+    int? canonicalVisitorReactionId,
+  }) {
     return MediaItem(
       mediaId: mediaId,
       title: title,
@@ -195,11 +200,11 @@ class MediaItem {
       mediaUrl: mediaUrl,
       thumbnailUrl: thumbnailUrl,
       mediaEmbedUrl: mediaEmbedUrl,
-      commentCount: commentCount,
+      commentCount: canonicalCommentCount ?? commentCount,
       canonicalGroupPostId: groupPostId,
-      reactionScore: reactionScore,
+      reactionScore: canonicalReactionScore ?? reactionScore,
       canReact: canReact,
-      visitorReactionId: visitorReactionId,
+      visitorReactionId: canonicalVisitorReactionId ?? visitorReactionId,
       author: author,
       album: album,
       category: category,
