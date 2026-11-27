@@ -1,0 +1,24 @@
+name: Diagnose public thread 451 reaction API
+on:
+  push:
+    branches: [fix/reaction-names-native-login]
+    paths: [.github/workflows/diagnose-thread-451.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare public site and public JSON API
+        shell: bash
+        run: |
+          set +e
+          for url in             'https://lagrandeitalia.net/threads/parlare-del-nulla-di-franco-marino.451/'             'https://www.lagrandeitalia.net/threads/parlare-del-nulla-di-franco-marino.451/'             'https://www.kairete.net/api/threads/451/'             'https://www.lagrandeitalia.net/api/threads/451/'             'https://www.kairete.net/api/posts/451/'; do
+            echo "===== $url ====="
+            curl -sS -L --max-time 20 -o /tmp/probe_body -w 'HTTP %{http_code}; URL %{url_effective}; content-type %{content_type}; bytes %{size_download}\n' "$url"
+            echo 'Response JSON fields (if any):'
+            jq -c 'if type=="object" then {errors,thread_id,first_post_id,Thread:(.thread|{thread_id,first_post_id,reaction_count,reaction_score}),post:(.post|{post_id,reaction_count,reaction_score}),reactions, reaction_users} else {json_type:type} end' /tmp/probe_body 2>/dev/null | cut -c1-1600 || true
+            echo 'Visible public reaction summaries (if HTML):'
+            grep -Eoi '.{0,100}(reactions:|hanno reagito|reaction[s]?:).{0,160}' /tmp/probe_body | head -n 5 | cut -c1-320 || true
+          done
