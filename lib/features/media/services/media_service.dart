@@ -50,8 +50,35 @@ class MediaService {
 
     final json = await _api.get(ApiPaths.media, query: query);
     _throwIfError(json);
-    final items = await enrichMediaItemAlbumHeaders(_parseMediaList(json));
+    var items = await enrichMediaItemAlbumHeaders(_parseMediaList(json));
+    // Only user-profile/feed collections need this mapping; album screens
+    // intentionally keep their imported mirror media visible.
+    if (userId != null) {
+      items = await _attachCanonicalGroupPosts(items);
+    }
     return _pinHighlightedMedia(items, albumId: albumId);
+  }
+
+  Future<List<MediaItem>> _attachCanonicalGroupPosts(
+      List<MediaItem> items) async {
+    if (items.isEmpty) return items;
+    final ids = items.map((m) => m.mediaId).where((id) => id > 0).take(50);
+    try {
+      final json = await _api.get(
+        '${ApiPaths.kaireteMedia}0/',
+        query: {'media_ids': ids.join(',')},
+      );
+      if (XenforoApi.firstErrorMessage(json) != null) return items;
+      final raw = json['canonical_map'];
+      if (raw is! Map) return items;
+      return items.map((media) {
+        final id = int.tryParse(raw[media.mediaId.toString()]?.toString() ?? '') ?? 0;
+        return id > 0 ? media.withCanonicalGroupPostId(id) : media;
+      }).toList();
+    } catch (_) {
+      // Server-side filtering remains authoritative on older installations.
+      return items;
+    }
   }
 
   /// Tutti i media in un album (qualsiasi autore), non solo quelli dell'utente loggato.
