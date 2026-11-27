@@ -11,6 +11,7 @@ import 'package:kairete/features/feed/utils/feed_comment_reply.dart';
 import 'package:kairete/features/suggestions/widgets/suggestions_feed_rail.dart';
 import 'package:kairete/features/feed/utils/feed_comment_tree.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_reaction_summary.dart';
 import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
 import 'package:kairete/features/feed/widgets/feed_inline_reply_host.dart';
 import 'package:kairete/features/feed/widgets/feed_compose_bar.dart';
@@ -383,6 +384,10 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           post.messagePlainText,
           style: const TextStyle(fontSize: 15, height: 1.35),
         ),
+      ),
+      beforeFooter: FeedReactionSummary(
+        total: post.reactionCount ?? post.reactionScore,
+        names: post.reactionNames,
       ),
       footer: FeedCardActionBar(
         commentCount: post.commentCount,

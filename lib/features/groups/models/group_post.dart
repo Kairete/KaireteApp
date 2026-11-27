@@ -1,4 +1,5 @@
 import 'package:kairete/features/groups/models/social_group.dart';
+import 'package:kairete/features/feed/widgets/feed_reaction_summary.dart';
 
 class GroupPost {
   GroupPost({
@@ -8,6 +9,8 @@ class GroupPost {
     this.postDate,
     this.commentCount = 0,
     this.reactionScore = 0,
+    this.reactionNames = const [],
+    this.reactionCount,
     this.canReact = true,
     this.canComment = false,
     this.visitorReactionId,
@@ -20,6 +23,8 @@ class GroupPost {
   final int? postDate;
   final int commentCount;
   final int reactionScore;
+  final List<String> reactionNames;
+  final int? reactionCount;
   final bool canReact;
   final bool canComment;
   final int? visitorReactionId;
@@ -33,6 +38,8 @@ class GroupPost {
       postDate: json['post_date'] as int?,
       commentCount: json['comment_count'] as int? ?? 0,
       reactionScore: json['reaction_score'] as int? ?? 0,
+      reactionNames: parseReactionNames(json),
+      reactionCount: (json['reaction_count'] as num?)?.toInt(),
       canReact: json['can_react'] as bool? ?? true,
       canComment: json['can_comment'] as bool? ?? false,
       visitorReactionId: json['visitor_reaction_id'] as int?,

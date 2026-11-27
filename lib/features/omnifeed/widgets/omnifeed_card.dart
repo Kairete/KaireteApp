@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kairete/core/theme/app_theme.dart';
 import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
+import 'package:kairete/features/feed/widgets/feed_reaction_summary.dart';
 import 'package:kairete/features/feed/widgets/feed_link_preview.dart';
 import 'package:kairete/features/media/utils/media_navigation.dart';
 import 'package:kairete/features/media/widgets/media_thumbnail.dart';
@@ -140,10 +141,20 @@ class OmnifeedCard extends StatelessWidget {
           ),
         ),
       ),
-      beforeFooter: FeedAuthorSignature.maybe(
-        html: author?.signatureHtml,
-        plain: author?.signaturePlain,
-        show: author?.contentShowSignature ?? true,
+      beforeFooter: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (FeedAuthorSignature.maybe(
+                html: author?.signatureHtml,
+                plain: author?.signaturePlain,
+                show: author?.contentShowSignature ?? true,
+              ) case final signature?)
+            signature,
+          FeedReactionSummary(
+            total: item.reactionCount ?? item.reactionScore,
+            names: item.reactionNames,
+          ),
+        ],
       ),
       footer: FeedCardActionBar(
         commentCount: item.commentCount,
