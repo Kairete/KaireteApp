@@ -103,6 +103,7 @@ class OmnifeedItem {
     required this.itemId,
     this.contentType,
     this.contentId,
+    this.firstPostId,
     this.contentTitle,
     this.messagePlainText,
     this.messageParsed,
@@ -148,6 +149,8 @@ class OmnifeedItem {
   final int itemId;
   final String? contentType;
   final int? contentId;
+  /// XenForo forum reactions belong to the first post, not to the thread.
+  final int? firstPostId;
   final String? contentTitle;
   final String? messagePlainText;
   final String? messageParsed;
@@ -533,6 +536,7 @@ class OmnifeedItem {
       ),
       contentType: 'thread',
       contentId: thread.threadId,
+      firstPostId: thread.firstPostId,
       contentTitle: thread.title,
       messagePlainText: thread.messagePlainText,
       messageParsed: thread.messageParsed,
@@ -822,6 +826,7 @@ class OmnifeedItem {
       itemId: resolved,
       contentType: contentType,
       contentId: contentId ?? OmnifeedItemId.decodeNativeId(resolved),
+      firstPostId: firstPostId,
       contentTitle: contentTitle,
       messagePlainText: messagePlainText,
       messageParsed: messageParsed,
@@ -1061,6 +1066,7 @@ class OmnifeedItem {
     return OmnifeedItem(
       itemId: resolvedItemId,
       contentType: contentTypeRaw ?? (profile != null ? 'profile_post' : null),
+      firstPostId: JsonParse.intOrNull(json['first_post_id']),
       contentId: JsonParse.intOrNull(json['content_id']) ??
           (resolvedItemId > 0
               ? OmnifeedItemId.decodeNativeId(resolvedItemId)
@@ -1166,6 +1172,7 @@ class OmnifeedItem {
       itemId: itemId,
       contentType: contentType,
       contentId: contentId,
+      firstPostId: firstPostId,
       contentTitle: contentTitle,
       messagePlainText: messagePlainText,
       messageParsed: messageParsed,
@@ -1210,6 +1217,7 @@ class OmnifeedItem {
       itemId: itemId,
       contentType: contentType ?? other.contentType,
       contentId: contentId ?? other.contentId,
+      firstPostId: firstPostId ?? other.firstPostId,
       contentTitle: _pickText(contentTitle, other.contentTitle),
       messagePlainText: _pickText(messagePlainText, other.messagePlainText),
       messageParsed: _pickText(messageParsed, other.messageParsed),
