@@ -151,7 +151,7 @@ class OmnifeedCard extends StatelessWidget {
               ) case final signature?)
             signature,
           FeedReactionSummary(
-            total: item.reactionScore,
+            total: item.reactionCount ?? item.reactionScore,
             names: item.reactionNames,
           ),
         ],
