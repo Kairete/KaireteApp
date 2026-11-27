@@ -22,3 +22,24 @@ jobs:
             echo 'Visible public reaction summaries (if HTML):'
             grep -Eoi '.{0,100}(reactions:|hanno reagito|reaction[s]?:).{0,160}' /tmp/probe_body | head -n 5 | cut -c1-320 || true
           done
+
+      - name: Inspect public first post and its reaction summary
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re,html,urllib.request
+          url='https://lagrandeitalia.net/threads/parlare-del-nulla-di-franco-marino.451/'
+          request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+          source=urllib.request.urlopen(request,timeout=25).read().decode('utf-8','replace')
+          print('HTML characters',len(source))
+          for pattern in ['reactionsBar','reactionsBar-link','posts/reactions','data-content="post-','data-lb-id="post-','message-id','reactionSummary','reaction_users']:
+              m=list(re.finditer(re.escape(pattern),source,re.I))
+              print('PATTERN',pattern,'count',len(m))
+              for hit in m[:3]:
+                  snippet=source[max(0,hit.start()-260):min(len(source),hit.end()+500)]
+                  snippet=re.sub(r'<[^>]+>',' ',snippet)
+                  snippet=html.unescape(re.sub(r'\\s+',' ',snippet))
+                  print('CONTEXT',snippet[:550])
+          print('POST REACTION IDS',list(dict.fromkeys(re.findall(r'posts/(\\d+)/reactions',source)))[:20])
+          print('POST HTML IDS',list(dict.fromkeys(re.findall(r'id="post-(\\d+)"',source)))[:20])
+          PY
