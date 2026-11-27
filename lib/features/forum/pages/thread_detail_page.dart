@@ -5,6 +5,7 @@ import 'package:kairete/features/feed/widgets/feed_author_signature.dart';
 import 'package:kairete/features/feed/widgets/feed_comment_bar.dart';
 import 'package:kairete/features/feed/widgets/feed_card_widgets.dart';
 import 'package:kairete/features/feed/widgets/feed_nested_comment_thread.dart';
+import 'package:kairete/features/groups/widgets/group_reaction_bar.dart';
 import 'package:kairete/features/feed/widgets/feed_share_sheet.dart';
 import 'package:kairete/features/forum/controllers/thread_detail_controller.dart';
 import 'package:kairete/features/forum/widgets/thread_post_body.dart';
@@ -137,10 +138,21 @@ class _ThreadDetailPageState extends State<ThreadDetailPage> {
                             ),
                         ],
                       ),
-                      beforeFooter: FeedAuthorSignature.maybe(
-                        html: thread.author?.signatureHtml,
-                        plain: thread.author?.signaturePlain,
-                        show: thread.author?.contentShowSignature ?? true,
+                      beforeFooter: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (FeedAuthorSignature.maybe(
+                            html: thread.author?.signatureHtml,
+                            plain: thread.author?.signaturePlain,
+                            show: thread.author?.contentShowSignature ?? true,
+                          ) case final signature?) signature,
+                          GroupReactionBar(
+                            total: thread.reactionCount ?? thread.firstPostReactionScore,
+                            reactionUsernames: thread.reactionUsernames,
+                            contentType: 'thread',
+                            contentId: thread.threadId,
+                          ),
+                        ],
                       ),
                       footer: FeedCardActionBar(
                         commentCount: thread.commentCount,
