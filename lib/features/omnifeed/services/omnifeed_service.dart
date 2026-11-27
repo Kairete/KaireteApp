@@ -451,6 +451,7 @@ class OmnifeedService {
             'comment_count': post.commentCount,
             'reaction_score': post.reactionScore,
             'reaction_users': post.reactionNames,
+            'reaction_count': post.reactionCount,
             if (post.author != null)
               'User': {
                 'user_id': post.author!.userId,
