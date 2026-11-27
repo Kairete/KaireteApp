@@ -57,7 +57,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   List<GroupPost> _posts = const [];
   Map<int, List<GroupPostComment>> _commentsByPost = const {};
   final Map<int, int> _shareCounts = {};
-  final Map<int, ({int score, int reactionId})> _postReactionOverrides = {};
+  final Map<int, ({int score, int count, int reactionId})> _postReactionOverrides = {};
   final Map<int, ({int score, int reactionId})> _commentReactionOverrides = {};
   final Set<int> _pendingPostReactions = {};
   final Set<int> _expandedPostIds = {};
@@ -206,14 +206,35 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       final previous = _postReactionOverrides[post.groupPostId];
       final oldId = previous?.reactionId ?? post.visitorReactionId ?? 0;
       final score = previous?.score ?? post.reactionScore;
+      final count = previous?.count ??
+          ((post.reactionCount != null && post.reactionCount! > 0)
+              ? post.reactionCount!
+              : post.reactionScore);
       final isDelete = action == 'delete';
       final delta = isDelete ? -1 : (oldId == 0 ? 1 : 0);
       setState(() {
         _postReactionOverrides[post.groupPostId] = (
           score: (score + delta).clamp(0, 1 << 30),
+          count: (count + delta).clamp(0, 1 << 30),
           reactionId: isDelete ? 0 : reactionId,
         );
       });
+      // Re-read the actual XenForo reactions after posting a reaction.
+      // A locally incremented reaction_score is not the canonical reaction count.
+      try {
+        final refreshed = await _service.fetchPost(widget.groupId, post.groupPostId);
+        if (mounted) {
+          setState(() {
+            _posts = [
+              for (final existing in _posts)
+                existing.groupPostId == refreshed.groupPostId ? refreshed : existing,
+            ];
+            _postReactionOverrides.remove(post.groupPostId);
+          });
+        }
+      } catch (_) {
+        // Keep a locally updated summary until the next full feed refresh.
+      }
     } on GroupsException catch (e) {
       AppToast.error(e.message);
     } finally {
@@ -494,9 +515,15 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           ],
         ),
       ),
-      beforeFooter: (post.reactionCount ?? postReaction?.score ?? post.reactionScore) > 0
+      beforeFooter: (postReaction?.count ?? 
+              ((post.reactionCount != null && post.reactionCount! > 0)
+                  ? post.reactionCount!
+                  : post.reactionScore)) > 0
           ? GroupReactionBar(
-              total: post.reactionCount ?? postReaction?.score ?? post.reactionScore,
+              total: postReaction?.count ??
+                  ((post.reactionCount != null && post.reactionCount! > 0)
+                      ? post.reactionCount!
+                      : post.reactionScore),
               reactionIds: post.reactionIds,
               reactionUsernames: post.reactionUsernames,
               visitorReactionId: postReaction?.reactionId ??
